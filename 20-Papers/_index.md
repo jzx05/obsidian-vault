@@ -4,7 +4,7 @@ tags: [index, papers]
 
 # 📚 论文索引
 
-按主题浏览：[[20-Papers/LLM]] · [[20-Papers/CV]] · [[20-Papers/RL]]
+按主题浏览：[[20-Papers/WM]] · [[20-Papers/WAM]]
 
 ## 📖 在读
 
