@@ -54,6 +54,8 @@ zotero-key: AJF8YS54
   - **Wan2.1-T2V-1.3B**（cross-attention 架构）
   - **HY1.5-T2V-8B**（MMDiT 架构）
 
+
+
 ### Stage 2：AR 扩散蒸馏（三步走）
 1. **Stage 2a — Causal Forcing 训练**：把双向模型变成因果 AR 模型，仍保留多步去噪
 2. **Stage 2b — 初始化（二选一）**：
