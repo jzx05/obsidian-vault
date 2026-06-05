@@ -1,8 +1,8 @@
 ---
 title: "Causal Forcing: Bridging Bidirectional and Autoregressive Video Diffusion"
 authors: []
-year: 2024
-venue: arXiv 2024
+year: 2026
+venue: arXiv 2026
 tags:
   - paper
   - video-diffusion
@@ -10,10 +10,10 @@ tags:
   - causal
   - distillation
 status: reading
-rating: 
+rating:
 date-read: 2026-06-05
-url: 
-pdf: 
+url: https://arxiv.org/abs/2602.02214
+pdf:
 priority: high
 ---
 
@@ -54,9 +54,9 @@ priority: high
 最简单的 AR 做法：训练一个因果 mask 的 next-frame 模型。
 但这有两个严重问题：
 
-| 问题 | 原因 |
-|------|------|
-| 质量大幅下降 | 单步预测，信息不足 |
+| 问题      | 原因                      |
+| ------- | ----------------------- |
+| 质量大幅下降  | 单步预测，信息不足               |
 | 预训练权重浪费 | 和原双向模型差距太大，fine-tune 困难 |
 
 **Causal Forcing 的思路**：最小改动——只改 attention mask，保留扩散去噪过程。
@@ -163,12 +163,12 @@ HY1.5:  多步 AR → 首帧延迟 81s（从 771s 降了，但还不够）
 
 ## 训练超参数（来自 minWM 消融）
 
-| 参数 | 值 | 说明 |
-|------|---|------|
-| 训练步数（Stage 2a） | 4k–6k steps | |
-| 批量大小 | 4–16 | bs 越大越稳定 |
-| 学习率 | 1×10⁻⁴ 附近 | 标准 fine-tune 范围 |
-| 窗口大小 W | 论文未明确给出 | 推测 4–8 帧 |
+| 参数             | 值           | 说明              |
+| -------------- | ----------- | --------------- |
+| 训练步数（Stage 2a） | 4k–6k steps |                 |
+| 批量大小           | 4–16        | bs 越大越稳定        |
+| 学习率            | 1×10⁻⁴ 附近   | 标准 fine-tune 范围 |
+| 窗口大小 W         | 论文未明确给出     | 推测 4–8 帧        |
 
 ---
 

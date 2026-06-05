@@ -60,7 +60,7 @@ zotero-key: AJF8YS54
 
 
 ### Stage 2：AR 扩散蒸馏（三步走）
-1. **Stage 2a — Causal Forcing 训练**：把双向模型变成因果 AR 模型，仍保留多步去噪
+1. **Stage 2a — Causal Forcing 训练**：把双向模型变成因果 AR 模型，仍保留多步去噪[[2024-Causal-Forcing]]
 2. **Stage 2b — 初始化（二选一）**：
    - **Causal ODE 初始化**（更高质量，但需离线生成 ODE 数据）
    - **Causal CD（Consistency Distillation）初始化**（无需额外存储，更省资源）
