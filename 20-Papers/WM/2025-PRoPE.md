@@ -32,6 +32,8 @@ priority: medium
 SE(3) 等变性
 [[PRoPE-SE3-equivariance.excalidraw]]
 
+情景 A：相机 i 在 (0,0,0)，相机 j 在 (1,0,0)
+情景 B：相机 i 在 (1000,0,0)，相机 j 在 (1001,0,0)
 
 ## 关联
 - 概念笔记：[[30-Notes/concepts/PRoPE]]

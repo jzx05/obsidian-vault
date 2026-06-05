@@ -8,11 +8,11 @@
 			"id": "title",
 			"x": 66.40884234390501,
 			"y": 1.910650984281915,
-			"width": 953.90625,
-			"height": 27.5,
+			"width": 1400.9935309175269,
+			"height": 40.3890026931179,
 			"text": "PRoPE — SE(3) Equivariance: Why P_iT P_j Is Invariant to Global Transforms",
 			"originalText": "PRoPE — SE(3) Equivariance: Why P_iT P_j Is Invariant to Global Transforms",
-			"fontSize": 22,
+			"fontSize": 32.3112021544943,
 			"fontFamily": 3,
 			"textAlign": "center",
 			"verticalAlign": "top",
@@ -25,8 +25,8 @@
 			"opacity": 100,
 			"angle": 0,
 			"seed": 1,
-			"version": 22,
-			"versionNonce": 446983410,
+			"version": 70,
+			"versionNonce": 954223730,
 			"isDeleted": false,
 			"groupIds": [],
 			"boundElements": [],
@@ -38,7 +38,7 @@
 			"index": "a0",
 			"frameId": null,
 			"roundness": null,
-			"updated": 1780646433446,
+			"updated": 1780647489140,
 			"hasTextLink": false,
 			"rawText": ""
 		},
@@ -75,7 +75,8 @@
 			],
 			"updated": 1780646692279,
 			"link": null,
-			"locked": false
+			"locked": false,
+			"hasTextLink": false
 		},
 		{
 			"id": "0NzjFlrl",
@@ -100,7 +101,7 @@
 			"version": 58,
 			"versionNonce": 1040881902,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780646710234,
 			"locked": false,
 			"text": "[K_i⁻ᵀ Rᵢ, 0\n0,   K_i⁻ᵀ]",
@@ -113,7 +114,8 @@
 			"originalText": "[K_i⁻ᵀ Rᵢ, 0\n0,   K_i⁻ᵀ]",
 			"autoResize": true,
 			"lineHeight": 1.25,
-			"hasTextLink": false
+			"hasTextLink": false,
+			"link": null
 		},
 		{
 			"id": "7tgV67ME_UnMZiq-C00qA",
@@ -140,7 +142,7 @@
 			"version": 25,
 			"versionNonce": 1601115310,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780646545492,
 			"link": null,
 			"locked": false,
@@ -158,7 +160,8 @@
 			"endBinding": null,
 			"startArrowhead": null,
 			"endArrowhead": null,
-			"polygon": false
+			"polygon": false,
+			"hasTextLink": false
 		},
 		{
 			"id": "IC1TG2TX",
@@ -183,7 +186,7 @@
 			"version": 21,
 			"versionNonce": 133669042,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780646576554,
 			"locked": false,
 			"text": "Pi",
@@ -196,7 +199,8 @@
 			"originalText": "Pi",
 			"autoResize": true,
 			"lineHeight": 1.25,
-			"hasTextLink": false
+			"hasTextLink": false,
+			"link": null
 		},
 		{
 			"id": "SDWBxNVl",
@@ -221,7 +225,7 @@
 			"version": 133,
 			"versionNonce": 2075294898,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780646735222,
 			"link": null,
 			"locked": false,
@@ -234,7 +238,8 @@
 			"containerId": null,
 			"originalText": "K_i",
 			"autoResize": true,
-			"lineHeight": 1.25
+			"lineHeight": 1.25,
+			"hasTextLink": false
 		},
 		{
 			"id": "ZXZSTNaT",
@@ -259,7 +264,7 @@
 			"version": 126,
 			"versionNonce": 742809454,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780646735222,
 			"link": null,
 			"locked": false,
@@ -272,7 +277,8 @@
 			"containerId": null,
 			"originalText": "┌  fx   0   cx ┐",
 			"autoResize": true,
-			"lineHeight": 1.25
+			"lineHeight": 1.25,
+			"hasTextLink": false
 		},
 		{
 			"id": "sskexQau",
@@ -297,7 +303,7 @@
 			"version": 39,
 			"versionNonce": 1380515950,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780646744271,
 			"locked": false,
 			"text": "            │   0  fy   cy │    3×3 矩阵",
@@ -310,7 +316,8 @@
 			"originalText": "            │   0  fy   cy │    3×3 矩阵",
 			"autoResize": true,
 			"lineHeight": 1.25,
-			"hasTextLink": false
+			"hasTextLink": false,
+			"link": null
 		},
 		{
 			"id": "ibu0II8w",
@@ -335,7 +342,7 @@
 			"version": 48,
 			"versionNonce": 1768167026,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780646735222,
 			"link": null,
 			"locked": false,
@@ -348,7 +355,8 @@
 			"containerId": null,
 			"originalText": "└   0   0    1 ┘",
 			"autoResize": true,
-			"lineHeight": 1.25
+			"lineHeight": 1.25,
+			"hasTextLink": false
 		},
 		{
 			"id": "IDk7yCA1",
@@ -373,7 +381,7 @@
 			"version": 92,
 			"versionNonce": 1600405934,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780646735222,
 			"link": null,
 			"locked": false,
@@ -386,7 +394,8 @@
 			"containerId": null,
 			"originalText": "相机内参矩阵",
 			"autoResize": true,
-			"lineHeight": 1.25
+			"lineHeight": 1.25,
+			"hasTextLink": false
 		},
 		{
 			"id": "3OQxNLCx",
@@ -424,7 +433,8 @@
 			"originalText": "R_i",
 			"autoResize": true,
 			"lineHeight": 1.25,
-			"hasTextLink": false
+			"hasTextLink": false,
+			"link": null
 		},
 		{
 			"id": "mdFXYmkF",
@@ -449,7 +459,7 @@
 			"version": 23,
 			"versionNonce": 1787566830,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780646760924,
 			"link": null,
 			"locked": false,
@@ -462,7 +472,8 @@
 			"containerId": null,
 			"originalText": "旋转矩阵",
 			"autoResize": true,
-			"lineHeight": 1.25
+			"lineHeight": 1.25,
+			"hasTextLink": false
 		},
 		{
 			"id": "03uTg06F",
@@ -487,7 +498,7 @@
 			"version": 31,
 			"versionNonce": 1695192302,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780646795155,
 			"link": null,
 			"locked": false,
@@ -500,7 +511,8 @@
 			"containerId": null,
 			"originalText": "（来自外参 T_i）",
 			"autoResize": true,
-			"lineHeight": 1.25
+			"lineHeight": 1.25,
+			"hasTextLink": false
 		},
 		{
 			"id": "upw0SrX7",
@@ -525,7 +537,7 @@
 			"version": 34,
 			"versionNonce": 2120714286,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780646804588,
 			"link": null,
 			"locked": false,
@@ -538,7 +550,8 @@
 			"containerId": null,
 			"originalText": "T_i = [ R_i | t_i ]",
 			"autoResize": true,
-			"lineHeight": 1.25
+			"lineHeight": 1.25,
+			"hasTextLink": false
 		},
 		{
 			"id": "QXQCH6CLsfdMuw4u3T2cp",
@@ -563,7 +576,7 @@
 			"version": 29,
 			"versionNonce": 1411569070,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780646836815,
 			"link": null,
 			"locked": false,
@@ -682,7 +695,8 @@
 				]
 			],
 			"pressures": [],
-			"simulatePressure": true
+			"simulatePressure": true,
+			"hasTextLink": false
 		},
 		{
 			"id": "h3pJmCm0N5osNaLPwAm4x",
@@ -707,7 +721,7 @@
 			"version": 9,
 			"versionNonce": 897111730,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780646837471,
 			"link": null,
 			"locked": false,
@@ -746,7 +760,8 @@
 				]
 			],
 			"pressures": [],
-			"simulatePressure": true
+			"simulatePressure": true,
+			"hasTextLink": false
 		},
 		{
 			"id": "8gMQmUkB2faY02BrYlpQP",
@@ -771,7 +786,7 @@
 			"version": 10,
 			"versionNonce": 167817970,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780646837879,
 			"link": null,
 			"locked": false,
@@ -814,7 +829,8 @@
 				]
 			],
 			"pressures": [],
-			"simulatePressure": true
+			"simulatePressure": true,
+			"hasTextLink": false
 		},
 		{
 			"id": "v8T5t41PsWPM5AN4nEegf",
@@ -839,7 +855,7 @@
 			"version": 27,
 			"versionNonce": 1108123374,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780646838731,
 			"link": null,
 			"locked": false,
@@ -950,7 +966,8 @@
 				]
 			],
 			"pressures": [],
-			"simulatePressure": true
+			"simulatePressure": true,
+			"hasTextLink": false
 		},
 		{
 			"id": "DEgWIXgJw9OULHFPfaFBB",
@@ -975,7 +992,7 @@
 			"version": 25,
 			"versionNonce": 1925062514,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780646839895,
 			"link": null,
 			"locked": false,
@@ -1078,7 +1095,8 @@
 				]
 			],
 			"pressures": [],
-			"simulatePressure": true
+			"simulatePressure": true,
+			"hasTextLink": false
 		},
 		{
 			"id": "t8_KXhcrZ7LhOsNwUnHer",
@@ -1103,7 +1121,7 @@
 			"version": 9,
 			"versionNonce": 838102574,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780646840323,
 			"link": null,
 			"locked": false,
@@ -1142,7 +1160,8 @@
 				]
 			],
 			"pressures": [],
-			"simulatePressure": true
+			"simulatePressure": true,
+			"hasTextLink": false
 		},
 		{
 			"id": "dE0_zdr62-yUj0vFLOMV0",
@@ -1167,7 +1186,7 @@
 			"version": 11,
 			"versionNonce": 1947848690,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780646840627,
 			"link": null,
 			"locked": false,
@@ -1214,7 +1233,8 @@
 				]
 			],
 			"pressures": [],
-			"simulatePressure": true
+			"simulatePressure": true,
+			"hasTextLink": false
 		},
 		{
 			"id": "LK1sVvt2eMT0XTw1YM8Z9",
@@ -1239,7 +1259,7 @@
 			"version": 12,
 			"versionNonce": 1949646322,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780646841038,
 			"link": null,
 			"locked": false,
@@ -1290,7 +1310,8 @@
 				]
 			],
 			"pressures": [],
-			"simulatePressure": true
+			"simulatePressure": true,
+			"hasTextLink": false
 		},
 		{
 			"id": "Hea1nelXMSeWt3g5Rx87S",
@@ -1315,7 +1336,7 @@
 			"version": 16,
 			"versionNonce": 803140786,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780646848475,
 			"link": null,
 			"locked": false,
@@ -1382,7 +1403,8 @@
 				]
 			],
 			"pressures": [],
-			"simulatePressure": true
+			"simulatePressure": true,
+			"hasTextLink": false
 		},
 		{
 			"id": "EE85SVgNH98h35ir8Qhho",
@@ -1407,7 +1429,7 @@
 			"version": 17,
 			"versionNonce": 1458279918,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780646849091,
 			"link": null,
 			"locked": false,
@@ -1478,7 +1500,8 @@
 				]
 			],
 			"pressures": [],
-			"simulatePressure": true
+			"simulatePressure": true,
+			"hasTextLink": false
 		},
 		{
 			"id": "tBwAHgZ6",
@@ -1503,7 +1526,7 @@
 			"version": 27,
 			"versionNonce": 2070563058,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780646850934,
 			"link": null,
 			"locked": false,
@@ -1516,7 +1539,8 @@
 			"containerId": null,
 			"originalText": "相机在世界坐标系中的位置",
 			"autoResize": true,
-			"lineHeight": 1.25
+			"lineHeight": 1.25,
+			"hasTextLink": false
 		},
 		{
 			"id": "mTKFpUPbyaw8xNa-SWVT6",
@@ -1543,7 +1567,7 @@
 			"version": 62,
 			"versionNonce": 1613278254,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780646876639,
 			"link": null,
 			"locked": false,
@@ -1561,17 +1585,18 @@
 			"endBinding": null,
 			"startArrowhead": null,
 			"endArrowhead": null,
-			"polygon": false
+			"polygon": false,
+			"hasTextLink": false
 		},
 		{
 			"id": "nBt7ZeWE",
 			"type": "text",
-			"x": 61.84823865570024,
-			"y": 586.7021797894871,
-			"width": 736.52392578125,
-			"height": 90,
+			"x": 46.691119963335154,
+			"y": 613.2271375011259,
+			"width": 831.2073974609375,
+			"height": 46.263108642982125,
 			"angle": 0,
-			"strokeColor": "#f08c00",
+			"strokeColor": "#e03131",
 			"backgroundColor": "transparent",
 			"fillStyle": "solid",
 			"strokeWidth": 1,
@@ -1583,29 +1608,186 @@
 			"index": "b04",
 			"roundness": null,
 			"seed": 1258301042,
-			"version": 24,
-			"versionNonce": 393274734,
+			"version": 61,
+			"versionNonce": 1378337650,
 			"isDeleted": false,
-			"boundElements": null,
-			"updated": 1780646898548,
+			"boundElements": [],
+			"updated": 1780647069504,
 			"link": null,
 			"locked": false,
-			"text": "t_i 没有进入 P_i，这是 SE(3) 平移不变性的\n来源",
+			"text": "t_i 没有进入 P_i，这是 SE(3) 平移不变性的来源",
 			"rawText": "t_i 没有进入 P_i，这是 SE(3) 平移不变性的来源",
-			"fontSize": 36,
+			"fontSize": 37.0104869143857,
 			"fontFamily": 5,
 			"textAlign": "left",
 			"verticalAlign": "top",
 			"containerId": null,
 			"originalText": "t_i 没有进入 P_i，这是 SE(3) 平移不变性的来源",
+			"autoResize": true,
+			"lineHeight": 1.25,
+			"hasTextLink": false
+		},
+		{
+			"id": "6MGXOnPi",
+			"type": "text",
+			"x": 44.42020644955414,
+			"y": 735.7430323606798,
+			"width": 255.635986328125,
+			"height": 45,
+			"angle": 0,
+			"strokeColor": "#f08c00",
+			"backgroundColor": "transparent",
+			"fillStyle": "solid",
+			"strokeWidth": 1,
+			"strokeStyle": "dashed",
+			"roughness": 1,
+			"opacity": 100,
+			"groupIds": [],
+			"frameId": null,
+			"index": "b06",
+			"roundness": null,
+			"seed": 1110284206,
+			"version": 92,
+			"versionNonce": 214613874,
+			"isDeleted": false,
+			"boundElements": [],
+			"updated": 1780646974126,
+			"locked": false,
+			"text": "1. 平移等变性质",
+			"rawText": "1. 平移等变性质",
+			"fontSize": 36,
+			"fontFamily": 5,
+			"textAlign": "center",
+			"verticalAlign": "top",
+			"containerId": null,
+			"originalText": "1. 平移等变性质",
+			"autoResize": true,
+			"lineHeight": 1.25,
+			"hasTextLink": false,
+			"link": null
+		},
+		{
+			"id": "Elgre1oz",
+			"type": "text",
+			"x": 38.771190883130004,
+			"y": 826.3560903132483,
+			"width": 209.38252488986745,
+			"height": 45,
+			"angle": 0,
+			"strokeColor": "#f08c00",
+			"backgroundColor": "transparent",
+			"fillStyle": "solid",
+			"strokeWidth": 1,
+			"strokeStyle": "dashed",
+			"roughness": 1,
+			"opacity": 100,
+			"groupIds": [],
+			"frameId": null,
+			"index": "b07",
+			"roundness": null,
+			"seed": 289735154,
+			"version": 43,
+			"versionNonce": 1830423154,
+			"isDeleted": false,
+			"boundElements": [],
+			"updated": 1780646990008,
+			"locked": false,
+			"text": "2. 旋转等变",
+			"rawText": "2. 旋转等变",
+			"fontSize": 36,
+			"fontFamily": 5,
+			"textAlign": "center",
+			"verticalAlign": "top",
+			"containerId": null,
+			"originalText": "2. 旋转等变",
 			"autoResize": false,
-			"lineHeight": 1.25
+			"lineHeight": 1.25,
+			"hasTextLink": false,
+			"link": null
+		},
+		{
+			"id": "QV7ghPlA",
+			"type": "text",
+			"x": 309.5411267482459,
+			"y": 835.6931615773582,
+			"width": 780.4515991210938,
+			"height": 45,
+			"angle": 0,
+			"strokeColor": "#f08c00",
+			"backgroundColor": "transparent",
+			"fillStyle": "solid",
+			"strokeWidth": 1,
+			"strokeStyle": "dashed",
+			"roughness": 1,
+			"opacity": 100,
+			"groupIds": [],
+			"frameId": null,
+			"index": "b08",
+			"roundness": null,
+			"seed": 1772912558,
+			"version": 46,
+			"versionNonce": 589603058,
+			"isDeleted": false,
+			"boundElements": [],
+			"updated": 1780647058186,
+			"link": null,
+			"locked": false,
+			"text": "(G P_i)ᵀ (G P_j) = P_iᵀ Gᵀ G P_j = P_iᵀ P_j",
+			"rawText": "(G P_i)ᵀ (G P_j) = P_iᵀ Gᵀ G P_j = P_iᵀ P_j",
+			"fontSize": 36,
+			"fontFamily": 5,
+			"textAlign": "left",
+			"verticalAlign": "top",
+			"containerId": null,
+			"originalText": "(G P_i)ᵀ (G P_j) = P_iᵀ Gᵀ G P_j = P_iᵀ P_j",
+			"autoResize": true,
+			"lineHeight": 1.25,
+			"hasTextLink": false
+		},
+		{
+			"id": "uL9due68",
+			"type": "text",
+			"x": 333.2374385108711,
+			"y": 742.6309808623214,
+			"width": 1251.406982421875,
+			"height": 45,
+			"angle": 0,
+			"strokeColor": "#f08c00",
+			"backgroundColor": "transparent",
+			"fillStyle": "solid",
+			"strokeWidth": 1,
+			"strokeStyle": "dashed",
+			"roughness": 1,
+			"opacity": 100,
+			"groupIds": [],
+			"frameId": null,
+			"index": "b09",
+			"roundness": null,
+			"seed": 1122327602,
+			"version": 76,
+			"versionNonce": 341987634,
+			"isDeleted": false,
+			"boundElements": [],
+			"updated": 1780647084439,
+			"link": null,
+			"locked": false,
+			"text": "P_i 里压根没有 t_i（平移）。搬走整个场景，P_i 不变，所以 P_iᵀ P_j 不变",
+			"rawText": "P_i 里压根没有 t_i（平移）。搬走整个场景，P_i 不变，所以 P_iᵀ P_j 不变",
+			"fontSize": 36,
+			"fontFamily": 5,
+			"textAlign": "left",
+			"verticalAlign": "top",
+			"containerId": null,
+			"originalText": "P_i 里压根没有 t_i（平移）。搬走整个场景，P_i 不变，所以 P_iᵀ P_j 不变",
+			"autoResize": true,
+			"lineHeight": 1.25,
+			"hasTextLink": false
 		}
 	],
 	"appState": {
 		"theme": "light",
 		"viewBackgroundColor": "#ffffff",
-		"currentItemStrokeColor": "#f08c00",
+		"currentItemStrokeColor": "#e03131",
 		"currentItemBackgroundColor": "transparent",
 		"currentItemFillStyle": "solid",
 		"currentItemStrokeWidth": 1,
@@ -1619,10 +1801,10 @@
 		"currentItemEndArrowhead": "arrow",
 		"currentItemArrowType": "round",
 		"currentItemFrameRole": null,
-		"scrollX": 164.82644681528848,
-		"scrollY": 351.2013850936323,
+		"scrollX": 20.36648989172147,
+		"scrollY": 429.78313502652026,
 		"zoom": {
-			"value": 0.659756
+			"value": 0.452583
 		},
 		"currentItemRoundness": "round",
 		"gridSize": 20,
