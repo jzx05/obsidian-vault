@@ -1,14 +1,19 @@
 ---
-title: "PRoPE: Projective Rotary Position Embedding for Camera-Controllable Video Generation"
+title: Cameras as Relative Positional Encoding
 authors: []
-year: 2024
-venue: NeurIPS 2024
-tags: [paper, attention, camera-control, position-embedding, to-read]
+year: 2025
+venue: NeurIPS 2025
+tags:
+  - paper
+  - attention
+  - camera-control
+  - position-embedding
+  - to-read
 status: to-read
-rating: 
-date-read: 
-url: 
-pdf: 
+rating:
+date-read:
+url:
+pdf:
 priority: medium
 ---
 
