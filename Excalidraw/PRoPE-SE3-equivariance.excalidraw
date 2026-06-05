@@ -6105,7 +6105,8 @@
 			"originalText": "Stage 2b (option a)：causal ODE initialization",
 			"autoResize": true,
 			"lineHeight": 1.25,
-			"hasTextLink": false
+			"hasTextLink": false,
+			"link": null
 		},
 		{
 			"id": "K0u8QTod",
@@ -7195,7 +7196,8 @@
 			"originalText": "多步 teacher",
 			"autoResize": true,
 			"lineHeight": 1.25,
-			"hasTextLink": false
+			"hasTextLink": false,
+			"link": null
 		},
 		{
 			"id": "qEe3hILb",
@@ -8003,7 +8005,7 @@
 			"version": 26,
 			"versionNonce": 1424833454,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780658797361,
 			"link": null,
 			"locked": false,
@@ -8016,7 +8018,8 @@
 			"containerId": null,
 			"originalText": "PF-ODE trajectories",
 			"autoResize": true,
-			"lineHeight": 1.25
+			"lineHeight": 1.25,
+			"hasTextLink": false
 		},
 		{
 			"id": "we2fuGMp",
@@ -8041,7 +8044,7 @@
 			"version": 17,
 			"versionNonce": 1418007986,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780658822126,
 			"link": null,
 			"locked": false,
@@ -8054,7 +8057,8 @@
 			"containerId": null,
 			"originalText": "多步 AR 模型",
 			"autoResize": true,
-			"lineHeight": 1.25
+			"lineHeight": 1.25,
+			"hasTextLink": false
 		},
 		{
 			"id": "BYx0CKj4",
@@ -8079,7 +8083,7 @@
 			"version": 9,
 			"versionNonce": 445663474,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780658832042,
 			"link": null,
 			"locked": false,
@@ -8092,7 +8096,8 @@
 			"containerId": null,
 			"originalText": "原始双向模型",
 			"autoResize": true,
-			"lineHeight": 1.25
+			"lineHeight": 1.25,
+			"hasTextLink": false
 		},
 		{
 			"id": "dnXoQVI1",
@@ -8117,7 +8122,7 @@
 			"version": 28,
 			"versionNonce": 688259314,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780658847524,
 			"link": null,
 			"locked": false,
@@ -8130,7 +8135,8 @@
 			"containerId": null,
 			"originalText": "causal mask",
 			"autoResize": true,
-			"lineHeight": 1.25
+			"lineHeight": 1.25,
+			"hasTextLink": false
 		},
 		{
 			"id": "D8FO3K9L",
@@ -8155,7 +8161,7 @@
 			"version": 40,
 			"versionNonce": 11183474,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780659383820,
 			"link": null,
 			"locked": false,
@@ -8168,7 +8174,8 @@
 			"containerId": null,
 			"originalText": "(x_{t_k},  x_{t_{k-1}})",
 			"autoResize": true,
-			"lineHeight": 1.25
+			"lineHeight": 1.25,
+			"hasTextLink": false
 		},
 		{
 			"id": "l6hQ48PA",
@@ -8193,7 +8200,7 @@
 			"version": 32,
 			"versionNonce": 1282499698,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780659701015,
 			"locked": false,
 			"text": "一致性蒸馏方式",
@@ -8206,7 +8213,8 @@
 			"originalText": "一致性蒸馏方式",
 			"autoResize": true,
 			"lineHeight": 1.25,
-			"hasTextLink": false
+			"hasTextLink": false,
+			"link": null
 		},
 		{
 			"id": "or2LVEj6",
@@ -8231,7 +8239,7 @@
 			"version": 180,
 			"versionNonce": 1463146606,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780659697832,
 			"link": null,
 			"locked": false,
@@ -8241,7 +8249,8 @@
 				1,
 				1
 			],
-			"crop": null
+			"crop": null,
+			"hasTextLink": false
 		},
 		{
 			"id": "DkZJ79WD",
@@ -8266,7 +8275,7 @@
 			"version": 7,
 			"versionNonce": 1575225650,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780660281208,
 			"locked": false,
 			"text": "ODE 轨迹：  x_T ──── x_{t_k} ──── x*_{t_{k-1}} ──── x_0",
@@ -8279,7 +8288,8 @@
 			"originalText": "ODE 轨迹：  x_T ──── x_{t_k} ──── x*_{t_{k-1}} ──── x_0",
 			"autoResize": true,
 			"lineHeight": 1.25,
-			"hasTextLink": false
+			"hasTextLink": false,
+			"link": null
 		},
 		{
 			"id": "SUbKh1Gs",
@@ -8304,7 +8314,7 @@
 			"version": 104,
 			"versionNonce": 959708210,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780659733969,
 			"locked": false,
 			"text": "↑                    ↑",
@@ -8317,7 +8327,8 @@
 			"originalText": "↑                    ↑",
 			"autoResize": false,
 			"lineHeight": 1.25,
-			"hasTextLink": false
+			"hasTextLink": false,
+			"link": null
 		},
 		{
 			"id": "6flXWVHC",
@@ -8342,7 +8353,7 @@
 			"version": 111,
 			"versionNonce": 535390446,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780659727846,
 			"link": null,
 			"locked": false,
@@ -8355,14 +8366,15 @@
 			"containerId": null,
 			"originalText": "student          EMA student",
 			"autoResize": true,
-			"lineHeight": 1.25
+			"lineHeight": 1.25,
+			"hasTextLink": false
 		},
 		{
 			"id": "CL2g7VKy",
 			"type": "text",
 			"x": 17.00449154360416,
 			"y": 5097.079154978429,
-			"width": 363.64434814453125,
+			"width": 361.8000183105469,
 			"height": 45,
 			"angle": 0,
 			"strokeColor": "#e03131",
@@ -8380,7 +8392,7 @@
 			"version": 111,
 			"versionNonce": 1290410798,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780659727846,
 			"link": null,
 			"locked": false,
@@ -8393,7 +8405,8 @@
 			"containerId": null,
 			"originalText": "G_θ(·)          G_θ̄(·)",
 			"autoResize": true,
-			"lineHeight": 1.25
+			"lineHeight": 1.25,
+			"hasTextLink": false
 		},
 		{
 			"id": "jXd5WFY3",
@@ -8418,7 +8431,7 @@
 			"version": 111,
 			"versionNonce": 1939506542,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780659727846,
 			"link": null,
 			"locked": false,
@@ -8431,7 +8444,8 @@
 			"containerId": null,
 			"originalText": "└──── 两者预测 x_0 要一致 ────┘",
 			"autoResize": true,
-			"lineHeight": 1.25
+			"lineHeight": 1.25,
+			"hasTextLink": false
 		},
 		{
 			"id": "mpEzAmKX",
@@ -8458,7 +8472,7 @@
 			"version": 41,
 			"versionNonce": 1555794546,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780659948498,
 			"link": null,
 			"locked": false,
@@ -8476,7 +8490,8 @@
 			"endBinding": null,
 			"startArrowhead": null,
 			"endArrowhead": "arrow",
-			"elbowed": false
+			"elbowed": false,
+			"hasTextLink": false
 		},
 		{
 			"id": "xzXcOy84",
@@ -8501,7 +8516,7 @@
 			"version": 3,
 			"versionNonce": 920751346,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780659952849,
 			"locked": false,
 			"text": "自洽性约束",
@@ -8514,7 +8529,8 @@
 			"originalText": "自洽性约束",
 			"autoResize": true,
 			"lineHeight": 1.25,
-			"hasTextLink": false
+			"hasTextLink": false,
+			"link": null
 		},
 		{
 			"id": "xWqu4zv6",
@@ -8557,7 +8573,8 @@
 			"originalText": "Motivation: x_0 的分布是多峰的, 从高噪声X_T出发，x_0对应的所有可能是干净图像，那么让X_T直接回归x_0,等价于让模型预测一个分布的均值",
 			"autoResize": false,
 			"lineHeight": 1.25,
-			"hasTextLink": false
+			"hasTextLink": false,
+			"link": null
 		},
 		{
 			"id": "YJ2IwBWe",
@@ -8584,7 +8601,7 @@
 			"version": 18,
 			"versionNonce": 680146094,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780660164287,
 			"link": null,
 			"locked": false,
@@ -8617,7 +8634,8 @@
 			"startArrowhead": null,
 			"endArrowhead": "arrow",
 			"elbowed": false,
-			"moveMidPointsWithElement": true
+			"moveMidPointsWithElement": true,
+			"hasTextLink": false
 		},
 		{
 			"id": "7xX0HE8e",
@@ -8642,7 +8660,7 @@
 			"version": 72,
 			"versionNonce": 348162162,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780660178632,
 			"locked": false,
 			"text": "blurry",
@@ -8655,7 +8673,8 @@
 			"originalText": "blurry",
 			"autoResize": false,
 			"lineHeight": 1.25,
-			"hasTextLink": false
+			"hasTextLink": false,
+			"link": null
 		},
 		{
 			"id": "b6vfT7gp",
@@ -8682,7 +8701,7 @@
 			"version": 60,
 			"versionNonce": 1745877106,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780660195497,
 			"link": null,
 			"locked": false,
@@ -8700,15 +8719,16 @@
 			"endBinding": null,
 			"startArrowhead": null,
 			"endArrowhead": "arrow",
-			"elbowed": false
+			"elbowed": false,
+			"hasTextLink": false
 		},
 		{
 			"id": "zZQRvRmb",
 			"type": "text",
 			"x": 1225.194511220312,
 			"y": 4684.806596509806,
-			"width": 301.0015020148772,
-			"height": 47.03148468982454,
+			"width": 300.9599609375,
+			"height": 47.03148468982456,
 			"angle": 0,
 			"strokeColor": "#e03131",
 			"backgroundColor": "transparent",
@@ -8725,7 +8745,7 @@
 			"version": 36,
 			"versionNonce": 425416558,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780660204163,
 			"link": null,
 			"locked": false,
@@ -8738,7 +8758,8 @@
 			"containerId": null,
 			"originalText": "换了一个学习目标",
 			"autoResize": true,
-			"lineHeight": 1.25
+			"lineHeight": 1.25,
+			"hasTextLink": false
 		},
 		{
 			"id": "RHGZpbe0",
@@ -8763,7 +8784,7 @@
 			"version": 69,
 			"versionNonce": 828929198,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780660214896,
 			"link": null,
 			"locked": false,
@@ -8773,7 +8794,8 @@
 				1,
 				1
 			],
-			"crop": null
+			"crop": null,
+			"hasTextLink": false
 		},
 		{
 			"id": "B7s2IcLt",
@@ -8798,7 +8820,7 @@
 			"version": 13,
 			"versionNonce": 1268657330,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780660256527,
 			"link": null,
 			"locked": false,
@@ -8811,7 +8833,8 @@
 			"containerId": null,
 			"originalText": "因为 teacher ODE 轨迹已经保证了",
 			"autoResize": false,
-			"lineHeight": 1.25
+			"lineHeight": 1.25,
+			"hasTextLink": false
 		},
 		{
 			"id": "ygbgH47H",
@@ -8836,7 +8859,7 @@
 			"version": 28,
 			"versionNonce": 1663758002,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780660294007,
 			"locked": false,
 			"text": "x_{t_k}和 x*_{t_{k-1}} 在同一条合理路径上",
@@ -8849,7 +8872,8 @@
 			"originalText": "x_{t_k}和 x*_{t_{k-1}} 在同一条合理路径上",
 			"autoResize": true,
 			"lineHeight": 1.25,
-			"hasTextLink": false
+			"hasTextLink": false,
+			"link": null
 		},
 		{
 			"id": "lttWdb2r",
@@ -8876,10 +8900,11 @@
 			"version": 65,
 			"versionNonce": 1667218866,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780660302506,
 			"link": null,
-			"locked": false
+			"locked": false,
+			"hasTextLink": false
 		},
 		{
 			"id": "rZCidu3r",
@@ -8906,10 +8931,11 @@
 			"version": 115,
 			"versionNonce": 504312494,
 			"isDeleted": false,
-			"boundElements": null,
+			"boundElements": [],
 			"updated": 1780660322338,
 			"link": null,
-			"locked": false
+			"locked": false,
+			"hasTextLink": false
 		},
 		{
 			"id": "ea1Zpyoc",
@@ -8947,13 +8973,356 @@
 			"originalText": "Stage 2b (option b)：causal CD",
 			"autoResize": true,
 			"lineHeight": 1.25,
+			"hasTextLink": false,
+			"link": null
+		},
+		{
+			"id": "dLt14QA1",
+			"type": "text",
+			"x": 1937.043957280367,
+			"y": 3721.9337786095316,
+			"width": 590.93994140625,
+			"height": 45,
+			"angle": 0,
+			"strokeColor": "#e03131",
+			"backgroundColor": "transparent",
+			"fillStyle": "solid",
+			"strokeWidth": 4,
+			"strokeStyle": "dashed",
+			"roughness": 1,
+			"opacity": 100,
+			"groupIds": [],
+			"frameId": null,
+			"index": "b38",
+			"roundness": null,
+			"seed": 605471406,
+			"version": 28,
+			"versionNonce": 355958190,
+			"isDeleted": false,
+			"boundElements": [
+				{
+					"id": "BzLxHB9A",
+					"type": "arrow"
+				}
+			],
+			"updated": 1780661005152,
+			"link": null,
+			"locked": false,
+			"text": "x_{t_k}（从数据分布采样 + 加噪）",
+			"rawText": "x_{t_k}（从数据分布采样 + 加噪）",
+			"fontSize": 36,
+			"fontFamily": 5,
+			"textAlign": "left",
+			"verticalAlign": "top",
+			"containerId": null,
+			"originalText": "x_{t_k}（从数据分布采样 + 加噪）",
+			"autoResize": true,
+			"lineHeight": 1.25
+		},
+		{
+			"id": "BzLxHB9A",
+			"type": "arrow",
+			"x": 2165.73964807491,
+			"y": 3773.9337786095316,
+			"width": 0,
+			"height": 99.10199819519812,
+			"angle": 0,
+			"strokeColor": "#e03131",
+			"backgroundColor": "transparent",
+			"fillStyle": "solid",
+			"strokeWidth": 4,
+			"strokeStyle": "dashed",
+			"roughness": 1,
+			"opacity": 100,
+			"groupIds": [],
+			"frameId": null,
+			"index": "b39",
+			"roundness": {
+				"type": 2
+			},
+			"seed": 618104434,
+			"version": 12,
+			"versionNonce": 801154546,
+			"isDeleted": false,
+			"boundElements": null,
+			"updated": 1780661007268,
+			"link": null,
+			"locked": false,
+			"points": [
+				[
+					0,
+					0
+				],
+				[
+					0,
+					99.10199819519812
+				]
+			],
+			"startBinding": {
+				"elementId": "dLt14QA1",
+				"mode": "orbit",
+				"fixedPoint": [
+					0.3870032718558834,
+					0.6129967281441067
+				]
+			},
+			"endBinding": null,
+			"startArrowhead": null,
+			"endArrowhead": "arrow",
+			"elbowed": false
+		},
+		{
+			"id": "L8wMvrSo",
+			"type": "text",
+			"x": 2211.4681877647777,
+			"y": 3788.7077868136107,
+			"width": 665.3160400390625,
+			"height": 45,
+			"angle": 0,
+			"strokeColor": "#e03131",
+			"backgroundColor": "transparent",
+			"fillStyle": "solid",
+			"strokeWidth": 4,
+			"strokeStyle": "dashed",
+			"roughness": 1,
+			"opacity": 100,
+			"groupIds": [],
+			"frameId": null,
+			"index": "b3A",
+			"roundness": null,
+			"seed": 1621323058,
+			"version": 36,
+			"versionNonce": 450085682,
+			"isDeleted": false,
+			"boundElements": [
+				{
+					"id": "KJULh2z6",
+					"type": "arrow"
+				}
+			],
+			"updated": 1780661107955,
+			"locked": false,
+			"text": "teacher 做一次前向 v_θ̄(x_{t_k}, t_k)",
+			"rawText": "teacher 做一次前向 v_θ̄(x_{t_k}, t_k)",
+			"fontSize": 36,
+			"fontFamily": 5,
+			"textAlign": "left",
+			"verticalAlign": "top",
+			"containerId": null,
+			"originalText": "teacher 做一次前向 v_θ̄(x_{t_k}, t_k)",
+			"autoResize": true,
+			"lineHeight": 1.25,
+			"hasTextLink": false
+		},
+		{
+			"id": "9BHYJ23r",
+			"type": "text",
+			"x": 2153.5361009997378,
+			"y": 3909.8905312689494,
+			"width": 212.3639373779297,
+			"height": 45,
+			"angle": 0,
+			"strokeColor": "#e03131",
+			"backgroundColor": "transparent",
+			"fillStyle": "solid",
+			"strokeWidth": 4,
+			"strokeStyle": "dashed",
+			"roughness": 1,
+			"opacity": 100,
+			"groupIds": [],
+			"frameId": null,
+			"index": "b3B",
+			"roundness": null,
+			"seed": 138498418,
+			"version": 19,
+			"versionNonce": 1625547890,
+			"isDeleted": false,
+			"boundElements": null,
+			"updated": 1780661015729,
+			"locked": false,
+			"text": "↓ Euler step",
+			"rawText": "↓ Euler step",
+			"fontSize": 36,
+			"fontFamily": 5,
+			"textAlign": "left",
+			"verticalAlign": "top",
+			"containerId": null,
+			"originalText": "↓ Euler step",
+			"autoResize": true,
+			"lineHeight": 1.25,
+			"hasTextLink": false
+		},
+		{
+			"id": "ZBw3ZbAo",
+			"type": "text",
+			"x": 1909.4724786769866,
+			"y": 3973.949518006547,
+			"width": 880.6539306640625,
+			"height": 45,
+			"angle": 0,
+			"strokeColor": "#e03131",
+			"backgroundColor": "transparent",
+			"fillStyle": "solid",
+			"strokeWidth": 4,
+			"strokeStyle": "dashed",
+			"roughness": 1,
+			"opacity": 100,
+			"groupIds": [],
+			"frameId": null,
+			"index": "b3C",
+			"roundness": null,
+			"seed": 1634053614,
+			"version": 31,
+			"versionNonce": 1135020398,
+			"isDeleted": false,
+			"boundElements": null,
+			"updated": 1780661210258,
+			"locked": false,
+			"text": "x*_{t_{k-1}} = x_{t_k} + v_θ̄(x_{t_k}, t_k) · Δt",
+			"rawText": "x*_{t_{k-1}} = x_{t_k} + v_θ̄(x_{t_k}, t_k) · Δt",
+			"fontSize": 36,
+			"fontFamily": 5,
+			"textAlign": "left",
+			"verticalAlign": "top",
+			"containerId": null,
+			"originalText": "x*_{t_{k-1}} = x_{t_k} + v_θ̄(x_{t_k}, t_k) · Δt",
+			"autoResize": true,
+			"lineHeight": 1.25,
+			"hasTextLink": false
+		},
+		{
+			"id": "KJULh2z6",
+			"type": "arrow",
+			"x": 2615.882690148901,
+			"y": 3781.7077868136103,
+			"width": 69.2110594879291,
+			"height": 76.84387470294723,
+			"angle": 0,
+			"strokeColor": "#e03131",
+			"backgroundColor": "transparent",
+			"fillStyle": "solid",
+			"strokeWidth": 4,
+			"strokeStyle": "dashed",
+			"roughness": 1,
+			"opacity": 100,
+			"groupIds": [],
+			"frameId": null,
+			"index": "b3D",
+			"roundness": {
+				"type": 2
+			},
+			"seed": 2086934002,
+			"version": 12,
+			"versionNonce": 1465381170,
+			"isDeleted": false,
+			"boundElements": null,
+			"updated": 1780661108184,
+			"link": null,
+			"locked": false,
+			"points": [
+				[
+					0,
+					0
+				],
+				[
+					69.2110594879291,
+					-76.84387470294723
+				]
+			],
+			"startBinding": {
+				"elementId": "L8wMvrSo",
+				"mode": "orbit",
+				"fixedPoint": [
+					0.5723234766003693,
+					0.4276765233996331
+				]
+			},
+			"endBinding": null,
+			"startArrowhead": null,
+			"endArrowhead": "arrow",
+			"elbowed": false
+		},
+		{
+			"id": "9hyUhpz5",
+			"type": "text",
+			"x": 2483.6528269425953,
+			"y": 3657.6327342278487,
+			"width": 576,
+			"height": 45,
+			"angle": 0,
+			"strokeColor": "#f08c00",
+			"backgroundColor": "transparent",
+			"fillStyle": "solid",
+			"strokeWidth": 4,
+			"strokeStyle": "dashed",
+			"roughness": 1,
+			"opacity": 100,
+			"groupIds": [],
+			"frameId": null,
+			"index": "b3E",
+			"roundness": null,
+			"seed": 1914070642,
+			"version": 28,
+			"versionNonce": 175531890,
+			"isDeleted": false,
+			"boundElements": null,
+			"updated": 1780661112665,
+			"link": null,
+			"locked": false,
+			"text": "当前位置应该往哪个方向走、走多快",
+			"rawText": "当前位置应该往哪个方向走、走多快",
+			"fontSize": 36,
+			"fontFamily": 5,
+			"textAlign": "left",
+			"verticalAlign": "top",
+			"containerId": null,
+			"originalText": "当前位置应该往哪个方向走、走多快",
+			"autoResize": true,
+			"lineHeight": 1.25
+		},
+		{
+			"id": "pMDKn5vf",
+			"type": "text",
+			"x": 2012.4066531332328,
+			"y": 4031.0732757242886,
+			"width": 705.4198608398438,
+			"height": 45,
+			"angle": 0,
+			"strokeColor": "#f08c00",
+			"backgroundColor": "transparent",
+			"fillStyle": "solid",
+			"strokeWidth": 4,
+			"strokeStyle": "dashed",
+			"roughness": 1,
+			"opacity": 100,
+			"groupIds": [],
+			"frameId": null,
+			"index": "b3F",
+			"roundness": null,
+			"seed": 579025646,
+			"version": 22,
+			"versionNonce": 2064214510,
+			"isDeleted": false,
+			"boundElements": null,
+			"updated": 1780661212193,
+			"locked": false,
+			"text": "( 用 AR teacher 单步 ODE 得到的邻近帧)",
+			"rawText": "( 用 AR teacher 单步 ODE 得到的邻近帧)",
+			"fontSize": 36,
+			"fontFamily": 5,
+			"textAlign": "left",
+			"verticalAlign": "top",
+			"containerId": null,
+			"originalText": "( 用 AR teacher 单步 ODE 得到的邻近帧)",
+			"autoResize": true,
+			"lineHeight": 1.25,
 			"hasTextLink": false
 		}
 	],
 	"appState": {
 		"theme": "light",
 		"viewBackgroundColor": "#fdf8f6",
-		"currentItemStrokeColor": "#1971c2",
+		"currentItemStrokeColor": "#f08c00",
 		"currentItemBackgroundColor": "transparent",
 		"currentItemFillStyle": "solid",
 		"currentItemStrokeWidth": 4,
@@ -8967,10 +9336,10 @@
 		"currentItemEndArrowhead": "arrow",
 		"currentItemArrowType": "round",
 		"currentItemFrameRole": null,
-		"scrollX": -1237.79522706604,
-		"scrollY": -2849.232854337823,
+		"scrollX": -1114.124937627341,
+		"scrollY": -2861.106882752886,
 		"zoom": {
-			"value": 0.310199
+			"value": 0.336957
 		},
 		"currentItemRoundness": "round",
 		"gridSize": 20,
