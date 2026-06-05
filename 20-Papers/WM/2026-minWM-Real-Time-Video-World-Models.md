@@ -116,7 +116,7 @@ zotero-key: AJF8YS54
 ## 引用与延伸阅读
 
 ### 同主题论文（按论文 references）
-- [9] **Genie 3** — DeepMind 新一代世界模型（2025）
+- [x] **Genie 3** — DeepMind 新一代世界模型（2025）
 - [10] **Hunyuan-GameCraft** — 腾讯交互式游戏世界模型
 - [11] **Yume-1.5** — 文本可控交互式视频生成
 - [17] **Pan: A world model for general, interactable, and long-horizon world simulation**
