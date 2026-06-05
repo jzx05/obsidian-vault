@@ -1,0 +1,15 @@
+# 强制把 .md 当文本，避免换行符在两台机器上来回打架
+*.md   text eol=lf
+*.json text eol=lf
+*.yml  text eol=lf
+
+# 二进制资源走 binary，避免 git 试图 diff
+*.pdf  binary
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.webp binary
+*.mp4  binary
+*.mov  binary
+*.zip  binary

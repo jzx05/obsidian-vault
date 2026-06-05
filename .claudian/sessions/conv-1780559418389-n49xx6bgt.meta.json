@@ -1,0 +1,23 @@
+{
+  "id": "conv-1780559418389-n49xx6bgt",
+  "providerId": "claude",
+  "title": "帮我下载DreamZero: World Action Models are Zero-shot P...",
+  "titleGenerationStatus": "failed",
+  "createdAt": 1780559418390,
+  "updatedAt": 1780563178544,
+  "lastResponseAt": 1780562949900,
+  "sessionId": "4b68a8ed-478e-433f-9acd-2cf77d5d48ba",
+  "providerState": {
+    "providerSessionId": "4b68a8ed-478e-433f-9acd-2cf77d5d48ba"
+  },
+  "usage": {
+    "model": "haiku",
+    "inputTokens": 2,
+    "cacheCreationInputTokens": 8398,
+    "cacheReadInputTokens": 171381,
+    "contextWindow": 200000,
+    "contextTokens": 179781,
+    "percentage": 90,
+    "contextWindowIsAuthoritative": true
+  }
+}

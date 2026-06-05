@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh repo *)",
+      "WebFetch(domain:github.com)",
+      "Bash(cd /tmp && git clone https://github.com/coleam00/excalidraw-diagram-skill.git 2>&1 && ls -la excalidraw-diagram-skill)",
+      "Bash(ls -la /tmp/excalidraw-diagram-skill/references/)",
+      "Read(//tmp/excalidraw-diagram-skill/**)",
+      "Bash(mkdir -p \".claude/skills\")",
+      "Bash(cp -r /tmp/excalidraw-diagram-skill \".claude/skills/excalidraw-diagram\")",
+      "Bash(rm -rf \".claude/skills/excalidraw-diagram/.git\")",
+      "Bash(uv --version)",
+      "Bash(uv sync *)",
+      "Bash(uv run *)",
+      "Bash(cd /tmp && git clone https://github.com/kepano/obsidian-skills.git && ls -la obsidian-skills/)",
+      "Read(//tmp/obsidian-skills/**)",
+      "Bash(cp -r /tmp/obsidian-skills/skills/* \".claude/skills/\" && ls -la \".claude/skills/\")"
+    ]
+  }
+}
