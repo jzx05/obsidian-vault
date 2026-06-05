@@ -3,43 +3,72 @@ title: "PRoPE (Projective Rotary Position Embedding)"
 tags: [note, concept, attention, camera-control]
 created: 2026-06-05
 related:
+  - "[[20-Papers/WM/2025-PRoPE.md]]"
   - "[[20-Papers/WM/2026-minWM-Real-Time-Video-World-Models]]"
 ---
 
 # PRoPE — Projective Rotary Position Embedding
 
-## 定义
-> 一种把**摄像机内外参 (K, T)** 注入 self-attention 的位置编码方法，让视频扩散模型理解"从哪个视角、什么相机看"。
+> 把相机内外参 (K, T) 注入 self-attention 的位置编码，让模型理解视角几何。
 
-## 为什么重要
-- 文本 prompt 无法精确指定**相机轨迹** — "向右平移 30°"很难用文字约束
-- PRoPE 把几何信息直接注入 attention → 模型可以学到**视角一致性**
-- 是世界模型 / NeRF 风格生成 / 自动驾驶视频生成的关键技术
+---
 
-## 核心要点
-- **几何洞察**：注意力交互只依赖**相对**摄像机位姿，不依赖绝对位置
-- **构造**：用 PRoPE 把每个 token 的相机参数变成块对角变换矩阵 P_i
-- **注入方式**：A_ij = (P_i Q_i)^T (P_j K_j)，类似 RoPE 但用相机投影矩阵
-- **优势**：保留预训练模型生成质量，只通过 attention 注入控制信号
+## 核心思路
 
-## 数学直觉
+每个 token 对应一帧相机，构造矩阵 P_i：
+
 ```
-原 RoPE：A_ij 依赖位置差 (i - j)
-PRoPE ：A_ij 依赖相对相机位姿 T_i^{-1} T_j（保持平移不变性）
+P_i = block-diag( K_i⁻ᵀ Rᵢ ,  K_i⁻ᵀ )
 ```
 
-## 例子
-- minWM Stage 1：用 PRoPE 让 Wan2.1 / HY1.5 学会响应相机轨迹
-- 训练数据：DL3DV（重建获得 ground-truth 相机）+ WorldPlay 生成
+注入方式：只改 Q 和 K，V 不动：
 
-## 与其他方法对比
-| 方法 | 控制粒度 | 生成质量保留 |
-|------|---------|------------|
-| Text prompt | 模糊 | ✓ |
-| ControlNet | 精确 | 部分损失 |
-| **PRoPE** | 精确（几何） | ✓ |
+```
+A_ij = (P_i Q_i)ᵀ (P_j K_j) = Q_iᵀ · P_iᵀ P_j · K_j
+                                        ↑
+                                   只含相对位姿
+```
+
+**t_i（平移）不进入 P_i** → 对全局平移天然不变。
+**旋转等变**：全局旋转 G 时，Gᵀ G = I 自动消去。
+
+---
+
+## 与 RoPE 的对应
+
+| | 1D RoPE | PRoPE |
+|---|---|---|
+| 位置来源 | 序列下标 | 相机位姿 (K, R) |
+| 相对性 | A_ij 依赖 (i−j) | A_ij 依赖 P_iᵀ P_j |
+| V 改动 | 否 | 否 |
+
+---
+
+## AR 生成中的使用方式
+
+视频按 chunk 生成（如每 4 帧一组）：
+
+```
+[噪声 fT1..fT4] → 多步去噪 → [干净 fT1..fT4]
+                                      ↓ 作为条件
+                              [噪声 fT5..fT8] → 去噪 → [干净 fT5..fT8]
+                                                               ↓ ...
+```
+
+每个 token 分配对应帧的 P_i，去噪时相机位姿已知（来自输入条件或预设轨迹）。
+PRoPE 不改 attention 结构，只在 Q/K 前插入矩阵乘，跨 chunk 的几何关系自动编码进注意力分数。
+
+---
+
+## 注意
+
+- 只编码旋转，不编码平移（t_i 不在 P_i 里）→ 纯平移场景无法感知尺度
+- 需要 ground-truth 相机轨迹训练（估计 pose 误差太大，信号被噪声淹没）
+
+---
 
 ## 关联
-- 来源论文：[[20-Papers/WM/2026-minWM-Real-Time-Video-World-Models]]
-- 引用 [26]：原始 PRoPE 论文（NeurIPS 2024，待读）
-- 相关：[[30-Notes/concepts/World-Model]]
+
+- 论文详情：[[20-Papers/WM/2025-PRoPE.md]]
+- 图解：[[Excalidraw/PRoPE-SE3-equivariance.excalidraw]] · [[Excalidraw/minWM-PRoPE-explanation.excalidraw]]
+- 应用：[[20-Papers/WM/2026-minWM-Real-Time-Video-World-Models]]
