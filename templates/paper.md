@@ -1,14 +1,16 @@
 ---
 title: "{{title}}"
 authors: []
-year: 
-venue: 
-tags: [paper]
-status: to-read       # to-read / reading / read / archived
-rating: 
-date-read: {{date:YYYY-MM-DD}}
-url: 
-pdf: 
+year:
+venue:
+tags:
+  - paper
+status: to-read
+rating:
+date-read:
+  "{ date:YYYY-MM-DD }":
+url:
+pdf:
 ---
 
 ## TL;DR
