@@ -21,13 +21,12 @@ priority: medium
 
 ## TL;DR
 > 把摄像机内外参注入 self-attention 的位置编码方法 — minWM Stage 1 的根基
-
+**PRoPE 的 attention 只看两台相机的"相对关系"，绝对位置、绝对朝向对它毫无影响。**
 ## 为什么读
 - minWM 摄像机控制的底层机制
 - 理解后可推广到其他几何控制场景（多视角、3D 重建）
 
-## 前景信息
-- ROPE
+
 
 ## 关联
 - 概念笔记：[[30-Notes/concepts/PRoPE]]
