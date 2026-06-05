@@ -8,8 +8,13 @@
       {
         "tabId": "tab-1780645574884-1g6aeb8",
         "conversationId": "conv-1780644055716-xa4avnw4s"
+      },
+      {
+        "draftModel": "sonnet",
+        "tabId": "tab-1780662054187-8s22pkw",
+        "conversationId": null
       }
     ],
-    "activeTabId": "tab-1780645574884-1g6aeb8"
+    "activeTabId": "tab-1780662054187-8s22pkw"
   }
 }
