@@ -24,7 +24,8 @@ pdf: "[[papers/world-models/WM_Survey_2024_Understanding_World_or_Predicting_Fut
 ## 核心方法（分类骨架 · R1）
 
 > 综述定义 World Model = a unified model that can replicate its fundamental dynamics of the world
-> 二分法依据：?              ← Understanding / Predicting 是按什么轴划分的
+> 二分法依据：Implicit representation of the external world：偏 understanding
+> 			Future predictions of the external world：偏 predicting
 
 ### 🌳 分类树
 
