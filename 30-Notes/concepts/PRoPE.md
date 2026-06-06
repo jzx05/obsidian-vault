@@ -70,5 +70,5 @@ PRoPE 不改 attention 结构，只在 Q/K 前插入矩阵乘，跨 chunk 的几
 ## 关联
 
 - 论文详情：[[20-Papers/WM/2025-PRoPE.md]]
-- 图解：[[Excalidraw/PRoPE-SE3-equivariance.excalidraw]] · [[Excalidraw/minWM-PRoPE-explanation.excalidraw]]
+- 图解：[[minWM-pipline.excalidraw]] · [[Excalidraw/minWM-PRoPE-explanation.excalidraw]]
 - 应用：[[20-Papers/WM/2026-minWM-Real-Time-Video-World-Models]]

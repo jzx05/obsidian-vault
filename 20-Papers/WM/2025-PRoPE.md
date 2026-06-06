@@ -20,7 +20,7 @@ priority: high
 # PRoPE — Cameras as Relative Positional Encoding
 
 > minWM Section 2.1 的核心依赖，Stage 1 的根基。
-> 相关图：![[Excalidraw/minWM-PRoPE-explanation.excalidraw]] · ![[Excalidraw/PRoPE-SE3-equivariance.excalidraw]]
+> 相关图：![[Excalidraw/minWM-PRoPE-explanation.excalidraw]] · ![[minWM-pipline.excalidraw]]
 
 ## TL;DR
 
@@ -111,7 +111,7 @@ A_ij = (P_i Q_i)ᵀ (P_j K_j)
 
 ## SE(3) 等变性（不变性）
 
-参见图：![[Excalidraw/PRoPE-SE3-equivariance.excalidraw]]
+参见图：![[minWM-pipline.excalidraw]]
 
 ### 什么是 SE(3)
 
@@ -236,6 +236,6 @@ PRoPE 训练需要 **ground-truth 相机轨迹**（估计 pose 不够）：
 
 - 概念笔记：[[30-Notes/concepts/PRoPE]]
 - 核心应用：[[20-Papers/WM/2026-minWM-Real-Time-Video-World-Models]]
-- SE(3) 图解：[[Excalidraw/PRoPE-SE3-equivariance.excalidraw]]
+- SE(3) 图解：[[minWM-pipline.excalidraw]]
 - 数据流图：[[Excalidraw/minWM-PRoPE-explanation.excalidraw]]
 - 相关概念：[[30-Notes/concepts/Asymmetric-DMD]] · [[30-Notes/concepts/Causal-Forcing]]

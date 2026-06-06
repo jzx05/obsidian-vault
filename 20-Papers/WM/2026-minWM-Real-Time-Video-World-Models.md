@@ -45,7 +45,7 @@ zotero-key: AJF8YS54
 - 已有零散方案（Genie、Hunyuan-GameCraft、Yume、Vidar 等），但**完整链路无开源版本**
 - 定位：类似"Stable Diffusion 之于扩散模型"，做世界模型的社区基建
 
-## 核心方法（两阶段流水线）
+## 核心方法（两阶段流水线）[[minWM-pipline.excalidraw]]
 
 ### Stage 1：双向扩散 + 摄像机控制
 - 用 **PRoPE**（Projective Rotary Position Embedding）把摄像机内外参 (K, T) 注入 self-attention
