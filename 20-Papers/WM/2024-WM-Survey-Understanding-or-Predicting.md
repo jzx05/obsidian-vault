@@ -21,16 +21,42 @@ pdf: "[[papers/world-models/WM_Survey_2024_Understanding_World_or_Predicting_Fut
 - World Model 概念被滥用，不同社区（RL / 视频生成 / 具身 / LLM）所指不同
 - 需要一个统一分类去对齐这些路线
 
-## 核心方法（分类骨架 · R1 待补）
-- **Understanding 路线**：Dreamer 系、latent dynamics、state-space 模型
-  - 关注：表征、状态转移、紧凑潜空间
-- **Predicting Future 路线**：video diffusion、autoregressive token、game engine 风格
-  - 关注：像素 / latent video 上的高保真生成
-- 关联到我已读：
-  - [[20-Papers/WM/2026-minWM-Real-Time-Video-World-Models]] → Predicting
-  - [[20-Papers/WM/2025-Genie-3]] → Predicting
-  - [[20-Papers/WM/2025-Hunyuan-GameCraft]] → Predicting
-  - （Understanding 阵营我目前缺代表论文笔记）
+## 核心方法（分类骨架 · R1）
+
+> 综述定义 World Model = ?  ← 一句话抄综述原文
+> 二分法依据：?              ← Understanding / Predicting 是按什么轴划分的
+
+### 🌳 分类树
+
+- **Understanding（理解世界）** — 学"世界是什么"
+  - **子类 1**：?
+    - 代表：?
+    - § ?
+  - **子类 2**：?
+    - 代表：?
+    - § ?
+
+- **Predicting Future（预测未来）** — 学"接下来发生什么"
+  - **子类 1**：?
+    - 代表：?（已读：[[20-Papers/WM/2026-minWM-Real-Time-Video-World-Models|minWM]] / [[20-Papers/WM/2025-Genie-3|Genie 3]] / [[20-Papers/WM/2025-Hunyuan-GameCraft|GameCraft]] 落在哪个子类？）
+    - § ?
+  - **子类 2**：?
+    - § ?
+
+### 🔑 综述独有的关键概念（生词清单 · 留给 R2 深入）
+- ? — 一行解释，§ ?
+- ? — 一行解释，§ ?
+
+### ❓ R1 阶段疑问（带到 R2 解决）
+- 综述定义的 World Model 与 [[30-Notes/concepts/World-Model]] 是否一致？
+- minWM / Genie / GameCraft 是否被综述提及？放在哪一节？
+- LLM-as-WM 这条线综述如何处理？
+- ?
+
+### 📊 关键图表速记
+- Fig ? （§ ?）：? — 记忆点 = ?
+- Tab ? （§ ?）：方法对比表 — 列维度 = ?
+- Fig ? （§ ?）：挑战 / 未来方向
 
 ## 实验与结论
 - 综述无实验，关注**对比表 / 分类树 / 挑战清单**
