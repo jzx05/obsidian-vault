@@ -79,9 +79,9 @@ date: 2026-06-07
 ### 2.1 World Model vs. Video Generation Model
 
 **需要找的信息：**
-- [ ] 综述对 "World Model" 的定义是什么？（区别于纯视频生成）
-- [ ] WM 的核心数学表达是什么？（找公式）
-- [ ] Video Generation Model 的定义是什么？
+- [x] 综述对 "World Model" 的定义是什么？a predictive model of agent-environment dynamics that captures how a robotic or embodied system evolves under actions.
+- [x] WM 的核心数学表达是什么？p(xt+1:t+H | xt, at:t+H−1, l)， 状态向量x的形式很多，可以是视频，潜空间甚至式符号，l表示语言指令，例如把杯子移到左前方45度0.5m远处。
+- [x] Video Generation Model 的定义是什么？p(vt+1:t+H | ot, at:t+H−1, l),
 - [ ] 两者的**核心区别**在哪里？（提示：policy-centric vs. generative）
 
 **关键概念提取：**
