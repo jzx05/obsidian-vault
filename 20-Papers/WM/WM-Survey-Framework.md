@@ -48,7 +48,7 @@ date: 2026-06-07
 | **concept笔记** | [[30-Notes/concepts/MBRL-World-Model]] | [[30-Notes/concepts/Generative-World-Model]] |     |     |
 
 4. WM for robot learning : robotic policy learning,   planning, simulation, evaluation, data generation.
-5. WM in robot area 的分类：1. tighter coupling between predictive modeling and action generation(内化为policy) 2. world models as simulators for *validation*, *post-training*, and *reinforcement learning*
+5. WM in robot area 的分类：1. tighter coupling between predictive modeling and action generation(内化为policy) 2. world models as simulators for *validation*, *post-training*, and *reinforcement learning*  ---》 integrated together
 
 **章节地图（基于 Figure 1）：**
 ```
@@ -69,16 +69,6 @@ date: 2026-06-07
               §8 Challenges & Future
 ```
 
----
-
-### 📌 Introduction 阶段的关键产出
-
-读完 Introduction 后，你应该能回答：
-
-1. **WHY**：为什么 WM 对 robot learning 重要？（一句话总结）
-2. **WHAT**：WM 在该综述中的精确定义是什么？
-3. **HOW**：综述用什么分类法组织所有方法？
-4. **NEW**：与同主题综述相比，新增了什么视角？
 
 ---
 
