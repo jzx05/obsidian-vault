@@ -32,23 +32,27 @@ date: 2026-06-07
 
 > 综述的"立论部分"——为什么写这篇综述？为什么 WM 对机器人重要？
 
-1. VLA的缺陷：long-horizon reasoning, temporal credit assignment, and robustness
-2. What is world model ?: a state-transition model that predicts the next state or a sequence of future states from the current state and action
-3. WM的分类：
+1. **VLA 的缺陷**：long-horizon reasoning, temporal credit assignment, and robustness
+2. **What is world model?** — a state-transition model that predicts the next state or a sequence of future states from the current state and action
+3. **WM 的分类**：
 
-|               | **Model-Based RL（Dreamer 系列）**         | **大规模生成式模型**                                 |     |     |
-| ------------- | -------------------------------------- | -------------------------------------------- | --- | --- |
-| **核心目标**      | 学习环境动力学，提升 RL 样本效率                     | 生成逼真可控的视频/观测                                 |     |     |
-| **表示空间**      | 压缩 latent vector（抽象状态）                 | 像素 / 高维视频帧                                   |     |     |
-| **动作条件化**     | 显式紧密耦合 $z'=f(z,a)$                     | 灵活注入（attention / adapter）                    |     |     |
-| **输出**        | 抽象状态向量（不一定可视）                          | 光真实感视频帧                                      |     |     |
-| **主要用途**      | 在"想象"中做 RL rollout                     | 仿真器 / 数据增强 / 策略先验                            |     |     |
-| **计算规模**      | 轻量，单 GPU 可训                            | 重，需百~千 GPU 预训练                               |     |     |
-| **代表方法**      | DreamerV1/V2/V3, TD-MPC2               | Genie 3, GameNGen, DIAMOND, minWM            |     |     |
-| **concept笔记** | [[30-Notes/concepts/MBRL-World-Model]] | [[30-Notes/concepts/Generative-World-Model]] |     |     |
+|               | **Model-Based RL（Dreamer 系列）**          | **大规模生成式模型**                                  |
+| ------------- | --------------------------------------- | --------------------------------------------- |
+| **核心目标**      | 学习环境动力学，提升 RL 样本效率                      | 生成逼真可控的视频/观测                                  |
+| **表示空间**      | 压缩 latent vector（抽象状态）                  | 像素 / 高维视频帧                                    |
+| **动作条件化**     | 显式紧密耦合 $z'=f(z,a)$                      | 灵活注入（attention / adapter）                     |
+| **输出**        | 抽象状态向量（不一定可视）                           | 光真实感视频帧                                       |
+| **主要用途**      | 在"想象"中做 RL rollout                      | 仿真器 / 数据增强 / 策略先验                             |
+| **计算规模**      | 轻量，单 GPU 可训                             | 重，需百~千 GPU 预训练                                |
+| **代表方法**      | DreamerV1/V2/V3, TD-MPC2                | Genie 3, GameNGen, DIAMOND, minWM             |
+| **concept笔记** | [[30-Notes/concepts/MBRL-World-Model]]  | [[30-Notes/concepts/Generative-World-Model]]  |
 
-4. WM for robot learning : robotic policy learning,   planning, simulation, evaluation, data generation.
-5. WM in robot area 的分类：1. tighter coupling between predictive modeling and action generation(内化为policy) 2. world models as simulators for *validation*, *post-training*, and *reinforcement learning*  ---》 integrated together
+4. **WM for robot learning**：robotic policy learning, planning, simulation, evaluation, data generation.
+5. **WM in robot area 的分类**：
+   1. Tighter coupling between predictive modeling and action generation（内化为 policy）
+   2. World models as simulators for *validation*, *post-training*, and *reinforcement learning*
+   
+   → 两者最终 integrated together
 
 **章节地图（基于 Figure 1）：**
 ```
@@ -79,14 +83,20 @@ date: 2026-06-07
 ### 2.1 World Model vs. Video Generation Model
 
 **需要找的信息：**
-- [x] 综述对 "World Model" 的定义是什么？a predictive model of agent-environment dynamics that captures how a robotic or embodied system evolves under actions.
-- [x] WM 的核心数学表达是什么？==p(xt+1:t+H | xt, at:t+H−1, l)==， 状态向量x的形式很多，可以是视频，潜空间甚至式符号，l表示语言指令，例如把杯子移到左前方45度0.5m远处。
-- [x] Video Generation Model 的定义是什么？p(vt+1:t+H | ot, at:t+H−1, l),
-- [x] 两者的**核心区别**在哪里？WM in robot = ==预测未来== + ==这个预测能被机器人用来做决策==
+- [x] 综述对 "World Model" 的定义是什么？
+  - A predictive model of agent-environment dynamics that captures how a robotic or embodied system evolves under actions.
+- [x] WM 的核心数学表达是什么？
+  - ==p(x~t+1:t+H~ | x~t~, a~t:t+H−1~, l)==
+  - 状态向量 x 的形式很多，可以是视频、潜空间甚至符号；l 表示语言指令，例如"把杯子移到左前方 45° 0.5m 远处"。
+- [x] Video Generation Model 的定义是什么？
+  - p(v~t+1:t+H~ | o~t~, a~t:t+H−1~, l)
+- [x] 两者的**核心区别**在哪里？
+  - WM in robot = ==预测未来== + ==这个预测能被机器人用来做决策==
 
-**action-conditioned video generation model** (动作条件化的视频生成模型) world model 和 video generation model 交叉的子类[[action-conditioned video generation model]]
+**Action-conditioned video generation model**（动作条件化的视频生成模型）— WM 和 video generation model 交叉的子类 [[action-conditioned video generation model]]
 
-World Model (广义)
+```
+World Model（广义）
 │
 ├─ 非视频的 world model（latent / symbolic / physical）
 │   └─ 本文提及但不重点讨论
@@ -97,9 +107,9 @@ World Model (广义)
     │   └─ 对决策价值有限
     │
     └─ Action-conditioned ← 本文核心关注
-        │
         ├─ 低层控制作为条件（控制指令）
         └─ 高层语言作为条件（任务描述）
+```
 
 
 ### 2.2 Robot Policy 的两大类型
@@ -110,6 +120,12 @@ p(at+1:t+k|ot, l)
 - [x] **VLA (Vision-Language-Action)** 是什么？代表方法？在大规模视觉-语言模型（VLM）上微调，融入机器人轨迹数据，使模型同时理解图像、语言，并输出动作（如 RT-2, OpenVLA）
 - [x] 两类 Policy 的输入输出格式有何不同？![[Pasted image 20260607141308.png]]
 - [x] 当前 Policy 的主要局限是什么？
+
+**关键方法列表：**
+| Policy 类型 | 代表方法 | 特点 |
+|------------|---------|------|
+| Visuomotor | [[30-Notes/concepts/Diffusion-Policy\|Diffusion Policy]], ACT, RDT-1B | 端到端图像→动作；建模多模态动作分布；Action Chunking |
+| VLA | RT-2, OpenVLA, π0 | 预训练 VLM backbone + action head；支持语言指令 |
 
 ---
 
@@ -129,12 +145,20 @@ Data Amplification	合成额外训练轨迹	用想象数据训练更鲁棒的策
 
 ---
 
-### 3.2 逆动力学模型 (Inverse Dynamics Models)
+### 3.2 逆动力学模型 (Inverse Dynamics Models)[[IDM-pipline]]
 
 **需要找的信息：**
-- [ ] 逆动力学方法的基本思路是什么？
-- [ ] 代表方法有哪些？
-- [ ] 优势和局限？
+- [x] 逆动力学方法的基本思路是什么？看到"当前画面"和"预测的未来画面"，推断出"这中间发生了什么动作"。
+- [x] 代表方法有哪些？
+-方法	未来预测方式	特点
+UniPi (Du et al., 2023)	显式视频 rollout	最早的代表性工作之一
+VidMan (Wen et al., 2024)	显式视频 rollout	视频生成 + IDM 分离
+Vidar (Feng et al., 2025)	显式视频 rollout	—
+Gen2Act (Bharadhwaj et al., 2025)	显式 human-video rollout	人类演示视频作为条件
+VPP (Hu et al., 2025)	隐式预测特征	不生成像素，生成 latent 预测特征
+Video2Act (Jia et al., 2025b)	隐式预测特征	—
+MimicVideo (Pai et al., 2025)	隐式视觉规划	—
+- [x] 优势和局限？1.模块化 2. 可解释性强 3. 可以利用大规模视频预训练 缺点：1. 两阶段训练，不是端到端优化，WM 不知道"什么样的预测对 IDM 最有用"。2. 推理时开销大
 
 ---
 
