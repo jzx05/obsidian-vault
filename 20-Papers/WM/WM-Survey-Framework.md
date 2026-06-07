@@ -109,7 +109,7 @@ p(at+1:t+k|ot, l)
 - [x] **Visuomotor Policy** 是什么？代表方法？ 专用视觉运动策略， 一种任务专用的端到端网络，直接从视觉观测映射到动作轨迹，中间不经过语言环节。 Diffusion Policy 是 **Visuomotor Policy** 的代表方法
 - [x] **VLA (Vision-Language-Action)** 是什么？代表方法？在大规模视觉-语言模型（VLM）上微调，融入机器人轨迹数据，使模型同时理解图像、语言，并输出动作（如 RT-2, OpenVLA）
 - [x] 两类 Policy 的输入输出格式有何不同？![[Pasted image 20260607141308.png]]
-- [ ] 当前 Policy 的主要局限是什么？（WM 要解决的问题）
+- [x] 当前 Policy 的主要局限是什么？
 
 ---
 
