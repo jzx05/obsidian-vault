@@ -1,211 +1,187 @@
 ---
 title: "World Model for Robot Learning: A Comprehensive Survey"
-type: survey-outline
+authors:
+  - TBD
+year: 2026
+venue: TBD (draft outline)
 tags:
+  - paper
+  - survey
   - world-model
   - robot-learning
-  - survey
   - embodied-ai
-created: 2026-06-07
+  - model-based-rl
 status: drafting
+rating: 0
+date-read: 2026-06-07
+url:
+project:
+pdf: "[[WM_Survey_2025_Robot_Learning_Comprehensive.pdf]]"
+zotero-key:
 ---
 
 # World Model for Robot Learning: A Comprehensive Survey
 
-> 综述框架草稿。围绕 **World Model (WM)** 在 **机器人学习 (Robot Learning)** 中的角色,从基础理论、表征建模、训练范式、下游任务、评测基准到未来方向进行系统性梳理。
+> 📝 综述写作大纲(草稿)
+> 🎯 目标:系统梳理 **World Model (WM)** 在 **机器人学习 (Robot Learning)** 中的角色与应用
+> 📂 索引:[[20-Papers/WM/_index]]
 
----
+## TL;DR
+> 本综述以 **机器人决策与控制** 为主线,围绕世界模型的 **表征 / 训练范式 / 使用方式 / 应用领域 / 评测体系** 五个维度建立统一分类法,梳理从 Dreamer (2018) 到 Genie 3 / minWM (2026) 的技术演进,聚焦 WM 作为"具身智能内部仿真器"的角色,与纯 video generation 综述形成差异化定位。
 
-## 1. Introduction
+## 问题与动机
+- 机器人学习面临的核心痛点
+  - 真实数据稀缺 + Sim2Real gap
+  - 长程规划需要可想象的"未来"
+  - 安全约束下的反事实推理
+- 现有综述的不足
+  - Model-based RL 综述偏经典控制,缺少 foundation model 视角
+  - Video generation 综述偏视觉质量,缺少决策有用性视角
+  - **缺一个把 WM 视为机器人"内部仿真器"的系统综述**
+- 本文定位
+  - 以 **robot learning** 为锚点,统一 latent / pixel / 3D / multimodal WM
+  - 强调 **生成保真度 ≠ 决策有用性** 的评估鸿沟
 
-- **1.1 Motivation**:为什么机器人需要世界模型?(Sim2Real gap、数据稀缺、长程规划、安全性、想象式 RL)
-- **1.2 What is a World Model?**:从 Ha & Schmidhuber (2018) 到现代 video/3D/multimodal world models 的定义演化。
-- **1.3 Why Now?**:基础模型 (VLM/Diffusion/Video Generation) 与具身智能 (Embodied AI) 的交汇。
-- **1.4 Scope of this Survey**:聚焦 **机器人决策与控制** 中的 WM,区别于纯生成式视频模型。
-- **1.5 Contributions & Taxonomy**:提出统一分类法 + 时间线 + benchmark 汇总。
-- **1.6 Comparison with Related Surveys**:与 model-based RL、video generation、embodied AI 等综述的差异。
+## 核心方法(综述结构总览)
 
----
+### Section 1 — Introduction
+- Motivation:为什么机器人需要世界模型
+- Definition:从 Ha & Schmidhuber (2018) 到 foundation-WM 的演化
+- Scope:聚焦机器人决策,区别于纯视频生成
+- Contributions:统一 taxonomy + 时间线 + benchmark 汇总
+- 与已有综述对比
 
-## 2. Preliminaries & Background
+### Section 2 — Preliminaries
+- POMDP / MDP 形式化(状态、观测、动作、奖励)
+- Forward / Inverse / Joint model
+- 经典 MBRL:Dyna、PILCO、iLQR/MPC
+- Deep WM 演化:World Models → PlaNet → Dreamer V1-V3 → MuZero
+- 与 Foundation Model (Video Diffusion / VLA / 3DGS) 的关系
 
-- **2.1 Formalism**
-  - POMDP / MDP 设定
-  - 状态、观测、动作、奖励的形式化定义
-  - 前向模型 vs 逆向模型 vs 联合模型
-- **2.2 Classical Model-Based RL**:Dyna、PILCO、iLQR/MPC 中的动力学模型。
-- **2.3 Deep World Models 的发展脉络**
-  - World Models (Ha & Schmidhuber, 2018)
-  - PlaNet / Dreamer 系列 (V1/V2/V3)
-  - MuZero & Latent Planning
-- **2.4 Foundation Models 视角**:Video Diffusion、VLA、3D Generation 与 WM 的关系。
-- **2.5 Robot Learning 范式**:IL、RL、Offline RL、VLA Policy。
+### Section 3 — Taxonomy(五维分类)
+| 维度 | 类别 |
+|------|------|
+| Representation | Latent / Pixel-Video / 3D-Geometry / Multimodal-Symbolic |
+| Generative Backbone | RSSM / Transformer-AR / Diffusion / Hybrid |
+| Conditioning | Action / Goal-Language / Multi-agent / Multi-view |
+| Usage | Imagination-RL / MPC / Data Engine / Evaluator |
+| Embodiment | Manipulation / Locomotion / Driving / Navigation |
 
----
+### Section 4 — Representations
+- **4.1 Latent-State**:RSSM 系列、Dreamer V1-V3、TD-MPC2
+- **4.2 Pixel/Video**:GAIA-1/2、Sora、Genie 1/2/3、V-JEPA、Cosmos、minWM、Self-Forcing、Causal Forcing
+- **4.3 3D / Geometry-aware**:NeRF-WM、3DGS-WM、Occupancy-WM
+- **4.4 Multimodal & Language-grounded**:VLM-as-WM、PDDL hybrid
+- **4.5 Physics-informed**:可微物理、约束感知动力学
+- **4.6 对比**:精度 vs 可控性 vs 计算成本
 
-## 3. Taxonomy of World Models for Robotics
+### Section 5 — Learning Paradigms
+- Self-supervised pretraining (JEPA、masked prediction)
+- Action-conditioned generative training (teacher forcing、diffusion forcing)
+- Causal / Streaming training (Self-Forcing、DMD、minWM)
+- Multi-task / Cross-embodiment (Open-X、DROID)
+- Sim-to-Real & Domain Randomization
+- Continual / Online adaptation
 
-> 提出一个多维分类体系,后续章节按此组织。
+### Section 6 — World Models for Policy Learning ⭐
+- Imagination-based RL (Dreamer-style)
+- MPC with learned dynamics (Visual MPC、TD-MPC)
+- Differentiable simulator (analytic policy gradient)
+- Data Engine (synthetic demos for IL/VLA)
+- Evaluator / Reward model / Safety screener
+- WM + VLA co-design (UniSim、1X World Model、Genie-Robotics)
 
-- **3.1 By Representation (表征空间)**
-  - Latent-state WM (Dreamer-like)
-  - Pixel/Video WM (Sora-like, Genie)
-  - 3D / Geometry-aware WM (NeRF, 3DGS, Occupancy)
-  - Multimodal / Symbolic WM (Language-grounded)
-- **3.2 By Generative Backbone (生成范式)**
-  - RSSM / Recurrent
-  - Transformer / Autoregressive
-  - Diffusion / Flow Matching
-  - Hybrid (e.g., causal diffusion, self-forcing)
-- **3.3 By Conditioning (条件输入)**
-  - Action-conditioned
-  - Goal/Language-conditioned
-  - Multi-agent / Multi-view
-- **3.4 By Usage (使用方式)**
-  - Imagination for Policy Learning (Dreamer-style)
-  - Planner / MPC backbone
-  - Data Engine (Synthetic data generation)
-  - Evaluator / Critic / Reward Model
-- **3.5 By Embodiment Scale**
-  - Manipulation
-  - Locomotion / Humanoid
-  - Autonomous Driving
-  - Mobile / Navigation
+### Section 7 — Applications
+- Manipulation / Bimanual / Dexterous
+- Locomotion & Humanoid
+- Autonomous Driving (DriveDreamer、Vista、GAIA、Cosmos)
+- Indoor Navigation & Mobile Manipulation
+- Multi-agent / HRI
+- Surgical / Soft Robotics
 
----
+### Section 8 — Datasets, Benchmarks & Evaluation
+- 数据集:Open-X-Embodiment、DROID、RH20T、AgiBot World、Ego4D
+- Benchmark:CALVIN、LIBERO、SimplerEnv、HumanoidBench、WorldModelBench
+- 指标:FVD/PSNR/LPIPS、action consistency、physical plausibility、**downstream success rate**
+- 评测开放问题:visual fidelity ≠ usefulness for control
 
-## 4. Representations: How to Model the World
+### Section 9 — Challenges
+- Long-horizon consistency & drift
+- Action controllability & faithfulness
+- Physical / causal reasoning
+- Real-time inference (>10Hz on-robot)
+- Cross-embodiment generalization
+- Data scaling laws
+- Safety, hallucination, OOD
+- Evaluation gap
 
-- **4.1 Latent-State Models**
-  - RSSM 及其变体 (Dreamer V1-V3, DayDreamer, TD-MPC2)
-  - 离散 vs 连续 latent
-  - 信息瓶颈与 disentanglement
-- **4.2 Pixel-Space / Video World Models**
-  - Action-conditioned video prediction (GameGAN, IRIS, GAIA-1/2)
-  - 大规模 video foundation WM:Sora、Genie 1/2/3、V-JEPA、Cosmos
-  - Real-time / streaming WM:Self-Forcing, Causal Forcing, minWM
-- **4.3 3D & Geometry-Aware Models**
-  - Neural Radiance / Gaussian Splatting WM
-  - Occupancy / Voxel-based WM(自动驾驶)
-  - 4D dynamic scene models
-- **4.4 Multimodal & Language-Grounded WM**
-  - VLM-as-WM (RoboFlamingo, RT-2 衍生)
-  - Symbolic / PDDL hybrid
-- **4.5 Physics-Informed WM**
-  - 可微物理 + 神经网络
-  - Constraint-aware dynamics
-- **4.6 Discussion**:不同表征的精度/可控性/计算成本权衡。
+### Section 10 — Future Directions
+- Unified foundation world models
+- WM + Reasoning (CoT, RL post-training)
+- Interactive & long-lived WM (persistent memory)
+- Neuro-symbolic & physics-grounded
+- On-device / edge WM
+- WM as scientific tool
+- Towards AGI-level embodied agents
 
----
+### Section 11 — Conclusion + Appendix
+- A. Timeline of representative works (2018–2026)
+- B. Comparison tables (model × representation × data × task × metric)
+- C. Notation summary
+- D. Open-source codebase list
 
-## 5. Learning Paradigms
+## 实验与结论(综述论证策略)
+- 用 **timeline 图** + **taxonomy 树** + **comparison table** 三类视觉元素串联全文
+- 每个分类至少 3 个代表性工作 + 1 个横向对比表
+- Section 6 / 7 是核心卖点,需要最详细;其余章节 supporting
 
-- **5.1 Self-Supervised Pretraining**:masked prediction、JEPA、对比学习。
-- **5.2 Action-Conditioned Generative Training**:teacher forcing、scheduled sampling、diffusion forcing。
-- **5.3 Causal / Streaming Training**:Self-Forcing、DMD、minWM 等长程一致性方法。
-- **5.4 Multi-task / Cross-Embodiment Training**:Open-X、DROID 等大规模数据混训。
-- **5.5 Sim-to-Real & Domain Randomization**:在 WM 中显式建模 domain gap。
-- **5.6 Continual / Online World Model Adaptation**:on-robot fine-tuning、test-time adaptation。
+## 我的思考
 
----
+### ✅ 优点
+- **差异化定位明确**:从 robot learning 视角切入,而非 video generation
+- **Taxonomy 在第 3 章前置**:后续叙述围绕固定坐标轴展开,降低读者认知负担
+- **Evaluation 单独成章**:点出"生成质量 ≠ 决策有用性"的领域共识盲点
 
-## 6. World Models for Policy Learning
+### ⚠️ 待解决
+- 论文边界:Foundation model (Sora 类) 是否纳入?建议:**只纳入与机器人/决策直接相关的 demo**
+- 与 model-based RL 综述的区分度需要在 Intro 显式说明
+- 篇幅控制:11 章可能过长,可考虑把 Section 5 / 9 合并
 
-- **6.1 Imagination-Based RL**
-  - Dreamer-style on-policy in latent
-  - 长 horizon rollout 的稳定性
-- **6.2 Model Predictive Control (MPC) with Learned Dynamics**
-  - Visual MPC、TD-MPC、DiffPhysics
-- **6.3 World Model as Differentiable Simulator**
-  - 反向传播至策略 (analytic policy gradient)
-- **6.4 World Model as Data Engine**
-  - 合成 demonstrations 训练 IL/VLA
-  - Counterfactual rollouts
-- **6.5 World Model as Evaluator / Reward Model**
-  - Generative reward、preference 评分
-  - 用 WM 做 policy verification & safety screening
-- **6.6 World Model + VLA Co-design**
-  - 共享 backbone:Genie-Robotics、UniSim、1X World Model
+### 🚀 可延伸方向
+- 配套一份 awesome-world-model-for-robot-learning 仓库
+- 制作交互式 taxonomy 网页(用 D3 / Observable)
+- 针对 Section 6 单独发一篇 short position paper
 
----
+## 引用与延伸阅读
 
-## 7. Application Domains
+### 已有相关笔记(可作为引用骨架)
+- [[20-Papers/WM/2025-Genie-3]] — Section 4.2 / 6.6 引用
+- [[20-Papers/WM/2026-minWM-Real-Time-Video-World-Models]] — Section 4.2 / 5.3 引用
+- [[20-Papers/WM/2024-Self-Forcing]] — Section 5.3 引用
+- [[20-Papers/WM/2024-Causal-Forcing]] — Section 5.3 引用
+- [[20-Papers/WM/2024-Causal-ODE-CD-Init]] — Section 5.3 引用
+- [[20-Papers/WM/2024-DMD]] — Section 5.3 引用
+- [[20-Papers/WM/2025-Hunyuan-GameCraft]] — Section 4.2 引用
+- [[20-Papers/WM/2025-PRoPE]] — Section 4.2 引用
 
-- **7.1 Robotic Manipulation**:tabletop、双臂、灵巧手。
-- **7.2 Locomotion & Humanoid**:四足、人形全身控制。
-- **7.3 Autonomous Driving**:GAIA、DriveDreamer、Vista、Cosmos。
-- **7.4 Indoor Navigation & Mobile Manipulation**。
-- **7.5 Multi-Agent / Human-Robot Interaction**。
-- **7.6 Surgical / Soft Robotics**(变形体、流体)。
+### 待新建概念笔记
+- [[30-Notes/concepts/World-Model]]
+- [[30-Notes/concepts/Model-Based-RL]]
+- [[30-Notes/concepts/Imagination-Learning]]
+- [[30-Notes/concepts/Sim2Real]]
+- [[30-Notes/methods/Differentiable-Simulator]]
+- [[30-Notes/methods/Latent-Imagination]]
 
----
+### 同主题索引
+- [[20-Papers/WM/_index]]
+- [[50-Areas/WAM]]
 
-## 8. Datasets, Benchmarks & Evaluation
+## 写作 TODO
 
-- **8.1 Datasets**
-  - Robot:Open-X-Embodiment、DROID、RH20T、AgiBot World
-  - Driving:nuScenes、NAVSIM、Waymo
-  - Egocentric:Ego4D、EgoExo4D
-- **8.2 Benchmarks**
-  - Manipulation:CALVIN、LIBERO、RoboCasa、SimplerEnv
-  - Locomotion:Isaac Lab、HumanoidBench
-  - WM-specific:WorldModelBench、EvalCrafter、VBench
-- **8.3 Evaluation Metrics**
-  - Pixel quality (FVD, PSNR, LPIPS)
-  - Action-conditional consistency
-  - Physical plausibility (object permanence、collision)
-  - Downstream policy success rate(最关键)
-- **8.4 Open Problems in Evaluation**:visual fidelity ≠ usefulness for control。
-
----
-
-## 9. Key Challenges
-
-- **9.1 Long-Horizon Consistency & Drift**
-- **9.2 Action Controllability & Faithfulness**(动作真的有效?)
-- **9.3 Physical & Causal Reasoning**(刚体、接触、因果)
-- **9.4 Real-Time Inference**(>10Hz on-robot)
-- **9.5 Generalization to Novel Embodiments / Scenes**
-- **9.6 Data Scaling Laws for WM**
-- **9.7 Safety, Hallucination & Out-of-Distribution**
-- **9.8 Evaluation Gap**:生成质量 vs 决策有用性
-
----
-
-## 10. Future Directions
-
-- **10.1 Unified Foundation World Models**:跨任务、跨本体、跨模态。
-- **10.2 World Models + Reasoning (CoT, RL post-training)**
-- **10.3 Interactive & Long-Lived WM**(memory、persistent world state)
-- **10.4 Neuro-Symbolic & Physics-Grounded WM**
-- **10.5 On-Device / Edge WM**(模型压缩、蒸馏)
-- **10.6 World Model as Scientific Tool**(发现物理规律、做实验设计)
-- **10.7 Towards AGI-Level Embodied Agents**
-
----
-
-## 11. Conclusion
-
-- 总结 taxonomy 与核心 insight
-- 强调 WM 是 **具身智能的 "internal simulator"**
-- Call to action:统一 benchmark、可复现 pipeline、跨学科合作
-
----
-
-## Appendix
-
-- **A. Timeline of Representative Works**(2018–2026)
-- **B. Comparison Tables**(模型 × 表征 × 数据 × 任务 × 指标)
-- **C. Notation Summary**
-- **D. Open-Source Codebase List**
-
----
-
-## 写作建议 / TODO
-
-- [ ] 收集 2024–2026 关键论文(已有 [[20-Papers/WM/2025-Genie-3]]、[[20-Papers/WM/2026-minWM-Real-Time-Video-World-Models]]、[[20-Papers/WM/2024-Self-Forcing]]、[[20-Papers/WM/2024-Causal-Forcing]] 等可引用)
-- [ ] 制作 taxonomy 图(可用 Excalidraw)
-- [ ] 制作时间线(2018 Ha&Schmidhuber → 2026 当前)
-- [ ] 每个分类至少 3 个代表性工作 + 1 个对比表
-- [ ] Section 6 与 Section 7 是核心卖点,需要最详细
-- [ ] 与现有综述 diff:强调 **robot learning** 视角而非纯 video generation
+- [ ] 收集 2024–2026 关键论文(目标 150+ refs)
+- [ ] 制作 taxonomy 图(Excalidraw)
+- [ ] 制作 timeline 图(2018 Ha&Schmidhuber → 2026)
+- [ ] 每章草稿 → 1500–3000 字
+- [ ] Section 6 / 7 优先详细化
+- [ ] Section 8 benchmark 表格补全
+- [ ] 与 model-based RL / video generation 综述对照表
