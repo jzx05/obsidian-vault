@@ -105,7 +105,7 @@ World Model (广义)
 ### 2.2 Robot Policy 的两大类型
 
 **需要找的信息：**
-- [ ] **Visuomotor Policy** 是什么？代表方法？
+- [x] **Visuomotor Policy** 是什么？代表方法？ 专用视觉运动策略， 一种任务专用的端到端网络，直接从视觉观测映射到动作轨迹，中间不经过语言环节。 Diffusion Policy 是 **Visuomotor Policy** 的代表方法
 - [ ] **VLA (Vision-Language-Action)** 是什么？代表方法？（如 RT-2, OpenVLA）
 - [ ] 两类 Policy 的输入输出格式有何不同？
 - [ ] 当前 Policy 的主要局限是什么？（WM 要解决的问题）
