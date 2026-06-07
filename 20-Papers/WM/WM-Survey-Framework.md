@@ -28,6 +28,102 @@ date: 2026-06-07
 
 ---
 
+## 🚪 Section 1 — Introduction（引言）
+
+> 综述的"立论部分"——为什么写这篇综述？为什么 WM 对机器人重要？
+
+### 1.1 研究背景与动机
+
+**需要找的信息：**
+- [ ] 当前机器人学习的主流范式是什么？（提示：foundation models, large-scale pre-training）
+- [ ] VLA 模型的现状和局限是什么？（如 RT-2, OpenVLA 等）
+- [ ] 为什么单纯的"模仿学习"不够？需要 WM 的根本原因？
+
+**核心论点提取：**
+- [ ] 论文如何论证 "WM = 具身智能的内部仿真器" 这个定位？
+- [ ] WM 区别于 video generation 的本质是什么？
+
+---
+
+### 1.2 World Model 的角色定位
+
+**需要找的信息：**
+- [ ] 论文给出的 WM 三大角色是什么？（提示对应 Section 3/4/5）
+  - 角色 1：作为 Policy 的辅助 → §3
+  - 角色 2：作为 Simulator → §4
+  - 角色 3：作为 Video Generator → §5
+- [ ] 这三种角色的边界在哪里？是否有重叠？
+
+**关键图示：**
+- [ ] **Figure 1**：综述的整体组织图——找出三大主线的视觉呈现
+- [ ] **Figure 2**：representation 类型的概览（visuomotor / VLA 两条主线）
+
+---
+
+### 1.3 与已有综述的差异化定位
+
+**需要找的信息：**
+- [ ] 论文如何区分自己与其他 WM 综述？
+- [ ] 为什么聚焦 "robot learning" 而非 "video generation"？
+- [ ] 该综述独有的视角是什么？（提示：policy-centric, fine-grained taxonomy）
+
+**对比表：**
+| 已有综述 | 焦点 | 本综述的差异 |
+|---------|------|------------|
+| | | |
+
+---
+
+### 1.4 核心贡献（Contributions）
+
+**需要找的信息（论文一般会列 3-4 条）：**
+- [ ] 贡献 1：分类法（taxonomy）层面 →
+- [ ] 贡献 2：覆盖范围层面 →
+- [ ] 贡献 3：评测/数据集层面 →
+- [ ] 贡献 4：挑战与未来方向 →
+
+> 提示：在 Introduction 末尾或 §1.5 处通常有 "Our contributions are:" 的列表
+
+---
+
+### 1.5 论文组织（Roadmap）
+
+**需要找的信息：**
+- [ ] 论文如何引导读者按顺序阅读？
+- [ ] 各章节之间的逻辑关系？
+
+**章节地图（基于 Figure 1）：**
+```
+§2 Background ─┬─ World Model 定义
+               └─ Robot Policy 定义
+                     │
+                     ▼
+              ┌──────┴──────┬──────────┐
+              │             │          │
+        §3 Policy 增强  §4 Simulator  §5 Video Gen
+              │             │          │
+              └──────┬──────┴──────────┘
+                     │
+              §6 其他应用 (导航/驾驶)
+                     │
+              §7 Benchmarks & Datasets
+                     │
+              §8 Challenges & Future
+```
+
+---
+
+### 📌 Introduction 阶段的关键产出
+
+读完 Introduction 后，你应该能回答：
+
+1. **WHY**：为什么 WM 对 robot learning 重要？（一句话总结）
+2. **WHAT**：WM 在该综述中的精确定义是什么？
+3. **HOW**：综述用什么分类法组织所有方法？
+4. **NEW**：与同主题综述相比，新增了什么视角？
+
+---
+
 ## 📚 Section 2 — Background（背景）
 
 > 建立基础概念：WM 和 Robot Policy 各是什么
