@@ -82,16 +82,25 @@ date: 2026-06-07
 - [x] 综述对 "World Model" 的定义是什么？a predictive model of agent-environment dynamics that captures how a robotic or embodied system evolves under actions.
 - [x] WM 的核心数学表达是什么？p(xt+1:t+H | xt, at:t+H−1, l)， 状态向量x的形式很多，可以是视频，潜空间甚至式符号，l表示语言指令，例如把杯子移到左前方45度0.5m远处。
 - [x] Video Generation Model 的定义是什么？p(vt+1:t+H | ot, at:t+H−1, l),
-- [ ] 两者的**核心区别**在哪里？（提示：policy-centric vs. generative）
+- [x] 两者的**核心区别**在哪里？WM in robot = ==预测未来== + ==这个预测能被机器人用来做决策==
 
-**关键概念提取：**
-| 概念 | 定义 | 页码 |
-|------|------|------|
-| World Model | | |
-| Video Generation Model | | |
-| 两者区别 | | |
+**action-conditioned video generation model** (动作条件化的视频生成模型) world model 和 video generation model 交叉的子类[[action-conditioned video generation model]]
 
----
+World Model (广义)
+│
+├─ 非视频的 world model（latent / symbolic / physical）
+│   └─ 本文提及但不重点讨论
+│
+└─ Video-based World Model ← 本文主线
+    │
+    ├─ 非 action-conditioned（纯视频预测）
+    │   └─ 对决策价值有限
+    │
+    └─ Action-conditioned ← 本文核心关注
+        │
+        ├─ 低层控制作为条件（控制指令）
+        └─ 高层语言作为条件（任务描述）
+
 
 ### 2.2 Robot Policy 的两大类型
 
