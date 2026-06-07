@@ -33,7 +33,8 @@ date: 2026-06-07
 > 综述的"立论部分"——为什么写这篇综述？为什么 WM 对机器人重要？
 
 1. VLA的缺陷：long-horizon reasoning, temporal credit assignment, and robustness
-2. What is world model ?: 
+2. What is world model ?: a state-transition model that predicts the next state or a sequence of future states from the current state and action
+3. WM的分类： 1. Model-Based RL(Dreamer) 2. 大规模的生成式模型
 
 **章节地图（基于 Figure 1）：**
 ```
