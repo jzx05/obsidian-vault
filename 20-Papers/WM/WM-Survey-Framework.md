@@ -34,7 +34,21 @@ date: 2026-06-07
 
 1. VLA的缺陷：long-horizon reasoning, temporal credit assignment, and robustness
 2. What is world model ?: a state-transition model that predicts the next state or a sequence of future states from the current state and action
-3. WM的分类： 1. Model-Based RL(Dreamer) 2. 大规模的生成式模型
+3. WM的分类：
+
+|               | **Model-Based RL（Dreamer 系列）**         | **大规模生成式模型**                                 |     |     |
+| ------------- | -------------------------------------- | -------------------------------------------- | --- | --- |
+| **核心目标**      | 学习环境动力学，提升 RL 样本效率                     | 生成逼真可控的视频/观测                                 |     |     |
+| **表示空间**      | 压缩 latent vector（抽象状态）                 | 像素 / 高维视频帧                                   |     |     |
+| **动作条件化**     | 显式紧密耦合 $z'=f(z,a)$                     | 灵活注入（attention / adapter）                    |     |     |
+| **输出**        | 抽象状态向量（不一定可视）                          | 光真实感视频帧                                      |     |     |
+| **主要用途**      | 在"想象"中做 RL rollout                     | 仿真器 / 数据增强 / 策略先验                            |     |     |
+| **计算规模**      | 轻量，单 GPU 可训                            | 重，需百~千 GPU 预训练                               |     |     |
+| **代表方法**      | DreamerV1/V2/V3, TD-MPC2               | Genie 3, GameNGen, DIAMOND, minWM            |     |     |
+| **concept笔记** | [[30-Notes/concepts/MBRL-World-Model]] | [[30-Notes/concepts/Generative-World-Model]] |     |     |
+
+4. WM for robot learning : robotic policy learning,   planning, simulation, evaluation, data generation.
+5. WM in robot area 的分类：1. tighter coupling between predictive modeling and action generation(内化为policy) 2. world models as simulators for *validation*, *post-training*, and *reinforcement learning*
 
 **章节地图（基于 Figure 1）：**
 ```
