@@ -120,8 +120,12 @@ p(at+1:t+k|ot, l)
 ### 3.1 为什么 WM 能帮助 Policy 学习？
 
 **需要找的信息：**
-- [ ] WM 给 policy 带来的核心优势是什么？（预测未来 / 提供监督信号 / 想象轨迹）
-- [ ] 论文用什么理论框架解释这种帮助？
+- [x] WM 给 policy 带来的核心优势是什么？（预测未来 / 提供监督信号 / 想象轨迹）                  
+Foresight  	执行前预判后果	避免盲目动作，减少真实环境错误
+Imagination-driven Planning	想象多条未来轨迹并比较	在脑内试错，选出最优方案
+Data Amplification	合成额外训练轨迹	用想象数据训练更鲁棒的策略
+
+- [x] 论文用什么理论框架解释这种帮助？概率统一视角（Probabilistic Unification）p(ot+1:t+k, at+1:t+k ∣ ot, l) ，把 Policy、Passive WM、Controllable WM、Inverse Dynamics 统一在同一个框架下
 
 ---
 
