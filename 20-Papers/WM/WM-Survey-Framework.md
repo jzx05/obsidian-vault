@@ -80,7 +80,7 @@ date: 2026-06-07
 
 **需要找的信息：**
 - [x] 综述对 "World Model" 的定义是什么？a predictive model of agent-environment dynamics that captures how a robotic or embodied system evolves under actions.
-- [x] WM 的核心数学表达是什么？p(xt+1:t+H | xt, at:t+H−1, l)， 状态向量x的形式很多，可以是视频，潜空间甚至式符号，l表示语言指令，例如把杯子移到左前方45度0.5m远处。
+- [x] WM 的核心数学表达是什么？==p(xt+1:t+H | xt, at:t+H−1, l)==， 状态向量x的形式很多，可以是视频，潜空间甚至式符号，l表示语言指令，例如把杯子移到左前方45度0.5m远处。
 - [x] Video Generation Model 的定义是什么？p(vt+1:t+H | ot, at:t+H−1, l),
 - [x] 两者的**核心区别**在哪里？WM in robot = ==预测未来== + ==这个预测能被机器人用来做决策==
 
@@ -103,18 +103,13 @@ World Model (广义)
 
 
 ### 2.2 Robot Policy 的两大类型
+p(at+1:t+k|ot, l)
 
 **需要找的信息：**
 - [x] **Visuomotor Policy** 是什么？代表方法？ 专用视觉运动策略， 一种任务专用的端到端网络，直接从视觉观测映射到动作轨迹，中间不经过语言环节。 Diffusion Policy 是 **Visuomotor Policy** 的代表方法
-- [ ] **VLA (Vision-Language-Action)** 是什么？代表方法？（如 RT-2, OpenVLA）
-- [ ] 两类 Policy 的输入输出格式有何不同？
+- [x] **VLA (Vision-Language-Action)** 是什么？代表方法？在大规模视觉-语言模型（VLM）上微调，融入机器人轨迹数据，使模型同时理解图像、语言，并输出动作（如 RT-2, OpenVLA）
+- [x] 两类 Policy 的输入输出格式有何不同？![[Pasted image 20260607141308.png]]
 - [ ] 当前 Policy 的主要局限是什么？（WM 要解决的问题）
-
-**关键方法列表：**
-| Policy 类型 | 代表方法 | 特点 |
-|------------|---------|------|
-| Visuomotor | | |
-| VLA | | |
 
 ---
 
