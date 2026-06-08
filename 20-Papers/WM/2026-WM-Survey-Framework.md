@@ -654,9 +654,9 @@ World Model（广义）
 
 **需要找的信息：**
 
-- [ ] 导航与操作的 WM 需求有何不同？
-- [ ] 代表方法？（如 Pathdreamer, VISTA, NWM）
-- [ ] WM 在导航中的核心价值？
+- [x] 导航与操作的 WM 需求有何不同？
+- [x] 代表方法？（如 Pathdreamer, VISTA, NWM）
+- [x] WM 在导航中的核心价值？
 
 ---
 
@@ -664,9 +664,9 @@ World Model（广义）
 
 **需要找的信息：**
 
-- [ ] 自动驾驶对 WM 的特殊需求？（多智能体、长时预测）
-- [ ] 代表方法？（如 GAIA-1, DriveDreamer, Drive-WM）
-- [ ] 与机器人操作的 WM 有何异同？
+- [x] 自动驾驶对 WM 的特殊需求？（多智能体、长时预测）
+- [x] 代表方法？（如 GAIA-1, DriveDreamer, Drive-WM）
+- [x] 与机器人操作的 WM 有何异同？
 
 ---
 
