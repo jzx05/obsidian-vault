@@ -388,13 +388,92 @@ World Model（广义）
 
 ---
 
-### 3.6 统一 VLA 模型
+### 3.6 统一 VLA 模型 (Unified VLA Models)
 
-**需要找的信息：**
+> **一句话理解**：VLA 不一定非要外挂一个视频 world model，它自己内部也可以长出"预测未来"的能力。
 
-- [ ] 这与 3.3 的区别是什么？
-- [ ] 代表方法？
-- [ ] 是否有 Table 对比各方法性能？（→ Table 5, 6）
+#### 与 3.2–3.4 的核心区别
+
+前面几节是 **video-backbone 范式**：怎么把 WM 接到/融入 policy。
+3.6 则转向 **VLA backbone 自身**：怎么让 VLA 本身就带有 world modeling 能力。
+
+```
+3.2–3.4 的问题：怎么把 WM "接到" policy 上？
+  3.2：串联接
+  3.3：融到单 backbone
+  3.4：多 expert 深度耦合
+
+3.6 的问题：怎么让 policy 自己 "长出" WM 能力？
+  → 从"外挂 world model"走向"内生 predictive structure"
+```
+
+**真正的区分标准**：不是"有没有独立 world model 模块"，而是 future-oriented predictive modeling 是否被内化在同一个 multimodal policy backbone 里。
+
+#### 总逻辑
+
+| 类型 | 纯 reactive VLA | 3.6 Unified VLA |
+|------|----------------|-----------------|
+| 输入 | 当前观测 + 语言 | 当前观测 + 语言 |
+| 输出 | 直接出动作 | 动作 + 某种未来预测目标 |
+| 内在结构 | 当前→动作的直映射 | 动作生成与内部预测目标联合训练 |
+
+#### 三类实现方式
+
+##### 第一类：显式 future-image prediction
+
+> 模型一边学输出动作，一边学预测未来图像。
+
+**核心逻辑**：如果模型被要求预测未来图像，就不得不学习物体怎么动、场景怎么变、动作与未来视觉的关系 → 反过来帮助动作生成。
+
+| 方法 | 特点 |
+|------|------|
+| GR-1 | 单个 GPT-style transformer 联合预测动作和未来图像 |
+| UP-VLA | future-image prediction 同时提升动作生成和视觉泛化 |
+| WorldVLA | autoregressive 框架统一动作+图像理解+图像生成；future-image 主要是训练信号，推理时不一定要渲染 |
+
+> **关键理解**：未来图像预测更像一种训练监督，而非部署时必须执行的显式功能。训练时让模型学"看见未来"，推理时未必真的渲染。
+
+##### 第二类：隐式 / latent future modeling
+
+> 不直接预测像素级 future frame，而是预测 compact future-aware representations。
+
+**为什么不做像素预测？**
+- 像素预测太贵、太冗余
+- 控制未必需要知道背景纹理，只需要知道：目标物体往哪移动、空间关系怎么变、哪些未来信息和动作最相关
+
+| 方法 | 特点 |
+|------|------|
+| DreamVLA | 预测 structured world knowledge（dynamic / spatial / semantic cues）支持动作推理 |
+| UniVLA | 后训练阶段吸收大规模视频中的 causal dynamics，不外挂独立 WM |
+| CoWVLA | 压缩到 latent motion + compact future visual targets，不重建完整 future frames |
+
+> **本质**：world modeling 仍然存在，但被压缩成 latent / semantic form — 只提取"对动作最有用的未来信息"。
+
+##### 第三类：Multi-expert / multi-system unified VLA
+
+> 主框架仍是统一 VLA，但内部保留功能专门化。predictive branch 更像 visual foresight / subgoal generation，而非原生视频 WM 主干。
+
+| 方法 | 特点 |
+|------|------|
+| F1 | MoT 架构中预测 future visual states 作为 planning targets |
+| InternVLA-A1 | lightweight latent visual foresight + action generation 联合优化 |
+| HALO | predictive branch 推向 visual subgoal prediction 和 embodied reasoning |
+| TriVLA | grounding + episodic dynamics perception + control 组织成协调子系统 |
+
+#### 通俗理解
+
+把 VLA 想成机器人"大脑"：
+- **旧思路**：给它外挂一个"想象模块"，先模拟未来再传给行动模块
+- **3.6 思路**：不外挂了，让大脑自己一边理解任务、一边想未来、一边决定动作
+
+→ 不是给 VLA 配一个外接世界模型，而是把世界模型变成 VLA 的**内在思维习惯**。
+
+#### 小结
+
+- 把"world model as policy"的概念扩展到超越显式视频生成的范围
+- 共同原则：动作生成不再是纯 reactive mapping，而是与内部预测目标联合训练
+- 预测目标可以是：未来状态本身 / latent surrogate / semantic surrogate
+- 从"外挂 world model"走向"内生 predictive structure"的重要转折
 
 ---
 
