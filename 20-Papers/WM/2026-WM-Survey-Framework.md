@@ -286,11 +286,95 @@ World Model（广义）
 
 ### 3.4 MoE/MoT 混合专家策略
 
-**需要找的信息：**
+> **一句话理解**：别把视频预测和动作控制彻底融成一个模型，也别完全拆成两个模型，而是让"视频专家"和"动作专家"各司其职、反复协作。
 
-- [ ] MoE（Mixture of Experts）在这里如何与 WM 结合？
-- [ ] 代表方法？（如 Motus, LingBot-VLA）
-- [ ] 相比单骨干的优势？
+#### 定位：三种范式的光谱
+
+```
+3.2 解耦式          3.4 多专家协作          3.3 单骨干统一
+(两个独立部门)    (多个专业小组协作)      (一个大部门共脑)
+松 ─────────────────── 中 ─────────────────── 紧
+```
+
+#### 核心思想
+
+- MoE = Mixture of Experts / MoT = Mixture of Transformers
+- 保留多个功能不同的 expert stream（video / action / language），通过 attention 机制在层间持续耦合
+- 高层形式：h~v~^l+1^, h~a~^l+1^ = F~mix~^l^(h~v~^l^, h~a~^l^; o~t~, l)
+- 交互方式可以是：joint attention / cross-attention / shared-attention fusion
+
+#### 为什么从 3.3 退一步？
+
+3.3 假设"全参数共享最优"，但视频预测和动作生成存在本质差异：
+
+| 差异维度 | 视频预测 | 动作生成 |
+|---------|---------|---------|
+| 时间频率 | 较稠密的连续时序变化 | 高频、精确、低延迟信号 |
+| 表示尺度 | 高维视觉 token / latent | 低维控制命令 |
+| 优化目标 | 时空一致性 | 可执行性和控制精度 |
+
+> **作者原话**：full parameter sharing is not always optimal.
+
+#### 与 3.3 的核心区别
+
+| 维度 | 3.3 Single Backbone | 3.4 MoE/MoT Expert |
+|------|--------------------|--------------------|
+| 架构 | 一个共享 backbone | 多个专门 expert |
+| 参数共享 | 高 | 部分共享、部分分工 |
+| 视觉/动作关系 | 同一 backbone 内统一建模 | 保留独立流，attention 反复交互 |
+| 假设 | 统一骨干最有效 | 专门化 + 交互可能更优 |
+| 重点 | Fully unified generation | Deeply interacting specialization |
+
+#### 关键转变：视频分支从"输出"变成"指导流"
+
+- 早期：视频分支 = 真要生成完整未来视频 → 再根据视频做动作
+- 3.4 趋势：视频分支 = **predictive latent process**（预测性潜在流）
+  - 不一定要渲染完整视频
+  - hidden states 用来指导动作分支
+  - 重点从"生成视频结果"转向"利用视频分支内部的时空表征"
+
+#### 代表方法
+
+**第一类：并行 expert coupling**
+
+| 方法 | 特点 |
+|------|------|
+| GE-Act | 预训练 video diffusion backbone + 轻量 action branch；通过 deep cross-attention 注入视频 latent；不需在线完整渲染视频 |
+
+**第二类：Mixture-of-Transformers 式深交互**
+
+| 方法 | 特点 |
+|------|------|
+| Motus | understanding expert + video generation expert + action expert，标准 MoT |
+| LingBot-VA | video token 和 action token 交织进共享 autoregressive 序列；dual-stream MoT + shared attention |
+| BagelVLA | 语言规划 + 视觉预测 + 动作生成放入同一执行循环，适合长时程 manipulation |
+| DiT4DiT | 用视频分支中间去噪特征来指导动作预测 |
+| Fast-WAM | 认为收益更多来自训练时视频协同训练，而非推理时显式想象未来 |
+
+**第三类：Latent-space expertization**
+
+| 方法 | 特点 |
+|------|------|
+| LDA-1B | 在 DINO latent space 里做视觉预测；视觉 expert 和动作 expert 通过 shared self-attention 耦合 |
+| FRAPPE | 不直接重建未来图像，学习 future-aware latent representations；与视觉基础模型做 latent 对齐 |
+
+#### 通俗比喻
+
+```
+视频专家：如果这么做，杯子会滑过去
+动作专家：那我需要多大力？
+语言专家：目标是放进碗里，不是推到桌边
+视频专家：那未来轨迹要再往右一些
+动作专家：好，我调整抓取路径
+```
+
+→ 持续交互的专家协作，而不是一个人包办，也不是两个人串联。
+
+#### 小结
+
+- 位于"完全解耦的模块化 pipeline"和"完全统一的单 backbone 生成器"之间
+- 把 world modeling 深嵌进 policy，但仍保留架构专门化
+- 视频分支逐渐内化为"指导动作的 foresight stream"
 
 ---
 
