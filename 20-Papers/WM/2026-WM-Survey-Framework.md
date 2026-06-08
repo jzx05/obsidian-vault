@@ -358,18 +358,6 @@ World Model（广义）
 | LDA-1B | 在 DINO latent space 里做视觉预测；视觉 expert 和动作 expert 通过 shared self-attention 耦合 |
 | FRAPPE | 不直接重建未来图像，学习 future-aware latent representations；与视觉基础模型做 latent 对齐 |
 
-#### 通俗比喻
-
-```
-视频专家：如果这么做，杯子会滑过去
-动作专家：那我需要多大力？
-语言专家：目标是放进碗里，不是推到桌边
-视频专家：那未来轨迹要再往右一些
-动作专家：好，我调整抓取路径
-```
-
-→ 持续交互的专家协作，而不是一个人包办，也不是两个人串联。
-
 #### 小结
 
 - 位于"完全解耦的模块化 pipeline"和"完全统一的单 backbone 生成器"之间
@@ -380,11 +368,84 @@ World Model（广义）
 
 ### 3.5 潜在空间世界模型策略 (Latent-Space WM)
 
-**需要找的信息：**
+> **一句话理解**：不要再显式生成未来图像/视频了，直接在 latent space 里学习"未来会怎样"的表示，再用这个表示指导动作生成。
 
-- [ ] 潜在空间 WM 和视频 WM 的核心区别？
-- [ ] 代表方法？（如 VLA-JEPA, JEPA-VLA）
-- [ ] 计算效率上的优势？
+#### 与 3.4 / 3.6 的区别
+
+| 节 | 核心做法 |
+|----|---------|
+| 3.4 MoE/MoT | 视频 expert + 动作 expert 深度协作 |
+| **3.5 Latent-Space WM** | **连未来图像都不用出，直接学"未来的表示"** |
+| 3.6 Unified VLA | VLA 内部长出预测能力（可以显式/隐式） |
+
+```
+3.4: predict future video (as expert stream) → guide action
+3.5: predict future latent → guide action  ← 更内化
+3.6: 统一 VLA 框架内包含各种程度的 future modeling
+```
+
+#### 核心思想
+
+- **定义**：future prediction entirely in representation space
+- 构造 predictive latent targets / future-aware embeddings / compact control conditions，与动作生成耦合
+- World modeling 不再是 visual reconstruction，而是学习 **future-aware representation**
+- Backbone 通常是 MLLM-based，而非 video-DiT-based
+
+#### 为什么要这么做？
+
+| 显式视频预测的问题 | Latent-space 的优势 |
+|------------------|-------------------|
+| 计算开销大（要解码像素） | 避免显式生成解码的开销 |
+| 信息冗余（背景纹理等控制无关细节） | 只提取对动作有用的未来信息 |
+| 像素级重建不等于对控制有帮助 | 直接学"对控制有用的未来结构" |
+
+> 机器人真正需要的只是：目标物体会不会移动、相对空间关系怎么变、哪些未来因素和动作选择最相关。
+
+#### 核心概念：Future-aware Representation
+
+一个"知道未来趋势"的内部表示：
+- 不一定是图像，不一定可视化
+- 必须承载：未来状态转移信息 + 动作相关的动态结构 + 对控制有帮助的预测约束
+- World model 更像"动作生成前的内部预测状态"，而非屏幕上可见的 imagined video
+
+#### 代表方法
+
+| 方法 | 核心做法 | 关键词 |
+|------|---------|--------|
+| FLARE | 让 action denoising network 的 hidden feature 对齐 future observation 的 latent embedding；不生成未来图像，隐式预见未来 | Future Latent Representation Alignment |
+| VLA-JEPA | Leakage-free state prediction：未来帧只用于产生 latent supervision target，逼模型在 latent space 学习与动作相关的状态转移 | JEPA-style, leakage-free |
+| JEPA-VLA | 不额外加 future head，而是认为 V-JEPA 2 的 predictive embeddings 比静态视觉表示更适合做 VLA backbone | Better backbone via predictive pretraining |
+| WoG | 不预测 future image 也不预测通用 future latent，直接预测对精确控制最有用的 compact future-oriented conditions | Compact control conditions |
+| DIAL | 用 latent world modeling 把高层意图与低层动作解耦；在 VLM feature space 中用 latent visual foresight 做结构化 bottleneck | Intent-action decoupling |
+
+#### 各方法直觉理解
+
+**FLARE** — 让动作网络内部特征提前"长得像"未来状态的表示（隐式预见）
+
+**VLA-JEPA** — 未来帧不能被模型拿来抄答案，只能当 latent target → 逼模型学到哪些状态转移和动作相关
+
+**JEPA-VLA** — 既然 video JEPA 已经学到了更好的 predictive embedding，那就直接拿它当 VLA 的更强先验
+
+**WoG** — 把 latent-space world modeling 又往 action 端推近一步：只预测控制最需要的那部分未来
+
+**DIAL** — 把 latent foresight 变成连接"想做什么"和"具体怎么做"的中间桥梁
+
+#### 补充视角：Symbolic / Planner-facing World Models
+
+作者在节末拉宽视角，提到非 neural 的 world model 同样有效：
+
+- 把 world modeling 外化为 predicate / object relation / affordance / operator / causal process
+- 供 symbolic planner 或 task-and-motion planner 查询
+- 用于生成高层技能序列
+
+> 这说明：有用的 WM 不一定依赖像素，也不一定是 neural latent — 只要能表达"对控制有用的未来结构"就够了。
+
+#### 小结
+
+- 这是一条 **non-pixel route**：不做 future-image / video decoding，但仍把 future dynamics 内化进动作生成
+- 保留了 WM 的核心收益（predictive structure 注入 action generation），同时避免了生成解码的开销和冗余
+- 与 JEPA family 概念关联：都在 embedding space 做预测而非像素空间
+- 核心立场：**比起把整个未来画出来，不如直接学对动作有用的未来表示**
 
 ---
 
