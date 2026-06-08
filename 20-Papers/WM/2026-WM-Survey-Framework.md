@@ -51,10 +51,11 @@ date: 2026-06-07
 5. **WM in robot area 的分类**：
    1. Tighter coupling between predictive modeling and action generation（内化为 policy）
    2. World models as simulators for *validation*, *post-training*, and *reinforcement learning*
-   
+
    → 两者最终 integrated together
 
 **章节地图（基于 Figure 1）：**
+
 ```
 §2 Background ─┬─ World Model 定义
                └─ Robot Policy 定义
@@ -73,7 +74,6 @@ date: 2026-06-07
               §8 Challenges & Future
 ```
 
-
 ---
 
 ## 📚 Section 2 — Background（背景）
@@ -83,13 +83,14 @@ date: 2026-06-07
 ### 2.1 World Model vs. Video Generation Model
 
 **需要找的信息：**
+
 - [x] 综述对 "World Model" 的定义是什么？
   - A predictive model of agent-environment dynamics that captures how a robotic or embodied system evolves under actions.
 - [x] WM 的核心数学表达是什么？
-  - ==p(x~t+1:t+H~ | x~t~, a~t:t+H−1~, l)==
+  - ==p(x~t+1:t+H~ | x~t~, a~t:t+H-1~, l)==
   - 状态向量 x 的形式很多，可以是视频、潜空间甚至符号；l 表示语言指令，例如"把杯子移到左前方 45° 0.5m 远处"。
 - [x] Video Generation Model 的定义是什么？
-  - p(v~t+1:t+H~ | o~t~, a~t:t+H−1~, l)
+  - p(v~t+1:t+H~ | o~t~, a~t:t+H-1~, l)
 - [x] 两者的**核心区别**在哪里？
   - WM in robot = ==预测未来== + ==这个预测能被机器人用来做决策==
 
@@ -111,17 +112,23 @@ World Model（广义）
         └─ 高层语言作为条件（任务描述）
 ```
 
-
 ### 2.2 Robot Policy 的两大类型
-p(at+1:t+k|ot, l)
+
+> p(a~t+1:t+k~ | o~t~, l)
 
 **需要找的信息：**
-- [x] **Visuomotor Policy** 是什么？代表方法？ 专用视觉运动策略， 一种任务专用的端到端网络，直接从视觉观测映射到动作轨迹，中间不经过语言环节。 Diffusion Policy 是 **Visuomotor Policy** 的代表方法
-- [x] **VLA (Vision-Language-Action)** 是什么？代表方法？在大规模视觉-语言模型（VLM）上微调，融入机器人轨迹数据，使模型同时理解图像、语言，并输出动作（如 RT-2, OpenVLA）
-- [x] 两类 Policy 的输入输出格式有何不同？![[Pasted image 20260607141308.png]]
+
+- [x] **Visuomotor Policy** 是什么？代表方法？
+  - 专用视觉运动策略：一种任务专用的端到端网络，直接从视觉观测映射到动作轨迹，中间不经过语言环节。
+  - Diffusion Policy 是其代表方法。
+- [x] **VLA (Vision-Language-Action)** 是什么？代表方法？
+  - 在大规模视觉-语言模型（VLM）上微调，融入机器人轨迹数据，使模型同时理解图像、语言，并输出动作（如 RT-2, OpenVLA）。
+- [x] 两类 Policy 的输入输出格式有何不同？
+  - ![[Pasted image 20260607141308.png]]
 - [x] 当前 Policy 的主要局限是什么？
 
 **关键方法列表：**
+
 | Policy 类型 | 代表方法 | 特点 |
 |------------|---------|------|
 | Visuomotor | [[30-Notes/concepts/Diffusion-Policy\|Diffusion Policy]], ACT, RDT-1B | 端到端图像→动作；建模多模态动作分布；Action Chunking |
@@ -136,29 +143,42 @@ p(at+1:t+k|ot, l)
 ### 3.1 为什么 WM 能帮助 Policy 学习？
 
 **需要找的信息：**
-- [x] WM 给 policy 带来的核心优势是什么？（预测未来 / 提供监督信号 / 想象轨迹）                  
-Foresight  	执行前预判后果	避免盲目动作，减少真实环境错误
-Imagination-driven Planning	想象多条未来轨迹并比较	在脑内试错，选出最优方案
-Data Amplification	合成额外训练轨迹	用想象数据训练更鲁棒的策略
 
-- [x] 论文用什么理论框架解释这种帮助？概率统一视角（Probabilistic Unification）p(ot+1:t+k, at+1:t+k ∣ ot, l) ，把 Policy、Passive WM、Controllable WM、Inverse Dynamics 统一在同一个框架下
+- [x] WM 给 policy 带来的核心优势是什么？
+
+| 优势 | 含义 | 价值 |
+|------|------|------|
+| Foresight | 执行前预判后果 | 避免盲目动作，减少真实环境错误 |
+| Imagination-driven Planning | 想象多条未来轨迹并比较 | 在脑内试错，选出最优方案 |
+| Data Amplification | 合成额外训练轨迹 | 用想象数据训练更鲁棒的策略 |
+
+- [x] 论文用什么理论框架解释这种帮助？
+  - 概率统一视角（Probabilistic Unification）：p(o~t+1:t+k~, a~t+1:t+k~ | o~t~, l)
+  - 把 Policy、Passive WM、Controllable WM、Inverse Dynamics 统一在同一个框架下
 
 ---
 
-### 3.2 逆动力学模型 (Inverse Dynamics Models)[[IDM-pipline]]
+### 3.2 逆动力学模型 (Inverse Dynamics Models) [[IDM-pipline]]
 
 **需要找的信息：**
-- [x] 逆动力学方法的基本思路是什么？看到"当前画面"和"预测的未来画面"，推断出"这中间发生了什么动作"。
+
+- [x] 逆动力学方法的基本思路是什么？
+  - 看到"当前画面"和"预测的未来画面"，推断出"这中间发生了什么动作"。
 - [x] 代表方法有哪些？
--方法	未来预测方式	特点
-UniPi (Du et al., 2023)	显式视频 rollout	最早的代表性工作之一
-VidMan (Wen et al., 2024)	显式视频 rollout	视频生成 + IDM 分离
-Vidar (Feng et al., 2025)	显式视频 rollout	—
-Gen2Act (Bharadhwaj et al., 2025)	显式 human-video rollout	人类演示视频作为条件
-VPP (Hu et al., 2025)	隐式预测特征	不生成像素，生成 latent 预测特征
-Video2Act (Jia et al., 2025b)	隐式预测特征	—
-MimicVideo (Pai et al., 2025)	隐式视觉规划	—
-- [x] 优势和局限？1.模块化 2. 可解释性强 3. 可以利用大规模视频预训练 缺点：1. 两阶段训练，不是端到端优化，WM 不知道"什么样的预测对 IDM 最有用"。2. 推理时开销大
+
+| 方法                                | 未来预测方式                 | 特点                   |
+| --------------------------------- | ---------------------- | -------------------- |
+| UniPi (Du et al., 2023)           | 显式视频 rollout           | 最早的代表性工作之一           |
+| VidMan (Wen et al., 2024)         | 显式视频 rollout           | 视频生成 + IDM 分离        |
+| Vidar (Feng et al., 2025)         | 显式视频 rollout           | —                    |
+| Gen2Act (Bharadhwaj et al., 2025) | 显式 human-video rollout | 人类演示视频作为条件           |
+| VPP (Hu et al., 2025)             | 隐式预测特征                 | 不生成像素，生成 latent 预测特征 |
+| Video2Act (Jia et al., 2025b)     | 隐式预测特征                 | —                    |
+| MimicVideo (Pai et al., 2025)     | 隐式视觉规划                 | —                    |
+
+- [x] 优势和局限？
+  - **优势**：① 模块化 ② 可解释性强 ③ 可以利用大规模视频预训练
+  - **缺点**：① 两阶段训练，不是端到端优化，WM 不知道"什么样的预测对 IDM 最有用" ② 推理时开销大
 
 ---
 
@@ -167,11 +187,13 @@ MimicVideo (Pai et al., 2025)	隐式视觉规划	—
 > WM 和 Policy 共享同一个网络骨干
 
 **需要找的信息：**
+
 - [ ] "单骨干"的核心思想是什么？
 - [ ] 代表方法：Unified VLA 有哪些？（如 DreamVLA, UniVLA, CoWVLA）
 - [ ] 与解耦方法相比有什么优劣？
 
 **代表方法：**
+
 | 方法名 | 年份 | 核心创新 | WM 类型 |
 |--------|------|---------|--------|
 | | | | |
@@ -181,6 +203,7 @@ MimicVideo (Pai et al., 2025)	隐式视觉规划	—
 ### 3.4 MoE/MoT 混合专家策略
 
 **需要找的信息：**
+
 - [ ] MoE（Mixture of Experts）在这里如何与 WM 结合？
 - [ ] 代表方法？（如 Motus, LingBot-VLA）
 - [ ] 相比单骨干的优势？
@@ -190,6 +213,7 @@ MimicVideo (Pai et al., 2025)	隐式视觉规划	—
 ### 3.5 潜在空间世界模型策略 (Latent-Space WM)
 
 **需要找的信息：**
+
 - [ ] 潜在空间 WM 和视频 WM 的核心区别？
 - [ ] 代表方法？（如 VLA-JEPA, JEPA-VLA）
 - [ ] 计算效率上的优势？
@@ -199,6 +223,7 @@ MimicVideo (Pai et al., 2025)	隐式视觉规划	—
 ### 3.6 统一 VLA 模型
 
 **需要找的信息：**
+
 - [ ] 这与 3.3 的区别是什么？
 - [ ] 代表方法？
 - [ ] 是否有 Table 对比各方法性能？（→ Table 5, 6）
@@ -212,12 +237,14 @@ MimicVideo (Pai et al., 2025)	隐式视觉规划	—
 ### 4.1 WM 用于强化学习
 
 **需要找的信息：**
+
 - [ ] WM 作为仿真器的基本范式是什么？（找图示，Figure 9）
 - [ ] 训练流程：如何在 WM 内部进行 RL？
 - [ ] 代表方法？（如 Dreamer 系列, DreamerV1/V2/V3）
 - [ ] WM-RL 的核心挑战：模型偏差如何影响 policy？
 
 **关键公式：**
+
 - [ ] WM 的预测目标函数是什么？
 - [ ] RL 的优化目标如何在 WM 内定义？
 
@@ -226,6 +253,7 @@ MimicVideo (Pai et al., 2025)	隐式视觉规划	—
 ### 4.2 规划与模型预测控制
 
 **需要找的信息：**
+
 - [ ] 如何用 WM 做 planning？（MPC 范式）
 - [ ] 代表方法？
 - [ ] 规划 horizon 对性能的影响？
@@ -235,6 +263,7 @@ MimicVideo (Pai et al., 2025)	隐式视觉规划	—
 ### 4.3 WM 用于数据增强与验证
 
 **需要找的信息：**
+
 - [ ] WM 如何生成合成训练数据？
 - [ ] 用于 policy 评估的方式？
 - [ ] 相关方法？（如 WorldFomo, WoW）
@@ -244,6 +273,7 @@ MimicVideo (Pai et al., 2025)	隐式视觉规划	—
 ### 4.4 WM 作为评估器
 
 **需要找的信息：**
+
 - [ ] 用 WM 评估 policy 的可行性？
 - [ ] 与真实环境评估的对比？
 
@@ -256,6 +286,7 @@ MimicVideo (Pai et al., 2025)	隐式视觉规划	—
 ### 5.1 问题设定与范围
 
 **需要找的信息：**
+
 - [ ] 本节的视频 WM 和前几节有何不同定位？
 - [ ] 机器人视频生成的特殊要求？（图示 Figure —— 找 Section 5 的 figure）
 
@@ -264,6 +295,7 @@ MimicVideo (Pai et al., 2025)	隐式视觉规划	—
 ### 5.2 视频生成作为策略学习的想象空间
 
 **需要找的信息：**
+
 - [ ] "Imagination-based" 的核心思路？
 - [ ] 代表方法？（如 Dreamer, UniPi, ManipDreamer）
 - [ ] Table 2 的对比——找该表格
@@ -273,6 +305,7 @@ MimicVideo (Pai et al., 2025)	隐式视觉规划	—
 ### 5.3 动作可控视频世界模型
 
 **需要找的信息：**
+
 - [ ] 从"视觉真实"到"动作可控"的转变是什么？
 - [ ] 代表方法？（如 IRASim, RoboEnvision, RoboMaster, Ctrl-World）
 - [ ] 如何实现动作条件化生成？
@@ -282,6 +315,7 @@ MimicVideo (Pai et al., 2025)	隐式视觉规划	—
 ### 5.4 带交互与几何先验的结构化生成
 
 **需要找的信息：**
+
 - [ ] 引入结构先验（接触、几何、多视角）的动机？
 - [ ] 代表方法？（如 Mask2IV, TesserAct, RoboVIP）
 
@@ -290,6 +324,7 @@ MimicVideo (Pai et al., 2025)	隐式视觉规划	—
 ### 5.5 从视频骨干到基础世界模型
 
 **需要找的信息：**
+
 - [ ] "Foundation World Model"的含义是什么？
 - [ ] 代表方法？（如 Vid2World, DreamDojo, UnifoLM-WMA-0, Cosmos Predict 2.5）
 - [ ] 与前几类方法的核心区别？
@@ -299,6 +334,7 @@ MimicVideo (Pai et al., 2025)	隐式视觉规划	—
 ### 5.6 技术演进与开放挑战
 
 **需要找的信息：**
+
 - [ ] 论文总结的演进路径是什么？（早期→中期→当前前沿）
 - [ ] 当前最核心的开放挑战？
 
@@ -309,6 +345,7 @@ MimicVideo (Pai et al., 2025)	隐式视觉规划	—
 ### 6.1 WM for Navigation（导航）
 
 **需要找的信息：**
+
 - [ ] 导航与操作的 WM 需求有何不同？
 - [ ] 代表方法？（如 Pathdreamer, VISTA, NWM）
 - [ ] WM 在导航中的核心价值？
@@ -318,6 +355,7 @@ MimicVideo (Pai et al., 2025)	隐式视觉规划	—
 ### 6.2 WM for Autonomous Driving（自动驾驶）
 
 **需要找的信息：**
+
 - [ ] 自动驾驶对 WM 的特殊需求？（多智能体、长时预测）
 - [ ] 代表方法？（如 GAIA-1, DriveDreamer, Drive-WM）
 - [ ] 与机器人操作的 WM 有何异同？
@@ -329,6 +367,7 @@ MimicVideo (Pai et al., 2025)	隐式视觉规划	—
 ### 7.1 评测体系（三类 Benchmark）
 
 **需要找的信息：**
+
 > 论文将 Benchmark 分为三类，找出每类的定义和代表：
 
 | 类别 | 评测目标 | 代表 Benchmark |
@@ -338,6 +377,7 @@ MimicVideo (Pai et al., 2025)	隐式视觉规划	—
 | 物理一致性诊断 | | WorldSimBench, WoW-World-Eval... |
 
 **关键问题：**
+
 - [ ] 为什么视觉真实度（visual realism）不等于 WM 质量？
 - [ ] 什么是"action-grounded"评测？
 
@@ -346,6 +386,7 @@ MimicVideo (Pai et al., 2025)	隐式视觉规划	—
 ### 7.2 训练数据集
 
 **需要找的信息：**
+
 > 论文用多维度分类数据集（见 Table 3 & 4），找出：
 
 - [ ] 数据集的核心维度有哪些？（X-Emb, Action, Obs/3D, Language, M/C）
@@ -357,6 +398,7 @@ MimicVideo (Pai et al., 2025)	隐式视觉规划	—
 ### 7.3 代表性实验结果
 
 **需要找的信息：**
+
 > 论文按 WM 集成方式分组对比（见 Table 5 & 6）：
 
 | 组别 | 代表方法 | LIBERO 均分 |
@@ -368,6 +410,7 @@ MimicVideo (Pai et al., 2025)	隐式视觉规划	—
 | Latent-space WM | VLA-JEPA, JEPA-VLA | |
 
 **关键发现：**
+
 - [ ] 哪种集成方式性能最优？
 - [ ] Long-horizon 任务上的主要瓶颈？
 
