@@ -788,34 +788,41 @@ WM 不仅用于训练 policy，还可作为 **safety evaluator / policy validato
 
 ### 7.3 代表性实验结果
 
-> 论文按 WM 集成方式分组对比（Table 5，LIBERO standard long-horizon setting）：
+> 论文按 WM 集成方式分组对比（Table 5，LIBERO standard 4-suite setting）：
 
-| 组别 | 代表方法 | Spatial | Object | Goal | Long | Avg |
-|------|---------|---------|--------|------|------|-----|
-| Decoupled | UniPi (2023) | | | | | |
-| | SteamVLA (Lin et al., 2025) | 84.2 | 96.8 | 84.8 | 90.6 | 89.1 |
-| | RoboFlamingo (Li et al., 2024a) | 64.8 | 90.2 | 76.4 | 79.2 | 77.7 |
-| Single-backbone | Cosmos Policy (Nvidia, 2025) | | | | | |
-| | UVA (Huang et al., 2025) | 88.1 | 100.0 | 100.0 | 82.1 | 92.6 |
-| | LRSM-D (Shrestha et al., 2025b) | | 86.7 | | | 80.5 |
-| MoE/MoT | Motus | | | | | |
-| | LingBot-VA (Ling et al., 2025b) | 86.2 | 96.1 | 87.6 | 74.8 | 86.2 |
-| Unified VLA | DreamVLA (Wen et al., 2025a) | 77.2 | 93.6 | | | |
-| | CoWVLA (Yuan et al., 2025) | 84.8 | 90.4 | | | |
-| | UniVLA (Zhao et al., 2025d) | 91.4 | 88.8 | | | |
-| | F1 (Li et al., 2025c) | 84.8 | 93.4 | | | |
-| Latent-space WM | VLA-JEPA (Yang, 2025) | 94.4 | 98.6 | | | |
-| | JEPA-VLA (Chen, 2025) | | | | | |
+| 组别              | 方法                                | Spatial | Object | Goal | Long | Avg  |
+| --------------- | --------------------------------- | ------- | ------ | ---- | ---- | ---- |
+| Decoupled       | UniPi (Du et al., 2023)           | —       | —      | —    | 0.6  | —    |
+|                 | MimicVideo (Pai et al., 2025)     | 94.2    | 96.8   | 90.6 | 94.0 | 93.9 |
+|                 | Say-Dream-ACT (Gu et al., 2026)   | 99.4    | 99.2   | 98.6 | 95.4 | 98.1 |
+| Single-backbone | UVA (Li et al., 2025c)            | —       | —      | —    | 90.0 | —    |
+|                 | VideoPolicy (Liang et al., 2025a) | —       | —      | —    | 94.0 | —    |
+|                 | Cosmos Policy (Kim et al., 2026)  | 98.1    | 100.0  | 98.2 | 97.6 | 98.5 |
+|                 | UD-VLA (Chen et al., 2026b)       | 94.1    | 95.7   | 91.2 | 89.6 | 92.7 |
+| MoE/MoT         | Motus (Bi et al., 2025)           | 98.5    | 99.8   | 96.6 | 97.6 | 97.7 |
+|                 | LingBot-VA (Li et al., 2026b)     | 98.5    | 99.6   | 97.2 | 98.5 | 98.5 |
+| Unified VLA     | RymaVLA-002 (Cm et al., 2025)     | 99.0    | 99.8   | 96.4 | 94.4 | 97.4 |
+|                 | DreamVLA (Zhoun et al., 2025c)    | 97.5    | 94.0   | 89.5 | 89.5 | 92.6 |
+|                 | UniVLA (Jia et al., 2025?)        | 86.5    | 96.8   | 85.6 | 92.0 | 92.2 |
+|                 | Unified VLA (Wang et al., 2025)   | 95.4    | 98.8   | 94.0 | 94.0 | 95.5 |
+|                 | CoWVLA (Yang et al., 2026a)       | 97.2    | 97.8   | 94.6 | 92.8 | 95.6 |
+|                 | F1 (Li et al., 2025)              | 98.2    | 97.8   | 95.4 | 91.3 | 95.7 |
+|                 | TriVLA (Liu et al., 2025d)        | 91.2    | 91.8   | 89.8 | 73.2 | 87.0 |
+| Latent-space WM | VLA-JEPA (Sun et al., 2026)       | 96.2    | 99.6   | 97.2 | 95.8 | 97.2 |
+|                 | JEPA-VLA (Miao et al., 2026b)     | 97.2    | 98.0   | 95.6 | 94.8 | 96.4 |
 
 **关键发现：**
 
 - [x] 哪种集成方式性能最优？
-  - **Latent-space WM**（VLA-JEPA）和 **Single-backbone**（UVA）在 LIBERO 上表现最强
-  - VLA-JEPA 在 Spatial（94.4）和 Object（98.6）上领先
-  - UVA 在 Object（100.0）和 Goal（100.0）上达到满分
+  - **Single-backbone**：Cosmos Policy（Avg 98.5）和 MoE/MoT 的 LingBot-VA（Avg 98.5）并列最高
+  - **Decoupled**：Say-Dream-ACT（Avg 98.1）紧随其后
+  - **MoE/MoT**：Motus（97.7）和 LingBot-VA（98.5）都很强
+  - **Latent-space WM**：VLA-JEPA（97.2）和 JEPA-VLA（96.4）表现稳定
+  - 各范式之间差距已不大，说明 integration style 不是唯一决定因素
 - [x] Long-horizon 任务上的主要瓶颈？
-  - Long-horizon 分数普遍低于其他子任务（多数方法 Long < 85）
-  - 误差累积 + 长时程 credit assignment 仍是核心难点
+  - Long 列仍是多数方法的最低分（如 TriVLA 73.2, DreamVLA 89.5）
+  - 最强方法已突破 95+（LingBot-VA 98.5, Cosmos Policy 97.6, Motus 97.6）
+  - 误差累积 + 长时程 credit assignment 仍是结构性难点
   - 论文指出：large-scale data diversity 和 contact-rich interactions 在 long-horizon 场景尤为缺乏
 
 ---
