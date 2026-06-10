@@ -724,11 +724,11 @@ WM 不仅用于训练 policy，还可作为 **safety evaluator / policy validato
 
 > 论文将 Benchmark 分为三类，找出每类的定义和代表：
 
-| 类别 | 评测目标 | 代表 Benchmark |
-|------|---------|---------------|
-| Open-loop 预测质量 | | RBench, EWMBench... |
-| Closed-loop 任务效用 | | WorldArena, WorldGym... |
-| 物理一致性诊断 | | WorldSimBench, WoW-World-Eval... |
+| 类别               | 评测目标 | 代表 Benchmark                     |
+| ---------------- | ---- | -------------------------------- |
+| Open-loop 预测质量   |      | RBench, EWMBench...              |
+| Closed-loop 任务效用 |      | WorldArena, WorldGym...          |
+| 物理一致性诊断          |      | WorldSimBench, WoW-World-Eval... |
 
 **关键问题：**
 
