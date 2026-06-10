@@ -732,7 +732,7 @@ WM 不仅用于训练 policy，还可作为 **safety evaluator / policy validato
 
 **关键问题：**
 
-- [ ] 为什么视觉真实度（visual realism）不等于 WM 质量？
+- [x] 为什么视觉真实度（visual realism）不等于 WM 质量？
 - [ ] 什么是"action-grounded"评测？
 
 ---
