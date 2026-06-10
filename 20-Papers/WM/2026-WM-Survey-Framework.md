@@ -540,50 +540,116 @@ World Model（广义）
 
 ## 🎮 Section 4 — World Model as Simulator（WM 作为仿真器）
 
-> **核心问题**：如何用 WM 代替真实环境进行强化学习训练？
+> **核心问题**：WM 直接充当交互式仿真环境，供 RL 训练和 policy 评估使用。
 
-### 4.1 WM 用于强化学习
+### 4.1 WM 用于强化学习 (World Model for Reinforcement Learning)
 
-**需要找的信息：**
+#### 核心范式
 
-- [ ] WM 作为仿真器的基本范式是什么？
-- [ ] 训练流程：如何在 WM 内部进行 RL？
-- [ ] 代表方法？（如 Dreamer 系列, DreamerV1/V2/V3）
-- [ ] WM-RL 的核心挑战：模型偏差如何影响 policy？
+与 Section 3 的区别：Section 3 中 WM 提供预测/监督/先验来增强 policy；Section 4 中 WM 直接替代真实环境，policy 在 WM 内部做 rollout、收集奖励、迭代优化。
 
-**关键公式：**
+```
+┌───────────────────────────────────────────────────┐
+│  World Model for RL                               │
+│                                                   │
+│  [World Model] ←── action ──── [Policy Model]    │
+│       │                              ↑            │
+│       ├─→ imagined observation ──────┘            │
+│       ├─→ reward signal                           │
+│       └─→ termination signal                      │
+│                                                   │
+│  Policy 在 WM 内部做 rollout 并优化                │
+└───────────────────────────────────────────────────┘
+```
 
-- [ ] WM 的预测目标函数是什么？
-- [ ] RL 的优化目标如何在 WM 内定义？
+WM 作为 learned simulator 提供：imagined transitions + reward signals + termination signals。Policy 通过最大化 imagined rollout 的期望回报来优化。
+
+#### 两个关键设计问题
+
+1. **WM 必须与 policy 共同演化** — learned simulator 需要和 policy 一起迭代改进（dual function）
+2. **环境忠实度（fidelity）** — 模型偏差会累积，影响 sim-to-real transfer
+
+#### 代表方法
+
+**Latent-space RL：**
+
+| 方法 | 核心特点 |
+|------|---------|
+| DreamerV1/V2/V3 | 在 latent space 做完整 MBRL；V3 通用化到多种任务 |
+| TD-MPC2 | temporal difference + model-predictive control 混合 |
+| GRPO / PanguRL | 把 RL 更新适配到 flow-based action heads |
+| WorldRL-Flex | 灵活的 RL-WM 耦合框架 |
+| GreenRobotLM | world-model-based RL 接入预训练 VLA |
+
+**Video/pixel-space RL：**
+
+| 方法 | 核心特点 |
+|------|---------|
+| DWA (Chandak et al., 2026) | 大规模数据训练 online WM，达到 RL-level policy |
+| WorldRL (Ding et al., 2025) | 高保真操作任务 WM-RL |
+| WorldVLA-R | 视频 WM 内做 RL fine-tuning |
+| VLAW (Guo et al., 2026) | 交替 WM 数据收集与 RL 优化 |
+| WMPO (Rao et al., 2026) | joint state-space imagination + reward prediction |
+
+#### 核心挑战
+
+| 挑战 | 描述 |
+|------|------|
+| 模型偏差累积 | 长 horizon rollout 时误差复合，policy 在真实环境退化 |
+| Reward 建模 | WM 需准确估计 reward 和 termination，不只是状态转移 |
+| WM-Policy 共演化 | 两者需交替改进，单独优化任一方都不够 |
+| Sim-to-real gap | 即使 WM 高保真，与物理世界仍有差距 |
 
 ---
 
-### 4.2 规划与模型预测控制
+### 4.2 WM 用于评估 (World Model for Evaluation)
 
-**需要找的信息：**
+#### 核心思想
 
-- [ ] 如何用 WM 做 planning？（MPC 范式）
-- [ ] 代表方法？
-- [ ] 规划 horizon 对性能的影响？
+WM 不仅用于训练 policy，还可作为 **safety evaluator / policy validator**：在部署前或运行时，用 WM 模拟候选动作的后果，进行筛选和验证。
 
----
+```
+┌───────────────────────────────────────────────────┐
+│  World Model for Evaluation                       │
+│                                                   │
+│  Scene → [World Model] → imagined outcomes        │
+│           multiple candidate actions              │
+│                   ↓                               │
+│  [Policy Model] ← select best / validate safety  │
+└───────────────────────────────────────────────────┘
+```
 
-### 4.3 WM 用于数据增强与验证
+#### 与 4.1 的区别
 
-**需要找的信息：**
+| 维度 | 4.1 WM for RL | 4.2 WM for Evaluation |
+|------|--------------|----------------------|
+| 目标 | 优化 policy 参数 | 评估/排序已有 policy |
+| 交互方式 | 完整训练循环 | 一次性 rollout + 打分 |
+| 关键输出 | 梯度更新 | 安全判断 / 质量评分 |
 
-- [ ] WM 如何生成合成训练数据？
-- [ ] 用于 policy 评估的方式？
-- [ ] 相关方法？（如 WorldFomo, WoW）
+#### 评估模式
 
----
+1. **Policy ranking / selection** — 在 WM 中让多个候选 policy rollout，选择表现最优者
+2. **Safety validation** — 模拟极端场景，检测 policy 是否产生危险动作
+3. **Runtime monitoring** — 部署时用 WM 预判下一步后果，拦截潜在错误
+4. **Offline policy evaluation** — 无需真实交互，用 WM 估计 policy 的期望表现
 
-### 4.4 WM 作为评估器
+#### 代表方法
 
-**需要找的信息：**
+| 方法 | 核心特点 |
+|------|---------|
+| WorldFomo | WM-based offline policy evaluation；用世界模型估计 policy 效用 |
+| VLA-RST (Storr et al., 2025) | video reward 用于策略验证和反馈 |
+| WorldGym | 探索 WM 能否完全替代真实环境进行评估 |
+| BISE (Wang et al., 2025) | 通过 appearance yields 增强评估真实性 |
+| HEPA | 基于 WM 的 policy competition / benchmark |
+| GigaSim | WM-based simulation 用于大规模策略评估 |
 
-- [ ] 用 WM 评估 policy 的可行性？
-- [ ] 与真实环境评估的对比？
+#### 关键洞察
+
+- 评估者不仅是 scorer，更是 **judge** — 需判断动作是否安全、合理、可执行
+- 核心价值：**无需真实世界交互即可大规模测试 policy**
+- 当前瓶颈：WM 的 fidelity 直接决定评估可信度；低保真 WM 可能给出误导性评分
 
 ---
 
