@@ -532,62 +532,164 @@ WM 不仅用于训练 policy，还可作为 **safety evaluator / policy validato
 
 ## 🎬 Section 5 — World Model for Robotic Video Generation
 
-> **核心问题**：视频生成型 WM 如何服务于具身机器人？
+> **核心问题**：如何构建面向机器人的视频世界模型——不只是视觉真实，更要 action-conditioned、physically plausible、对下游决策有用？
+
+#### 与 Section 3/4 的定位区别
+
+| Section | WM 的角色 | 视频生成的作用 |
+|---------|---------|-------------|
+| §3 | 辅助 policy 学习（预测/先验/监督） | 视频是内部表征或训练信号 |
+| §4 | 替代真实环境做 RL/评估 | 视频是 simulator 的输出 |
+| **§5** | **视频生成本身就是 WM 的主要形态** | 视频是面向机器人的可控预测产物 |
+
+#### Section 5 演进路线
+
+```
+5.2 Imagination → 5.3 Controllability → 5.4 Structure → 5.5 Foundation
+(想象监督)        (动作可控)           (几何/交互先验)   (基础世界模型)
+```
+
+---
 
 ### 5.1 问题设定与范围
 
-**需要找的信息：**
-
-- [ ] 本节的视频 WM 和前几节有何不同定位？
-- [ ] 机器人视频生成的特殊要求？（图示 Figure —— 找 Section 5 的 figure）
-
----
-
-### 5.2 视频生成作为策略学习的想象空间
-
-**需要找的信息：**
-
-- [ ] "Imagination-based" 的核心思路？
-- [ ] 代表方法？（如 Dreamer, UniPi, ManipDreamer）
-- [ ] Table 2 的对比——找该表格
+- 机器人视频 WM = 在 image/video space 中稠密表示未来的模型
+- 与通用视频生成的区别：必须是 action-conditioned，必须对下游决策有用
+- 视频 WM 的价值取决于是否保留：**action composition / interaction structure / physics**
+- 核心瓶颈不是"生成逼真视频"，而是生成**因果对齐、物理一致、可执行**的未来
 
 ---
 
-### 5.3 动作可控视频世界模型
+### 5.2 视频生成作为策略学习的想象空间 (Imagination for Policy Learning)
 
-**需要找的信息：**
+> 第一代方法：把视频生成当作 imagination engine，为 policy 提供监督或合成经验。
 
-- [ ] 从"视觉真实"到"动作可控"的转变是什么？
-- [ ] 代表方法？（如 IRASim, RoboEnvision, RoboMaster, Ctrl-World）
-- [ ] 如何实现动作条件化生成？
+#### 核心思路
+
+- 生成未来任务轨迹（视频形式）
+- 通过 IDM 或 latent action recovery 连接到 policy
+- 也可作为 synthetic demonstration 用于数据增强和泛化
+
+#### 代表方法
+
+| 方法 | 核心特点 |
+|------|---------|
+| UniPi (Du et al., 2023) | 最早把视频生成用于机器人规划的代表性工作 |
+| Video Language Planning | 语言条件化的视频规划 |
+| ManipDreamer | 操作任务的视频想象 |
+| DreamGen (Jiang et al., 2025a) | 强视频生成器适配到 target embodiment，合成 neural 轨迹并恢复动作 |
+| Dreaminate | object-centric residual RL 连接视频想象与物理执行 |
+
+#### 关键信息
+
+- 当 future generation 以 task/language 为条件时，生成的视频可作为：high-level demonstration surrogate / task-relevant synthetic supervision / visual plans for long-horizon decision
+- 核心信息：更强的视频 WM 不仅能正则化 policy，还能产生合成经验来改善下游泛化
 
 ---
 
-### 5.4 带交互与几何先验的结构化生成
+### 5.3 动作可控视频世界模型 (Action-Controllable Video World Models)
 
-**需要找的信息：**
+> 从"想象监督"转向"显式可控性"：生成的未来必须忠实跟随命令的动作序列。
 
-- [ ] 引入结构先验（接触、几何、多视角）的动机？
-- [ ] 代表方法？（如 Mask2IV, TesserAct, RoboVIP）
+#### 核心转变
+
+- 不再只问"视频看起来真实吗"
+- 而是问"生成的未来是否忠实响应动作输入"
+- 在 embodied 场景中，视觉逼真但不响应动作的 rollout 对决策价值有限
+
+#### 代表方法
+
+| 方法 | 核心特点 |
+|------|---------|
+| IRASim (Zhu et al., 2025b) | 把操作形式化为 trajectory-to-video；frame-level action conditioning |
+| RoboEnvision (Yang et al., 2025) | 长时程多任务操作；preserving semantic/temporal consistency |
+| RoboMaster (Fu et al., 2026) | 分解操作为多阶段；建模 robot arm + object 的耦合运动；rich contact dynamics |
+| Ctrl-World (Guo et al., 2026b) | 联合 multi-view prediction + frame-level action + memory-based long-horizon generation |
+| EnerVerse-AC (Jiang et al., 2025c) | action-conditional multi-view generator；同时做 data engine 和 evaluator |
+| Interactive World Simulator (Wang et al., 2026a) | 高频、长时程、stable policy-conditioned interaction；closed-loop rollout + policy evaluation |
+| EVA (Wang et al., 2026b) | post-training alignment：用 inverse-dynamics rewards 弥合 visual plausibility 与 physical executability 的 gap |
+
+#### 关键洞察
+
+- Fidelity 越来越不只用 realism 衡量，而是用 **action faithfulness + controllable interaction + usefulness for closed-loop decision**
+- 这些工作标志着一个概念转变：从"生成好看的视频"到"生成可用于决策的视频"
 
 ---
 
-### 5.5 从视频骨干到基础世界模型
+### 5.4 带交互与几何先验的结构化生成 (Structure-Aware Generation)
 
-**需要找的信息：**
+> 不只依赖低维动作条件化，还引入 masks / geometry / viewpoints / identity cues 等结构先验。
 
-- [ ] "Foundation World Model"的含义是什么？
-- [ ] 代表方法？（如 Vid2World, DreamDojo, UnifoLM-WMA-0, Cosmos Predict 2.5）
-- [ ] 与前几类方法的核心区别？
+#### 动机
+
+- 纯动作条件化可能不够：模型需要理解交互结构（接触、抓取、多视角一致性）
+- 引入结构先验 → 生成的未来更 controllable、跨视角一致、物理合理
+
+#### 代表方法
+
+| 方法 | 核心特点 |
+|------|---------|
+| Mask2IV (Li et al., 2025a) | 两阶段：先预测 actor-object interaction trajectories，再据此生成视频；flexible control over interaction |
+| TesserAct (Zhen et al., 2025) | 从 2D 扩展到 4D embodied world model（RGB + depth + normal signals）；spatial consistency + stronger inverse dynamics |
+| RoboVIP (Wang et al., 2026a) | 引入 visual identity prompting 引导 multi-view video diffusion；temporally coherent multi-view observations |
+
+#### 与 symbolic world modeling 的联系
+
+- 部分方法把 world modeling 抽象为 predicates / object relations / affordances / causal processes
+- 不追求提升 visual fidelity，而是追求更 compact + compositional 的 predictive variables
+- 这些方法可能更适合 long-horizon reasoning 和 executable control
+
+---
+
+### 5.5 从视频骨干到基础世界模型 (From Video Backbones to Foundation World Models)
+
+> 最新趋势：把机器人视频 WM 重新定义为 general-purpose interactive predictors，基于大规模视频 backbone 构建可复用的基础层。
+
+#### 核心转变
+
+- 视频生成不再是 downstream augmentation tool
+- 而是成为 simulation / planning / evaluation / large-scale data production 的 **reusable foundation layer**
+
+#### 代表方法
+
+| 方法 | 核心特点 |
+|------|---------|
+| Vid2World (Huang et al., 2026) | 系统性地把预训练 video diffusion model 转化为 interactive world model |
+| Genie Envisioner (Liao et al., 2026) | 统一 video world modeling + action decoding for robotic manipulation |
+| DreamDojo (Gao et al., 2026a) | 大规模人类 egocentric 视频预训练；continuous latent actions + post-training for target embodiments |
+| WoW (Chi et al., 2025c) | 物理直觉不能只靠 passive video；用 extensive robot interaction trajectories 训练 + inverse dynamics |
+| ABot-PhysWorld (Chen et al., 2026d) | physics-aligned world foundation model；physically grounded 3D branch |
+| UnifoLM-WMA-0 (Unitree, 2025) | 平台级可复用 world model |
+| Cosmos Predict 2.5 (Ali et al., 2025) | 可复用 world backbone |
+| GigaWorld-0 (Team et al., 2025b) | data-engine 视角：controllable video branch + physically grounded 3D branch |
+
+#### 关键信息
+
+- 视频生成越来越不被当作独立生成任务，而是作为 **interactive world modeling 的 foundation layer**
+- 核心要求从 visual realism 扩展到：action faithfulness + controllable interaction + usefulness for closed-loop decision
 
 ---
 
 ### 5.6 技术演进与开放挑战
 
-**需要找的信息：**
+#### 三代演进
 
-- [ ] 论文总结的演进路径是什么？（早期→中期→当前前沿）
-- [ ] 当前最核心的开放挑战？
+| 阶段 | 代表 | 核心关注 |
+|------|------|---------|
+| 第一代：Imagination | Dreaminate, ManipDreamer, DreamGen, PhysWorld | 视频生成作为想象监督 |
+| 第二代：Controllability | IRASim, RoboMaster, Ctrl-World, EnerVerse-AC, Interactive World Simulator, EVA | 动作对齐、可控性、可执行性 |
+| 第三代：Foundation | Vid2World, DreamDojo, WoW, ABot-PhysWorld, UnifoLM-WMA-0, Cosmos Predict 2.5, GigaWorld-0 | 可复用基础层 |
+| 并行线：Structure | Mask2IV, TesserAct, RoboVIP | masks / geometry / multi-view identity |
+
+#### 当前核心瓶颈
+
+不再是"生成逼真视频"，而是：
+- **Causal alignment** — 生成的未来必须与 robot actions 因果对齐
+- **Physical/kinematic self-consistency** — 跨视角一致、长时程稳定
+- **Executability** — 生成结果必须足够精确以支持真实 policy improvement
+- **Interaction stability** — 在接触、碰撞等交互条件下保持稳定
+
+> 视频生成的真正价值在于：把 future prediction 变成 controllable, interactive, and actionable interface between perception and decision making.
 
 ---
 
