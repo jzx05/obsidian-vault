@@ -763,29 +763,60 @@ WM 不仅用于训练 policy，还可作为 **safety evaluator / policy validato
 	- Obs/3D：是否有多视角、深度、LiDAR、3D 标注等强观测信息
 	- Language：是否有语言/任务条件
 	- M/C：是否有多模态或接触丰富信号，如力、触觉、音频、密集本体感知等
-- [ ] 最重要的数据集有哪些？（2025-2026年）
-- [ ] 缺乏什么类型的数据？
+- [x] 最重要的数据集有哪些？（2025-2026年）
+
+| 数据集 | 特点 |
+|------|------|
+| DROID (Khazatsky et al., 2024) | 多 embodiment、多场景、大规模 real robot |
+| Bridge V2 | 多任务操作、language conditioned |
+| RoboSet (Bharadhwaj et al., 2023) | multi-embodiment 操作 |
+| CALVIN (Mees et al., 2022) | long-horizon language-conditioned benchmark |
+| Galaxea Open World Dataset | cross-embodiment 大规模 |
+| Humanoid ZeroDay | 人形机器人数据 |
+| DROID-Manip 2.1 | 多机型操作增强版 |
+| RoboCasa (Nasiriany et al., 2024) | 模拟 + 真实混合；kitchen 长时程 |
+| TWOWI (2025) | 大规模人类+机器人视频混合 |
+
+- [x] 缺乏什么类型的数据？
+  - **接触丰富信号（M/C）**：大多数数据集缺少力、触觉、音频等 contact-rich 模态
+  - **跨 embodiment 泛化数据**：多数仅覆盖单一机型，跨平台数据稀缺
+  - **长时程交互轨迹**：现有数据多为短片段，缺少 multi-step sequential manipulation
+  - **物理标注（contact dynamics）**：缺少显式标注物体接触状态、力分布等
+  - 论文指出：large-scale robot interaction data 仍是瓶颈；现有数据集的 diversity 远不如自动驾驶或互联网视频领域
 
 ---
 
 ### 7.3 代表性实验结果
 
-**需要找的信息：**
+> 论文按 WM 集成方式分组对比（Table 5，LIBERO standard long-horizon setting）：
 
-> 论文按 WM 集成方式分组对比（见 Table 5 & 6）：
-
-| 组别 | 代表方法 | LIBERO 均分 |
-|------|---------|-----------|
-| Decoupled | UniPi, VidMan | |
-| Single-backbone | UVA, VideoPolicyy | |
-| MoE/MoT | Motus, LingBot-VLA | |
-| Unified VLA | DreamVLA, CoWVLA | |
-| Latent-space WM | VLA-JEPA, JEPA-VLA | |
+| 组别 | 代表方法 | Spatial | Object | Goal | Long | Avg |
+|------|---------|---------|--------|------|------|-----|
+| Decoupled | UniPi (2023) | | | | | |
+| | SteamVLA (Lin et al., 2025) | 84.2 | 96.8 | 84.8 | 90.6 | 89.1 |
+| | RoboFlamingo (Li et al., 2024a) | 64.8 | 90.2 | 76.4 | 79.2 | 77.7 |
+| Single-backbone | Cosmos Policy (Nvidia, 2025) | | | | | |
+| | UVA (Huang et al., 2025) | 88.1 | 100.0 | 100.0 | 82.1 | 92.6 |
+| | LRSM-D (Shrestha et al., 2025b) | | 86.7 | | | 80.5 |
+| MoE/MoT | Motus | | | | | |
+| | LingBot-VA (Ling et al., 2025b) | 86.2 | 96.1 | 87.6 | 74.8 | 86.2 |
+| Unified VLA | DreamVLA (Wen et al., 2025a) | 77.2 | 93.6 | | | |
+| | CoWVLA (Yuan et al., 2025) | 84.8 | 90.4 | | | |
+| | UniVLA (Zhao et al., 2025d) | 91.4 | 88.8 | | | |
+| | F1 (Li et al., 2025c) | 84.8 | 93.4 | | | |
+| Latent-space WM | VLA-JEPA (Yang, 2025) | 94.4 | 98.6 | | | |
+| | JEPA-VLA (Chen, 2025) | | | | | |
 
 **关键发现：**
 
-- [ ] 哪种集成方式性能最优？
-- [ ] Long-horizon 任务上的主要瓶颈？
+- [x] 哪种集成方式性能最优？
+  - **Latent-space WM**（VLA-JEPA）和 **Single-backbone**（UVA）在 LIBERO 上表现最强
+  - VLA-JEPA 在 Spatial（94.4）和 Object（98.6）上领先
+  - UVA 在 Object（100.0）和 Goal（100.0）上达到满分
+- [x] Long-horizon 任务上的主要瓶颈？
+  - Long-horizon 分数普遍低于其他子任务（多数方法 Long < 85）
+  - 误差累积 + 长时程 credit assignment 仍是核心难点
+  - 论文指出：large-scale data diversity 和 contact-rich interactions 在 long-horizon 场景尤为缺乏
 
 ---
 
