@@ -720,20 +720,34 @@ WM 不仅用于训练 policy，还可作为 **safety evaluator / policy validato
 
 ### 7.1 评测体系（三类 Benchmark）
 
-**需要找的信息：**
+#### 核心评价哲学：Action-Grounded Evaluation
 
-> 论文将 Benchmark 分为三类，找出每类的定义和代表：
+> 评估 WM 的标准不是"生成的视频看起来真不真实"，而是"生成的未来是否忠实于动作输入、是否能支撑下游决策"。
 
-| 类别               | 评测目标 | 代表 Benchmark                     |
-| ---------------- | ---- | -------------------------------- |
-| Open-loop 预测质量   |      | RBench, EWMBench...              |
-| Closed-loop 任务效用 |      | WorldArena, WorldGym...          |
-| 物理一致性诊断          |      | WorldSimBench, WoW-World-Eval... |
+**为什么 visual realism ≠ WM 质量？**
+- 一个视频可以看起来逼真，但不响应动作、违背物理因果、无法被 policy 用于决策
+- 原文：visual realism alone is neither necessary nor sufficient — rollouts may look convincing while still violating dynamics in ways that break closed-loop control
 
-**关键问题：**
+**Action-grounded 评测关注的维度：**
 
-- [x] 为什么视觉真实度（visual realism）不等于 WM 质量？
-- [ ] 什么是"action-grounded"评测？
+| 维度 | 含义 |
+|------|------|
+| Action faithfulness | 生成的未来是否忠实响应输入的动作序列 |
+| Temporal coherence | 时间上是否连贯、不跳帧 |
+| Physical consistency | 是否遵守物理规律（接触、碰撞、重力） |
+| Controllability | 是否可被动作精确控制 |
+| Executability | 生成的轨迹是否真正可被机器人执行 |
+| Decision utility | 预测是否对 policy ranking / planning / evaluation 有用 |
+
+#### 三层评测体系
+
+| 层级 | 评测问题 | 代表 Benchmark |
+|------|---------|--------------|
+| Open-loop 预测质量 | 生成的未来是否忠实于 action command？ | RBench, EWMBench, DreamGen Bench, EVA-Bench |
+| Closed-loop 任务效用 | 预测放进交互决策循环后是否仍有用？ | WorldArena, WorldEval, WorldGym, World-in-World |
+| 物理一致性诊断 | 生成的 rollout 是否 physically grounded 和 operationally executable？ | WorldSimBench, WoW-World-Eval, WM-ABench |
+
+> No single metric is sufficient for embodied world model evaluation. A strong world model must not only predict plausible futures, but also preserve the action-relevant structure needed for reliable control.
 
 ---
 
@@ -743,7 +757,12 @@ WM 不仅用于训练 policy，还可作为 **safety evaluator / policy validato
 
 > 论文用多维度分类数据集（见 Table 3 & 4），找出：
 
-- [ ] 数据集的核心维度有哪些？（X-Emb, Action, Obs/3D, Language, M/C）
+- [x] 数据集的核心维度有哪些？（X-Emb, Action, Obs/3D, Language, M/C）
+	- X-Emb： 是否覆盖多个机器人 embodiment
+	- Action：是否有显式动作监督或动作代理
+	- Obs/3D：是否有多视角、深度、LiDAR、3D 标注等强观测信息
+	- Language：是否有语言/任务条件
+	- M/C：是否有多模态或接触丰富信号，如力、触觉、音频、密集本体感知等
 - [ ] 最重要的数据集有哪些？（2025-2026年）
 - [ ] 缺乏什么类型的数据？
 
