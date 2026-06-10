@@ -825,21 +825,123 @@ WM 不仅用于训练 policy，还可作为 **safety evaluator / policy validato
   - 误差累积 + 长时程 credit assignment 仍是结构性难点
   - 论文指出：large-scale data diversity 和 contact-rich interactions 在 long-horizon 场景尤为缺乏
 
+> Table 6 补充（RoboTwin, CALVIN, LIBERO-LH style benchmarks，侧重 long-horizon & cross-embodiment）：
+
+| 组别 | 方法 | RT-4 | 67.6 | CA | 5.0 | 5.6 | 6.0 |
+|------|------|------|------|-----|-----|-----|-----|
+| Decoupled | VidMan (Wen et al., 2024) | — | 95.4 | — | — | — | — |
+| | VPP (Hu et al., 2025) | 34.1 | — | — | — | — | — |
+| | MimicVideo (Pai et al., 2025) | — | — | — | — | 49.8/53.2 | — |
+| Single-backbone | UVA (Li et al., 2025c) | — | — | 50.1/52.9 | — | — | 63.0 |
+| | UD-VLA (Chen et al., 2026b) | — | — | — | 53.1 | — | — |
+| MoE/MoT | Motus (Bi et al., 2025) | 89.7 | 87.6 | — | — | — | — |
+| | LingBot-VA (Li et al., 2026b) | 94.1 | 98.5 | — | — | — | — |
+| Unified VLA | DreamVLA | — | — | — | 51.0 | 5.0 | — |
+| | UFVLA (Zheng et al., 2025) | — | — | 14.7 | — | 4.2 | — |
+| | UniVLA | — | — | — | — | 47.6 | — |
+| | Unified VLA (Wang et al., 2025) | 93.1 | 97.0 | — | — | — | — |
+| | CoWVLA | — | — | 17.3 | 63.4 | — | — |
+| Latent-space WM | VLA-MCA (Sun et al., 2025) | — | — | 17.3 | — | 63.4 | — |
+
+**Table 6 关键观察：**
+- LIBERO 上接近饱和（多数 95+），但在 CALVIN（long-horizon multi-step）和 RoboTwin（cross-embodiment）上差距仍明显
+- long-horizon multi-step 场景（CALVIN 5.0/5.6/6.0）分数普遍低，说明当前 WM-policy 方法仍难以稳定跨越 5+ 步连续执行
+- 论文结论：high performance on single benchmark does not generalize — results are not yet transferable to other settings with real cross-embodiment and longer horizons
+
 ---
 
 ## ⚠️ Section 8 — Challenges & Future Directions
 
-**需要找的信息（逐一填写）：**
+> 尽管 WM 在机器人学习中前景广阔，可靠部署仍面临多个核心挑战。
 
-| 挑战 | 问题描述 | 现有解决方案 | 未来方向 |
-|------|---------|------------|---------|
-| 8.1 因果条件缺口 | WM 预测与机器人动作的因果脱节 | | |
-| 8.2 效率瓶颈 | 推理/训练计算代价高 | | |
-| 8.3 多模态感知瓶颈 | 过度依赖视觉，忽略触觉等 | | |
-| 8.4 ??? | | | |
-| 8.5 ??? | | | |
+### 8.1 因果条件缺口 (Causal Conditioning Gaps)
 
-> 提示：继续阅读 Section 8 补全后几项挑战
+**问题**：当前 VLA 框架常用 future-state prediction 来正则化 policy，但预测的未来更多基于历史上下文或任务意图，而非因果对应到即将执行的机器人动作。模型可能生成语义合理但物理上不忠实于候选动作后果的 futures。
+
+**核心瓶颈**：predictive world-model objectives 往往从 observation history 和 task intent 训练，使预测可以 plausible 但不因果绑定到将执行的动作 → 限制了 closed-loop control 的有效性。
+
+**现有方案**：WorldVLA (Cen et al., 2025) 采用统一训练策略，将 future-state prediction 与 action generation 耦合，鼓励 policy-aligned predictive dynamics。
+
+**未来方向**：需要更强的因果条件化机制，确保预测的是"在机器人执行这个动作后世界会怎样"，而非仅仅"一个合理的未来"。
+
+---
+
+### 8.2 效率瓶颈 (Efficiency Bottlenecks)
+
+**问题**：WM-based policies 比纯 VLA 计算代价高得多（训练和推理），因为模型需要联合预测视频/状态和动作，或做 iterative denoising。
+
+**具体表现**：
+- 大模型需 fine-tuning 代价高昂，adaptation 到新环境困难
+- Diffusion-based video prediction 的 iterative denoising 导致高延迟
+- 训练和推理都需要显著更多计算
+
+**现有方案**：
+- Lightweight adapters（保持 base model frozen）
+- Partial denoising：Mimic Video, LingBot-VA 只做部分去噪，抓关键 motion dynamics
+- Latent-space models：LeWorld-Model 等直接在 predictive representations 上操作，避免 full high-dimensional generation
+- Fast-WAM：训练时用 world modeling 增强表征，推理时完全去掉 WM
+
+**未来方向**：从根本上重新思考 WM 架构——是否需要 full reconstruction？能否在推理时完全消除 WM 开销而只保留训练时的表征收益？
+
+---
+
+### 8.3 多模态感知瓶颈 (Multi-Modal Perception Bottlenecks)
+
+**问题**：当前 WM 在视觉合成上表现出色，但与真实世界物理动力学脱节。过度依赖视觉，忽略了摩擦、刚度、接触稳定性等不可观测属性。
+
+**核心差距**：tactile / force / proprioception 等 contact-rich 信号对精确操作至关重要，但当前 WM 几乎不利用它们。
+
+**架构挑战**：触觉信号是高频瞬态事件，低维度，在 joint latent optimization 中容易被高维视觉特征稀释或淹没。
+
+**现有方案**：vision-tactile models (Higuera et al., 2026; Zheng et al., 2026) 开始通过学习 joint latent representations 来增强 contact-rich tasks 的鲁棒性。
+
+**未来方向**：有效平衡异质输入，确保 sparse visual semantics 与 dense physical feedback 融合——迈向 physics-aware robotic intelligence。
+
+---
+
+### 8.4 经典控制集成 (Classical Control Integration)
+
+**问题**：WM 通过 MPC 做前向规划时，iterative rollout 带来巨大计算开销，限制了高容量模型的实时部署。
+
+**核心矛盾**：
+- WM 可捕获 agent-environment 的随机联合演化
+- 但 neural expressivity 难以与 formal control guarantees（如 Lyapunov stability, robust control）调和
+
+**现有方案**：Jia et al. (2025a) 探索 Lyapunov stability 或 robust control 与 learned dynamics 的融合。
+
+**未来方向**：将 learned dynamics 与现有 mature control principles（不只是 MPC）融合，构建可在 non-stationary, open-world settings 中自适应的机器人系统。
+
+---
+
+### 8.5 符号结构集成 (Symbolic Structure Integration)
+
+**问题**：pixel-based rollouts 在 long-horizon 任务中误差累积会降低 planning reliability。当前 WM 主要处理像素/latent，难以做 compositional prediction。
+
+**Symbolic WM 的优势**：
+- 抽象掉低层细节，建模 discrete / rule-based transitions
+- 在 extended horizons 上推理更可靠
+- 支持 compositional generalization
+
+**局限**：symbolic representations 难以处理高维观测无法干净映射到 predefined symbols 的情况。
+
+**未来方向**：构建 hybrid world models——结合 learned perceptual representations 与 symbolic structure (Liang et al., 2026; Shah et al., 2025)。Object-centric 或 relational abstractions + symbolic constraints in generative models → 可扩展且可靠的 long-horizon world modeling。
+
+---
+
+### 8.6 评估指标的开放挑战 (Open Challenges in Evaluation Metrics)
+
+**问题**：embodied WM 缺乏广泛接受的统一评估框架。与视频生成追求 perceptual fidelity 不同，机器人 WM 应以 functional value for decision making 为评判标准。
+
+**核心矛盾**：
+- 视觉逼真 ≠ action-conditioned dynamics / causal consistency / controllability
+- Visual realism does not necessarily preclude utility for planning or policy evaluation
+- 评估维度本质上是 multi-dimensional（predictive quality / action sensitivity / long-horizon consistency / control utility）
+
+**现有问题**：当前 benchmarks 和 protocols 碎片化，跨任务/跨 embodiment 的一致比较困难。
+
+**未来方向**：建立 function-aware evaluation frameworks——jointly assess predictive realism, action sensitivity, long-horizon consistency, and control utility。建立 compact standardized metrics（task success, policy-ranking fidelity, executability-oriented diagnostics）以区分 visually plausible models 和 truly actionable ones。
+
+---
 
 ---
 
@@ -863,12 +965,12 @@ WM 不仅用于训练 policy，还可作为 **safety evaluator / policy validato
 
 - [x] 摘要 & Introduction（了解整体定位）
 - [x] Section 2（背景概念）
-- [ ] Section 3（WM for Policy）→ **当前位置**
-- [ ] Section 4（WM as Simulator）
-- [ ] Section 5（WM for Video）
+- [x] Section 3（WM for Policy）
+- [x] Section 4（WM as Simulator）
+- [x] Section 5（WM for Video）
 - [ ] Section 6（其他应用）
-- [ ] Section 7（Benchmarks）
-- [ ] Section 8（挑战与未来）
+- [x] Section 7（Benchmarks）
+- [x] Section 8（挑战与未来）
 
 ---
 
