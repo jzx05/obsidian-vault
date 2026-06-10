@@ -652,16 +652,17 @@ WM 不仅用于训练 policy，还可作为 **safety evaluator / policy validato
 
 #### 代表方法
 
-| 方法 | 核心特点 |
-|------|---------|
-| Vid2World (Huang et al., 2026) | 系统性地把预训练 video diffusion model 转化为 interactive world model |
-| Genie Envisioner (Liao et al., 2026) | 统一 video world modeling + action decoding for robotic manipulation |
-| DreamDojo (Gao et al., 2026a) | 大规模人类 egocentric 视频预训练；continuous latent actions + post-training for target embodiments |
-| WoW (Chi et al., 2025c) | 物理直觉不能只靠 passive video；用 extensive robot interaction trajectories 训练 + inverse dynamics |
-| ABot-PhysWorld (Chen et al., 2026d) | physics-aligned world foundation model；physically grounded 3D branch |
-| UnifoLM-WMA-0 (Unitree, 2025) | 平台级可复用 world model |
-| Cosmos Predict 2.5 (Ali et al., 2025) | 可复用 world backbone |
-| GigaWorld-0 (Team et al., 2025b) | data-engine 视角：controllable video branch + physically grounded 3D branch |
+| 方法                                    | 核心特点                                                                                    |
+| ------------------------------------- | --------------------------------------------------------------------------------------- |
+| Vid2World (Huang et al., 2026)        | 系统性地把预训练 video diffusion model 转化为 interactive world model                              |
+| Genie Envisioner (Liao et al., 2026)  | 统一 video world modeling + action decoding for robotic manipulation                      |
+| DreamDojo (Gao et al., 2026a)         | 大规模人类 egocentric 视频预训练；continuous latent actions + post-training for target embodiments |
+| WoW (Chi et al., 2025c)               | 物理直觉不能只靠 passive video；用 extensive robot interaction trajectories 训练 + inverse dynamics |
+| ABot-PhysWorld (Chen et al., 2026d)   | physics-aligned world foundation model；physically grounded 3D branch                    |
+| UnifoLM-WMA-0 (Unitree, 2025)         | 平台级可复用 world model                                                                      |
+| Cosmos Predict 2.5 (Ali et al., 2025) | 可复用 world backbone                                                                      |
+| GigaWorld-0 (Team et al., 2025b)      | data-engine 视角：controllable video branch + physically grounded 3D branch                |
+|                                       |                                                                                         |
 
 #### 关键信息
 
