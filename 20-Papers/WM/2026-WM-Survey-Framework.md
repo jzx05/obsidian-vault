@@ -312,9 +312,10 @@ World Model（广义）
 
 **第一类：并行 expert coupling**
 
-| 方法 | 特点 |
-|------|------|
+| 方法     | 特点                                                                               |
+| ------ | -------------------------------------------------------------------------------- |
 | GE-Act | 预训练 video diffusion backbone + 轻量 action branch；deep cross-attention 注入视频 latent |
+|        |                                                                                  |
 
 **第二类：Mixture-of-Transformers 式深交互**
 
