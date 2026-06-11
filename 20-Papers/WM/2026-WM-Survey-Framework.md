@@ -131,7 +131,7 @@ World Model（广义）
 ┌───────────────────────────────────────────────────────┐
 │  Visuomotor Policy                                    │
 │                                                       │
-│  [Image o_t] ──→ [ Encoder + Policy Net ] ──→ [a_t]  │
+│  [Image o_t] ──→ [ Encoder + Policy Net ] ──→ [a_t]   │
 │                   (Diffusion / ACT / ...)             │
 │                                                       │
 │  特点: 端到端, 无语言, 任务专用                         │
@@ -140,21 +140,22 @@ World Model（广义）
 ┌───────────────────────────────────────────────────────┐
 │  VLA (Vision-Language-Action)                         │
 │                                                       │
-│  [Image o_t] ─┐                                      │
-│               ├─→ [ VLM Backbone ] ─→ [Action Head]  │
-│  [Language l] ─┘   (RT-2/OpenVLA/π0)      ──→ [a_t]  │
+│  [Image o_t] ─┐                                       │
+│               ├─→ [ VLM Backbone ] ─→ [Action Head]   │
+│  [Language l]─┘   (RT-2/OpenVLA/π0)      ──→ [a_t]    │
 │                                                       │
-│  特点: 预训练VLM, 支持语言指令, 通用性强                │
+│  特点: 预训练VLM, 支持语言指令, 通用性强                 │
 └───────────────────────────────────────────────────────┘
 ```
 - [x] 当前 Policy 的主要局限是什么？
 
 **关键方法列表：**
 
-| Policy 类型 | 代表方法 | 特点 |
-|------------|---------|------|
-| Visuomotor | [[30-Notes/concepts/Diffusion-Policy\|Diffusion Policy]], ACT, RDT-1B | 端到端图像→动作；建模多模态动作分布；Action Chunking |
-| VLA | RT-2, OpenVLA, π0 | 预训练 VLM backbone + action head；支持语言指令 |
+| Policy 类型  | 代表方法                                                                  | 特点                                    |
+| ---------- | --------------------------------------------------------------------- | ------------------------------------- |
+| Visuomotor | [[30-Notes/concepts/Diffusion-Policy\|Diffusion Policy]], ACT, RDT-1B | 端到端图像→动作；建模多模态动作分布；Action Chunking    |
+| VLA        | RT-2, OpenVLA, π0                                                     | 预训练 VLM backbone + action head；支持语言指令 |
+|            |                                                                       |                                       |
 
 ---
 
