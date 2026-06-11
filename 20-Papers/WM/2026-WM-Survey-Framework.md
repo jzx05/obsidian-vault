@@ -823,7 +823,7 @@ WM 不仅用于训练 policy，还可作为 **safety evaluator / policy validato
   - **Decoupled**：Say-Dream-ACT（Avg 98.1）紧随其后
   - **MoE/MoT**：Motus（97.7）和 LingBot-VA（98.5）都很强
   - **Latent-space WM**：VLA-JEPA（97.2）和 JEPA-VLA（96.4）表现稳定
-  - 各范式之间差距已不大，说明 integration style 不是唯一决定因素
+  - 各范式之间差距已不大（最高 98.5 vs 最低 87.0），说明集成方式不是唯一决定因素，数据规模和训练策略同样关键
 - [x] Long-horizon 任务上的主要瓶颈？
   - Long 列仍是多数方法的最低分（如 TriVLA 73.2, DreamVLA 89.5）
   - 最强方法已突破 95+（LingBot-VA 98.5, Cosmos Policy 97.6, Motus 97.6）
