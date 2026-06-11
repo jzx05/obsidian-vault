@@ -165,13 +165,13 @@ World Model（广义）
 
 #### Section 3 范式递进总览
 
-| 子节 | 范式 | WM 与 Policy 关系 | 代表 |
-|------|------|------------------|------|
-| 3.2 | Decoupled IDM | WM 先预测未来 → IDM 反推动作（串联） | UniPi, VidMan |
-| 3.3 | Single Backbone | 同一 backbone 联合生成未来视觉 + 动作 | UVA, VideoVLA |
-| 3.4 | MoE/MoT Expert | 多 expert 保留分工，层间持续交互 | Motus, DiT4DiT |
-| 3.5 | Latent-Space WM | 不做像素预测，在表示空间构造 future target | VLA-JEPA, FLARE |
-| 3.6 | Unified VLA | VLA 自身内化 predictive structure | DreamVLA, WorldVLA |
+| 子节  | 范式              | WM 与 Policy 关系                | 代表                 |
+| --- | --------------- | ----------------------------- | ------------------ |
+| 3.2 | Decoupled IDM   | WM 先预测未来 → IDM 反推动作（串联）       | UniPi, VidMan      |
+| 3.3 | Single Backbone | 同一 backbone 联合生成未来视觉 + 动作     | UVA, VideoVLA      |
+| 3.4 | MoE/MoT Expert  | 多 expert 保留分工，层间持续交互          | Motus, DiT4DiT     |
+| 3.5 | Latent-Space WM | 不做像素预测，在表示空间构造 future target  | VLA-JEPA, FLARE    |
+| 3.6 | Unified VLA     | VLA 自身内化 predictive structure | DreamVLA, WorldVLA |
 
 > 递进主线：从"外挂 WM 模块"逐步走向"WM 能力内生于 policy backbone"。
 
@@ -181,11 +181,11 @@ World Model（广义）
 
 - [x] WM 给 policy 带来的核心优势是什么？
 
-| 优势 | 含义 | 价值 |
-|------|------|------|
-| Foresight | 执行前预判后果 | 避免盲目动作，减少真实环境错误 |
-| Imagination-driven Planning | 想象多条未来轨迹并比较 | 在脑内试错，选出最优方案 |
-| Data Amplification | 合成额外训练轨迹 | 用想象数据训练更鲁棒的策略 |
+| 优势                          | 含义          | 价值              |
+| --------------------------- | ----------- | --------------- |
+| Foresight                   | 执行前预判后果     | 避免盲目动作，减少真实环境错误 |
+| Imagination-driven Planning | 想象多条未来轨迹并比较 | 在脑内试错，选出最优方案    |
+| Data Amplification          | 合成额外训练轨迹    | 用想象数据训练更鲁棒的策略   |
 
 - [x] 论文用什么理论框架解释这种帮助？
   - 概率统一视角（Probabilistic Unification）：p(o~t+1:t+k~, a~t+1:t+k~ | o~t~, l)
