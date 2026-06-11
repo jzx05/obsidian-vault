@@ -22,6 +22,9 @@ priority: high
 - 这带来巨大推理开销（视频解码 + 多步生成）
 - **本文追问**：WAM 的收益到底来自哪里？是训练时的视频建模？还是推理时的未来想象？
 
+## 相关工作 
+VLA 在语义理解很强，但是 action-conditioned dynamics (给定当前状态和动作，预测下一个状态) 不一定好。Fast-WAM 在测试时也像 VLA 一样是直接输出动作的 policy interface，不需要先生成未来视频；但它在训练阶段额外加入了基于未来视觉预测的 world-modeling objective。
+
 ## 方法：Fast-WAM
 
 ### 架构设计
