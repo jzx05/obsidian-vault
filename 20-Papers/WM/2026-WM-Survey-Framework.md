@@ -9,6 +9,8 @@ date: 2026-06-07
 
 # 🗺️ World Model for Robot Learning — 阅读框架
 
+> **一句话总结**：World Model 不只是"预测未来的模块"，而是一种可以被内化为策略骨干、用作仿真器训练、或作为视频生成基础层的统一范式——其核心价值在于把 predictive structure 注入 action generation，使机器人从 reactive mapping 走向 anticipatory decision-making。
+
 > **论文结构速览**：本综述以"WM 在机器人学习中扮演什么角色"为主线，分三大使用场景展开，共 8 个主章节。
 
 ---
