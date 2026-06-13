@@ -24,14 +24,14 @@ priority: high
 
 ## 与 Fast-WAM 的对比
 
-| | Fast-WAM | DiT4DiT |
-|---|---|---|
-| 架构 | MoT（共享 self-attention） | 独立双 DiT + feature extraction |
-| Video→Action 信息流 | Action attend to video 第一帧 KV | Action DiT 读取 Video DiT 中间层 hidden states |
-| 推理时 video 分支 | 完全移除 | 保留（可选 joint inference） |
-| 核心 insight | 训练时 co-training 够了，推理不需要 video | 视频生成是 action quality 的 scaling proxy |
-| Attention coupling | 共享 self-attention（MoT） | 单向 feature conditioning |
-| 预训练基础 | Wan2.5-1B | Cosmos-Tokenizer + OpenSora2.2 |
+|                    | Fast-WAM                       | DiT4DiT                                   |
+| ------------------ | ------------------------------ | ----------------------------------------- |
+| 架构                 | MoT（共享 self-attention）         | 独立双 DiT + feature extraction              |
+| Video→Action 信息流   | Action attend to video 第一帧 KV  | Action DiT 读取 Video DiT 中间层 hidden states |
+| 推理时 video 分支       | 完全移除                           | 保留（可选 joint inference）                    |
+| 核心 insight         | 训练时 co-training 够了，推理不需要 video | 视频生成是 action quality 的 scaling proxy      |
+| Attention coupling | 共享 self-attention（MoT）         | 单向 feature conditioning                   |
+| 预训练基础              | Wan2.5-5B                      | Cosmos-Tokenizer + OpenSora2.2            |
 
 ## 方法：DiT4DiT
 
