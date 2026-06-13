@@ -249,6 +249,8 @@ frame 0: 额外乘以 mask=0 或 skip 某些操作
 
 **直接约束：`infer_action` 的 KV cache 等价性要求。**
 
+![[Excalidraw/Fast-WAM-first-frame-causal-mask.excalidraw]]
+
 如果用 `bidirectional`：
 - 第一帧的 self-attention 输出 = f(frame0, frame1, frame2, ..., frameN)
 - 即第一帧的 KV 依赖所有后续帧
