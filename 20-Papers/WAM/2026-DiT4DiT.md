@@ -69,8 +69,8 @@ priority: high
 ### 关键设计细节
 
 **1. Asymmetric Timestep Sampling**
-- Video DiT 使用时间步 $\tau_v$，从某个分布采样（偏高噪声）
-- Action DiT 使用独立时间步 $\tau_a$
+- Video DiT 使用时间步 $\tau_v$，平均分布采样
+- Action DiT 使用独立时间步 $\tau_a$，偏
 - **不对称**：不同于强制同步的 joint diffusion，允许两个模态以不同节奏去噪
 - 代码中用 `Beta(α, α)` 分布采样 $\tau_v$
 
