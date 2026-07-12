@@ -212,15 +212,15 @@ priority: high
 
 ## 与 Fast-WAM 的关系
 
-| 维度 | Qwen-RobotManip | [[20-Papers/WAM/2026-Fast-WAM|Fast-WAM]] |
-|------|:---:|:---:|
-| 范式 | VLA（直接输出动作） | WAM（视频 co-training，推理时不生成视频） |
-| 视频角色 | VL co-training 作为辅助（不生成视频） | Video loss 作为训练信号 |
-| 动作预测 | DiT action expert + flow matching | DiT action expert + flow matching |
-| 视觉骨干 | Qwen2.5-VL (7B) | Wan2.5-1B |
-| 核心创新 | 对齐框架 + 数据 scaling | 证明 test-time imagination 不必要 |
-| 数据规模 | ~58M trajectories | 较小规模实验 |
-| 部署验证 | 多平台真实部署 | 单平台 |
+| 维度   |          Qwen-RobotManip          |   [[20-Papers/WAM/2026-Fast-WAM   | Fast-WAM]] |
+| ---- | :-------------------------------: | :-------------------------------: | ---------- |
+| 范式   |            VLA（直接输出动作）            |   WAM（视频 co-training，推理时不生成视频）    |            |
+| 视频角色 |    VL co-training 作为辅助（不生成视频）     |         Video loss 作为训练信号         |            |
+| 动作预测 | DiT action expert + flow matching | DiT action expert + flow matching |            |
+| 视觉骨干 |          Qwen2.5-VL (7B)          |             Wan2.5-1B             |            |
+| 核心创新 |         对齐框架 + 数据 scaling         |   证明 test-time imagination 不必要    |            |
+| 数据规模 |         ~58M trajectories         |              较小规模实验               |            |
+| 部署验证 |              多平台真实部署              |                单平台                |            |
 
 共同点：
 - 都用 DiT 做 action expert + flow matching
