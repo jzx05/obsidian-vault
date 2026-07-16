@@ -1,7 +1,7 @@
 {
   "userName": "",
   "permissionMode": "yolo",
-  "model": "opus",
+  "model": "claude-code/claude-opus-4-7",
   "thinkingBudget": "off",
   "effortLevel": "high",
   "serviceTier": "default",
@@ -32,8 +32,8 @@
       "enableBangBash": false,
       "customModels": "",
       "lastModel": "opus",
-      "environmentVariables": "",
-      "environmentHash": ""
+      "environmentVariables": "ANTHROPIC_AUTH_TOKEN=\"sk-R0fXiNnRXYZL6I2qdvDNbtmMr78HaDV0Qc1HBSMU6IMa7AwW\"\nANTHROPIC_BASE_URL=\"https://api.ikuncode.cc\"\nANTHROPIC_MODEL=\"claude-opus-4-7\"\nCLAUDE_CODE_USE_BEDROCK=1",
+      "environmentHash": "ANTHROPIC_BASE_URL=https://api.ikuncode.cc|ANTHROPIC_MODEL=claude-opus-4-7"
     },
     "codex": {
       "enabled": true,
@@ -79,7 +79,7 @@
   },
   "settingsProvider": "claude",
   "savedProviderModel": {
-    "claude": "opus"
+    "claude": "claude-code/claude-opus-4-7"
   },
   "savedProviderEffort": {
     "claude": "high"
