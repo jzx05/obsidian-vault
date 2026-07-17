@@ -2,8 +2,9 @@
   "tabManagerState": {
     "openTabs": [
       {
+        "draftModel": "claude-code/claude-opus-4-7",
         "tabId": "tab-1784173020078-21omo1o",
-        "conversationId": "conv-1784173022384-ifd42e2zz"
+        "conversationId": null
       }
     ],
     "activeTabId": "tab-1784173020078-21omo1o"
