@@ -37,6 +37,7 @@ related:
   - "[[2026-Hi-VLA-Orchestration]]"
   - "[[2026-Agentic-VLA-Deep-Read]]"
 ---
+pipline: [[harness-vla]]
 NEED TO KOWNE BEFORE READING:
 1. primitive: 机器人的“动作 API”或“基础积木”。把一段相对完整、可重复调用的机器人行为，封装成具有明确接口的动作单元。
 2. 
