@@ -168,6 +168,25 @@ $$c_t = \Pi(o_t, \ell, M_{task}, M_{global}), \qquad c_t \in \mathcal{P}$$
 机械重放 seed 0 中每一个 xyz 坐标和低层动作
 ```
 
+==For Example:==
+```json
+//semantic memory
+{
+  "task": "put the black bowl on the wooden tray",
+  "success": true,
+  "trace_file": "task_specific_memory_put_black_bowl_on_tray_s0.jsonl",
+  "strategy": "use VLA for grasping, then analytic transport and release",
+  "avoid": [
+    "do not reuse reference xyz values",
+    "verify placement with the benchmark success signal"
+  ]
+}
+
+// procedural memory
+{"action":"vla_act","prompt":"grasp the black bowl","max_chunks":2}
+{"action":"move_to","xyz":[0.12,-0.08,0.92],"gripper":null}
+{"action":"release"}
+```
 ### 3.2 Global Memory：跨任务的成功规则与失败模型
 
 Global Memory 保存与具体任务无关的操作知识，例如：
@@ -179,7 +198,22 @@ Global Memory 保存与具体任务无关的操作知识，例如：
 - 失败后先重新定位、重对位，再重试 VLA。
 
 作者的定位很准确：记忆不是增加新的技能，而是在逐步标定固定技能库的**适用域与失败边界**。
+==For Example:==
+```text
+Success rule:
+Use VLA primitives for contact-rich phases such as irregular grasping
+or fixture interaction. After a stable grasp, prefer analytic motion
+for long transport and precise placement.
 
+Failure model:
+If the gripper closes but the object does not move with the end effector,
+treat the attempt as an empty grasp. Re-localize the object and re-stage
+before retrying.
+
+Failure model:
+Do not terminate from visual proximity alone. Check the benchmark success
+signal and the latest execution record.
+```
 ## 4. 训练与部署协议
 
 这部分决定了应该怎样解读实验数字。
