@@ -1,0 +1,73 @@
+# ActionGraph-VLA Example
+
+This diagram shows the proposed graph-centric VLA architecture and a concrete example for the instruction "put the mug on the plate".
+
+```mermaid
+flowchart TB
+    subgraph perception["1. Perception and Goal Parsing"]
+        imageInput["Multi-view RGB + robot state"]
+        sceneGraph["Current Actionable Scene Graph<br/>G_t"]
+        languageInput["Instruction<br/>put the mug on the plate"]
+        goalGraph["Goal Graph<br/>G_goal"]
+        imageInput -->|"objects, parts, robot, spatial/contact edges"| sceneGraph
+        languageInput -->|"target nodes + desired relation"| goalGraph
+    end
+
+    subgraph reasoning["2. Graph-centric Reasoning"]
+        deltaReasoner["Graph Delta Reasoner<br/>What relation is missing?"]
+        transitionPolicy["Relational Transition Policy<br/>What graph edge should change next?"]
+        sceneGraph -->|"current state"| deltaReasoner
+        goalGraph -->|"desired state"| deltaReasoner
+        deltaReasoner -->|"missing edge + preconditions"| transitionPolicy
+    end
+
+    subgraph control["3. Relation-conditioned Control Loop"]
+        localGrounding["Local Visual Grounding<br/>target crop + geometry"]
+        actionDecoder["Action Decoder<br/>conditioned on relation transition"]
+        robotAction["Action Chunk<br/>move, grasp, lift, place"]
+        robotWorld["Robot / Environment"]
+        updatedGraph["Updated Graph<br/>G_t+k"]
+        goalCheck{"Goal relation satisfied?"}
+        done["Task complete"]
+
+        transitionPolicy -->|"target object + relation"| localGrounding
+        sceneGraph -->|"node boxes + local features"| localGrounding
+        localGrounding -->|"graph condition + visual detail"| actionDecoder
+        actionDecoder -->|"continuous control"| robotAction
+        robotAction -->|"execute"| robotWorld
+        robotWorld -->|"observe again"| updatedGraph
+        updatedGraph --> goalCheck
+        goalCheck -->|"no: reason again"| deltaReasoner
+        goalCheck -->|"yes"| done
+    end
+
+    subgraph example["Concrete Example"]
+        exampleScene["G_t<br/>mug on table<br/>plate on table<br/>gripper empty<br/>gripper near mug"]
+        exampleGoal["G_goal<br/>target: mug<br/>reference: plate<br/>desired edge: on(mug, plate)"]
+        exampleDelta["Delta<br/>missing: on(mug, plate)<br/>precondition: holding(gripper, mug)"]
+        exampleTransition["Next transition<br/>grasp(mug)<br/>then place(mug, plate)"]
+
+        exampleScene --> exampleDelta
+        exampleGoal --> exampleDelta
+        exampleDelta --> exampleTransition
+    end
+
+    sceneGraph -.->|"example instance"| exampleScene
+    goalGraph -.->|"example instance"| exampleGoal
+    deltaReasoner -.->|"computes"| exampleDelta
+    transitionPolicy -.->|"selects"| exampleTransition
+
+    classDef input fill:#D1FAE5,stroke:#059669,stroke-width:2px,color:#064E3B
+    classDef graphNode fill:#DBEAFE,stroke:#2563EB,stroke-width:2px,color:#1E3A8A
+    classDef reason fill:#EDE9FE,stroke:#7C3AED,stroke-width:2px,color:#4C1D95
+    classDef action fill:#FFEDD5,stroke:#EA580C,stroke-width:2px,color:#7C2D12
+    classDef exampleNode fill:#F8FAFC,stroke:#64748B,stroke-width:2px,color:#0F172A
+    classDef decision fill:#FEF3C7,stroke:#D97706,stroke-width:2px,color:#78350F
+
+    class imageInput,languageInput input
+    class sceneGraph,goalGraph,updatedGraph graphNode
+    class deltaReasoner,transitionPolicy reason
+    class localGrounding,actionDecoder,robotAction,robotWorld,done action
+    class exampleScene,exampleGoal,exampleDelta,exampleTransition exampleNode
+    class goalCheck decision
+```
