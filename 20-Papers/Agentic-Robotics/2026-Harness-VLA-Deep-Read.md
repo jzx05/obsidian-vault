@@ -210,9 +210,7 @@ If the gripper closes but the object does not move with the end effector,
 treat the attempt as an empty grasp. Re-localize the object and re-stage
 before retrying.
 
-Failure model:
-Do not terminate from visual proximity alone. Check the benchmark success
-signal and the latest execution record.
+
 ```
 ## 4. 训练与部署协议
 
