@@ -1,0 +1,1129 @@
+  τ0-VLA: a Hierarchical Robot Foundation Model
+  with World-Model-Guided Test-Time Computation
+         Xiaowei Cai2 , Yunuo Cai1,2 , Bingao Chen2,3 , Jingxiao Chen2 , Zhi Chen2 , Siyuan Feng2 , Tengyu Hou2 , Jingshun Huang1,2 ,
+                  Han Jiang2 , Runkun Ju2 , Dong Li2 , Mingxiang Li2 , Shaowei Li2 , Xinchen Li2 , Yifan Li1,2 , Yi Liu1,2 ,
+                  Zhongyuan Liu2 , Jianlan Luo1,2 , Junwen Miao2 , Ruiqi Ni2 , Buqing Nie2 , Mingjie Pan1,2 , Xinlin Ren2 ,
+               Jianheng Song2 , Jiaxu Wang2,3 , Peiqi Wang2 , Sen Wang2 , Xiaoyan Wang2 , Dafeng Wei2 , Dongming Wu2,3 ,
+          Pengwei Xie2 , Pu Yang2 , Hangjian Ye1,2 , Xiangyu Yue2,3 , Jinyu Zhang1,2 , Qinglin Zhang2 , Xueyong Zhao2 , Yue Zhou2
+                   1                                                               2                                        3
+                       Shanghai Innovation Institute                                   Agibot Finch                             The Chinese University of Hong Kong
+                                                                                  https://tau0-vla.github.io/
+
+
+
+      Pretraining Data                High-Level Policy w/ Test-Time Computation                                                                                             Capability
+           Teleop Data                P VLM proposes a subtask                                                       The target task is Make Milk                          Long-Horizon
+                                                                                                                    Tea,… What subtask should the                        Mobile Manipulation
+                                     W World Model imagines outcome
+                                                                                                                    robot perform next?
+                                      V Value Model scores progress
+
+                                                                                                     P    W    V
+
+                                                  Depth 1
+
+                                                                          ✓                                        ✗                             ✓
+
+
+                                                            Pick Up Spoon                           Place Cup                       Pick Up Cup
+
+                                                            P     W   V                                                                  P   W       V
+                                    Depth 2
+
+                                                     ✗                        ✓                      ✗                          ✗                ✓                  ✗
+
+
+                                     Pick Up Cup                Scoop Jelly            Place Cup               Pick Up Cup          Place Cup            Pick Up Spoon
+
+        Autonomous Data
+                                                                                                         …                                                               Precise Manipulation
+                                                                                        F VLM reflects over retained branches
+
+
+                                                                                              Reflected Subtask
+                                                                                               Pick Up Spoon
+                                                                                                                                                                          Cross-Embodiment
+            UMI Data                  Low-Level Policy                                                                                                                      Generalization
+
+                                                                                  Vision-Language-Action Model
+
+
+
+Fig. 1: Overview of τ0 -VLA. The high-level policy uses world-model-guided test-time computation to search over subtask
+sequences. At each expansion step, a VLM proposes candidate subtasks, a world model predicts their visual outcomes, and
+a value model evaluates the resulting task progress. Beam search retains promising branches, after which a reflective model
+commits to the next subtask based on the retained candidates and their predicted consequences. The figure illustrates a single
+candidate expansion with N = 3; recursive beam expansion to depth D is omitted for brevity. The selected subtask then
+conditions a low-level VLA policy trained on 40,115 hours of heterogeneous real-world data, enabling long-horizon mobile
+manipulation, precise execution, and deployment across multiple robot embodiments.
+
+   Abstract—Long-horizon robot manipulation requires a robot                                                  before committing to its output. A low-level policy then executes
+to both execute individual skills reliably and sequence them co-                                              the generated subtask across multiple robot embodiments. The
+herently over extended tasks. Most hierarchical vision-language-                                              policy is trained on 40,115 hours of heterogeneous real-world data
+action (VLA) models make each such decision with a single                                                     with multimodal co-training. Across in-domain and distribution-
+forward pass, leaving no mechanism to allocate additional com-                                                shifted settings, allocating additional test-time computation sub-
+putation to difficult or consequential choices. We introduce τ0 -                                             stantially improves next-subtask prediction accuracy, and these
+VLA, a hierarchical robot foundation model that formulates high-                                              gains translate into higher closed-loop success on long-horizon
+level subtask generation as a compute-scalable inference problem                                              robot manipulation tasks.
+through world-model-guided test-time computation. At each
+inference step, the high-level policy uses execution memory to                                                                                       I. I NTRODUCTION
+generate a subtask and, when needed, searches over alternatives
+                                                                                                                 Long-horizon manipulation encompasses a broad class of
+  Authors are listed alphabetically. See the Author Contributions section for                                 real-world robotic tasks, such as cleaning a room, cooking
+individual contributions.                                                                                     a meal, or preparing a drink. These tasks require coherent
+sequences of subtasks carried out over minutes or hours. The        The proposal is used directly when the policy is confi-
+robot must locate and manipulate objects, interact with artic-      dent. Otherwise, token-confidence statistics trigger an addi-
+ulated structures, verify intermediate outcomes, and recover        tional reasoning procedure. This procedure follows a propose–
+from local failures. Such tasks are not simply long sequences       predict–evaluate loop. The proposal model generates open-
+of motor commands; they are sequences of consequential              ended candidate subtasks, a world model predicts the terminal
+decisions. Throughout execution, the robot must infer what          observation induced by each candidate, and a value model
+has been completed, determine what remains, and maintain            scores candidate quality from the predicted outcomes. Beam
+an appropriate subtask command. An incorrect subtask choice         search recursively expands promising candidates, allowing the
+cannot generally be corrected by more precise motor control:        inference budget to scale through the branching factor, beam
+the robot may execute the wrong subtask perfectly.                  width, and search depth. A reflective model then conditions
+   Vision-language-action (VLA) models provide a natural            on the retained branches and generates the final subtask. Its
+foundation for long-horizon robotic control by coupling the         output may coincide with a proposal but is not restricted to the
+semantic representations of pretrained vision-language models       candidate set. The low-level policy then executes the generated
+with continuous action generation [7, 46, 22, 31, 3, 5].            subtask. The resulting real observation is incorporated into
+Hierarchical VLAs further expose subtasks as an explicit            execution memory at the next inference step, closing the loop
+interface for decomposing and executing multi-stage behav-          between predicted and observed consequences. To support
+iors [21, 2, 37, 30, 16, 17, 5, 35]. Many hierarchical systems      reliable reasoning over extended executions, we train the
+still make each high-level decision with a fixed inference          memory mechanism to correct its own state. Specifically, we
+budget, directly mapping the current observation and execution      perturb memories derived from existing demonstrations and
+history to the next subtask. In this setting, the model neither     train the high-level policy to repair records that lag behind, run
+compares alternative subtasks nor evaluates them through the        ahead of, or otherwise misrepresent the robot’s actual progress,
+physical states they are expected to produce. Recent systems        requiring no additional annotation.
+instead use high-level tree search or recursive subgoal refine-
+ment [33, 43, 45], motivating the question we study here:              Once generated, each subtask is executed by a generalist
+how to couple open-ended language-subtask search with visual        low-level policy that combines a pretrained vision-language
+outcome prediction and execution memory in a generalist             backbone with a Mixture-of-Transformers action expert. The
+real-robot hierarchy. Without pre-commitment evaluation, an         policy operates over a unified 40-dimensional state and action
+incorrect decision is typically detected only after execution has   space covering end effectors, arm joints, grippers, the waist,
+already altered the environment, at which point replanning can      and the mobile base. This unified representation allows a
+respond but cannot recover the cost of the failed commitment.       single model to support fixed-base manipulation, bimanual
+Thus, the central bottleneck in long-horizon execution is no        coordination, and mobile whole-body control across multiple
+longer the availability of a hierarchical action interface, but     robot embodiments. We train the policy on approximately
+the inference procedure used to generate the next subtask.          40,000 hours of robot data collected from heterogeneous
+   We instead formulate generating the next subtask as an           sources, together with multimodal co-training data, yielding
+inference-time reasoning problem, allowing computation to           a language-conditioned execution interface without the need
+scale with the difficulty of each decision, as test-time com-       for subtask-specific controllers.
+putation does in language models [32, 11]. The subtask is             We evaluate the complete system across multiple robot
+a natural unit for this reasoning. Action-level search can          embodiments on real-world, long-horizon manipulation tasks.
+resolve local control ambiguities, but often exposes only local     The evaluation covers room cleaning, meal preparation, tea
+physical consequences [29, 23, 10, 41, 18, 44]. Language-           making, and laundry collection, with episodes lasting up to
+only reasoning operates over longer horizons, but compares          12 minutes. Hierarchical test-time computation substantially
+alternatives without grounding them in the physical states they     improves task success over whole-task inference using the
+would produce. Subtasks lie between these extremes: they are        same low-level policy and increases next-subtask prediction
+sparse enough to justify additional computation, yet temporally     accuracy, with further gains obtained from larger inference
+extended enough to induce meaningful and distinguishable            budgets.
+changes in the environment. Comparing candidate subtasks
+before execution therefore requires predicting the state that         Our central contribution is a complete VLA system, τ0 -
+each candidate would produce. Generative models of future           VLA, that formulates high-level subtask generation as a
+observations provide precisely this capability [13, 4, 14, 15,      compute-scalable inference problem while retaining a unified
+27], enabling candidate subtasks to be evaluated through their      low-level control interface across multiple robot embodiments.
+anticipated physical consequences before they are issued for        Our experiments show that allocating additional computation
+execution.                                                          to high-level decisions substantially improves next-subtask
+   We present τ0 -VLA, a hierarchical VLA system that in-           prediction, and yields higher end-to-end task success on long-
+stantiates this approach. At each inference step, a memory-         horizon real-robot tasks. We further provide a detailed empiri-
+augmented high-level policy uses the current observation            cal analysis of execution memory, consequence-aware search,
+and execution memory to generate the appropriate subtask.           and the compute-accuracy trade-off.
+                     II. R ELATED W ORK                            π0.7 , whereas it informs which subtask to execute in τ0 -VLA.
+   τ0 -VLA brings together three lines of work: generalist VLA     Our high-level policy also maintains a correctable execution
+models for low-level control, hierarchical robot policies for      memory and scales decision-time computation through search
+subtask-level decision making, and world models with test-         width and depth.
+time computation for evaluating candidate decisions. We thus
+                                                                   C. World Models and Test-Time Computation
+survey works in these areas.
+                                                                      World models predict future states under candidate behavior
+A. Vision-Language-Action Models                                   and support planning and policy learning [19, 20]. In robot
+   Vision-language-action (VLA) models map visual obser-           manipulation, generated images or videos have been used as
+vations and language instructions to robot actions, often          goals for inverse dynamics and low-level control [13, 4], mod-
+by adapting pretrained vision-language backbones for con-          eled jointly with actions [9, 8], and incorporated into search
+tinuous control. Early work established scalable language-         or iterative plan revision [14]. Reflective Planning iteratively
+conditioned robot learning and transfer from vision-language       revises a VLM plan using imagined future states [15]. Our
+pretraining [7, 46]. Subsequent work broadened this paradigm       search instead maintains multiple language-subtask branches
+across tasks and embodiments [22, 31], while recent generalist     and prunes them with a dedicated value model before reflective
+models target continuous control, open-world generalization,       generation. At the action level, additional inference is allocated
+and cross-embodiment transfer [3, 5, 30, 42, 1, 17]. Com-          through sampling, verification, or value-guided selection [29,
+plementary work studies compact policies, efficient action to-     23, 10]. FOREWARN predicts latent outcomes for low-level
+kenization, knowledge-preserving training, and asynchronous        action plans and uses a VLM to select among them, while
+action-chunk execution [38, 34, 12, 6]. Cross-embodiment           VLA-Reasoner performs world-model-guided Monte Carlo
+policies must also reconcile heterogeneous control interfaces.     tree search over action trajectories [41, 18]. WLA-0 jointly
+RDT-1B introduces a physically interpretable unified action        predicts textual subtasks, future images, and actions, and its
+space, while Being-H0.5 maps heterogeneous controls into           test-time scaling mode selects among action chunks using
+semantically aligned slots [25, 28].                               imagined future frames and a value model [44].
+   This line of work primarily improves control representa-           Search has also been applied to high-level robot decisions.
+tions, training scale, and transfer across tasks and embod-        VINE proposes subgoal transitions on a two-dimensional
+iments. Our low-level policy follows the same generalist           scene graph, predicts their success probabilities from suc-
+VLA paradigm. Our primary focus is complementary: making           cessful and failed demonstrations, and prunes low-feasibility
+high-level subtask generation an explicit, compute-scalable        branches before execution [33]. Seeing Farther and Smarter
+inference problem.                                                 combines predicted visual dynamics, value-guided beam
+                                                                   search, confidence-based routing, and multi-path reflection
+B. Hierarchical Robot Policies
+                                                                   over manipulation plans [43]. These are among the closest
+   Hierarchical policies separate temporally extended decisions    search-based mechanisms to our work. VINE searches struc-
+from continuous control. Prior work grounds language-model         tured scene-graph transitions using feasibility scores, while
+decisions in learned robot affordances [21], represents action     Seeing Farther and Smarter searches discrete manipulation
+hierarchies through language [2], and connects slower seman-       plans with a learned critic. In contrast, τ0 -VLA searches
+tic reasoning to faster visuomotor control through explicit        open-ended language subtasks and evaluates each candidate
+commands, latent representations, or staged inference [37, 16,     through its predicted terminal image. It conditions subsequent
+30, 17, 5]. Recent systems address long-horizon state tracking     decisions on a correctable execution memory, then uses a
+and adaptation more explicitly. MEM combines short-term            reflective model to generate the final subtask from the retained
+visual memory with long-term textual memory [40]. MemER            branches.
+retrieves task-relevant historical keyframes before generating
+instructions for a low-level VLA, while Goal2Skill combines                             III. P RELIMINARIES
+structured memory, outcome verification, and reflection in
+                                                                      We consider a robot task specified by a language instruction
+a high-level VLM and low-level VLA hierarchy [39, 26].
+                                                                   ℓ. At inference step t, a vision-language-action (VLA) policy
+Anticipation-VLA adaptively generates recursive subgoals,
+                                                                   maps the current multi-view observation ot , proprioceptive
+whereas VISTA uses a world model as the high-level policy
+                                                                   state st , and language command ct to an H-step action chunk
+to generate textual and visual subgoal sequences [45, 27].
+                                                                   at:t+H−1 . It also receives textual control metadata η specifying
+   Among generalist hierarchical foundation models, π0.7 also
+                                                                   the embodiment, control mode, and whole-body configuration.
+couples a semantic high-level policy, a world model, and a
+                                                                   Its concrete text serialization is provided in Appendix C-B:
+low-level policy [35]. Its world model generates subgoal im-
+ages for a subtask already produced by the high-level policy. In                    at:t+H−1 = πθ (ot , st , ct , η),            (1)
+τ0 -VLA, visual prediction instead occurs before commitment
+and supports comparison among multiple candidate subtasks          where θ denotes the policy parameters and H is the action-
+through value-guided search and reflection. Thus, visual pre-      chunk horizon. In direct execution, the full task instruction
+diction conditions how a generated subtask is executed in          is used throughout the episode, so ct = ℓ. The policy must
+therefore infer the current stage of the task while generating      search over possible subtask sequences. It expands candidate
+the corresponding motor actions.                                    branches, predicts and scores their visual outcomes, and passes
+   A hierarchical VLA separates high-level subtask generation       the retained beam to a reflective model that generates the final
+from low-level action generation. At each inference step,           subtask. This procedure allows the policy to improve next-
+the high-level policy first generates a subtask, and the low-       subtask prediction by allocating additional test-time computa-
+level policy then generates actions conditioned on it. Let µ        tion.
+denote the high-level policy, let M0 denote the initial empty          Accordingly, the high-level policy µ consists of a proposal
+execution memory, and let z0⋆ = ∅. At inference step t, µ           model P , a world model W, a value model V , and a reflective
+forms the high-level decision context                               model F . Their inference interfaces are defined below.
+                                    ⋆
+                                                                   Proposal model. At the beginning of inference step t, the
+                  ht = ℓ, Mt−1 , zt−1   , ot ,             (2)
+                                                                    proposal model receives the context ht defined in Section III,
+where Mt−1 is the carried execution memory and zt−1 ⋆
+                                                        is the      updates the execution memory, and generates a direct subtask
+subtask generated at the preceding inference step. The policy       proposal ztdir :
+                                                                                          ztdir , Mt = P (ht ).
+                                                                                                    
+brings the execution memory up to date and generates the                                                                         (5)
+subtask for the current observation:
+                                                                    The proposal model updates the memory from Mt−1 , the
+                       (Mt , zt⋆ ) = µ(ht ).                 (3)                                  ⋆
+                                                                    previously generated subtask zt−1 , and the current observation
+                                                                    ot . From token confidences produced by the same forward
+Here Mt summarizes the execution history observed up to ot
+                                                                    pass, the adaptive router computes gt ∈ {0, 1}. Here gt = 0
+and therefore does not yet contain the outcome of executing
+                                                                    selects the fast route and gt = 1 invokes TTC. The routing
+zt⋆ , while zt⋆ is the subtask generated for the current observa-
+                                                                    rule is defined in Appendix C-J.
+tion. The generated subtask is used as the language command,
+                                                                    World model and value model. For a generic candidate
+ct = zt⋆ , yielding
+                                                                    within beam search, let õ denote a head-camera RGB image
+                 at:t+H−1 = πθ (ot , st , zt⋆ , η).          (4)    and z the candidate subtask. The world model predicts the
+                                                                    terminal head-camera image, and the value model scores that
+After executing the action chunk, the resulting real observation    outcome:
+is used at the next inference step. At every inference step, the                   ô = W(õ, z),    v = V (ℓ, z, ô).          (6)
+low-level policy conditions on the generated subtask zt⋆ . If it
+                         ⋆
+remains the same as zt−1    , execution of the current subtask      Thus, the world model always operates on a single head-
+continues. If it changes, the low-level policy begins executing     camera image. The value model receives the global task
+the newly generated subtask.                                        instruction, candidate subtask, and predicted terminal image,
+   The high-level policy can either commit to its direct            and returns a scalar candidate-quality score v.
+proposal or invoke additional test-time computation before          Test-time search.      When gt = 1, the high-level policy
+producing zt⋆ . Thus, the high-level policy determines which        invokes the S EARCH operation in Algorithm 1:
+subtask is currently appropriate, while the low-level policy
+determines how to execute it.                                                    Ct = Search (ht , P, W, V, N, B, D) .           (7)
+
+                         IV. M ETHOD                                The operation performs beam search over candidate subtask
+                                                                    sequences. The positive integers N , B, and D denote the
+A. System Overview
+                                                                    branching factor, beam width, and search depth. A branch
+   τ0 -VLA consists of two components applied sequentially at       b stores a proposal context h(b), an ordered sequence of
+each logical inference step. The high-level policy maintains        imagined subtasks ρ(b), a cumulative score S(b), and, for a
+execution memory, decides when to invoke additional test-           non-root branch, a terminal predicted image ô(b). We initialize
+time computation, and generates the current subtask. The low-       Qt,0 with a single root branch broot whose context is ht , whose
+level policy then maps the current observation and generated        path is the empty sequence ρ(broot ) = (), and whose score is
+subtask to robot actions. This hierarchy supports long-horizon      S(broot ) = 0.
+progress tracking and consequence-aware planning without              At each depth d ∈ {1, . . . , D}, we independently invoke the
+modifying the low-level control interface. Figure 2 provides        proposal model N times for every retained branch b ∈ Qt,d−1 :
+an overview. The following subsections define both policies                              
+                                                                               b,i
+and then describe their joint inference procedure.                            zt,d , Mb,i
+                                                                                      t,d ∼ P ( · | h(b)),     i = 1, . . . , N. (8)
+B. High-Level Policy                                                Here P ( · | h(b)) denotes the proposal model’s decoding
+   Unlike a conventional fixed-compute high-level policy            distribution. The sample index i keeps repeated text proposals
+which commits to a subtask through a single forward pass, our       distinct and associates each proposal with its branch-local
+high-level policy µ generates the next subtask with a budget-       memory. For the root branch, h(broot ) = ht , so the proposal
+adaptive test-time computation (TTC) procedure. On uncer-           model receives the current multi-view observation ot . For ev-
+tain predictions, TTC performs world-model-guided beam              ery non-root branch, the visual component of h(b) is ô(b), the
+  a. High-Level Policy                                                    c. World-Model-Guided Test-Time Computation
+                Observation      Task Instruction      Execution Memory    Current context
+                 multi-view       “Make Milk Tea”        “Placed Cup”            observation
+                                                                                     task             Beam Search
+                                                                                    memory
+                                                                                                          Candidate Subtask            Imagined Outcome           Score
+                     Vision-Language Model
+                              Qwen3.5-9B
+                                                                                                           “Pick Up Spoon”                                        0.95
+                                                                                            propose
+      Thought        Updated Memory                 Candidate Subtask
+      <think>           “Placed Cup”                  “Pick Up Spoon”          High-
+                                                                                                                              World                    Value                  Retain
+                                                                               Level                       “Place Cup”                                            0.50    ×
+                                                                                                                              Model                    Model                  Top-B
+                                                                               Policy
+  b. Low-Level Policy
+
+                 Meta         Robot    Noised         Committed Subtask                                    “Pick Up Cup”                                          0.95
+                 Info         State    Action           Pick Up Spoon
+                                                                             after depth D
+                                                                           reflect & commit
+          Vision-Language Model                            MoT                                                       expand retained beams · repeat to depth D
+                   Qwen3.5-2B                          Action Expert
+                                                                            Next Subtask                    Example Retained Branch: Pick Up Spoon → Scoop Jelly → Pour Jelly
+
+                                                         Pred. Action       Pick Up Spoon
+
+
+
+Fig. 2: The hierarchical τ0 -VLA architecture. (a) At a high-level inference step t, the proposal model P conditions on the
+                                                                                                                               ⋆
+latest multi-view observation ot , task instruction ℓ, carried execution memory Mt−1 , and previously generated subtask zt−1      .
+It produces observation-aligned memory Mt and a direct proposal ztdir . (b) The low-level policy conditions on the generated
+subtask zt⋆ , multi-view observation ot , proprioceptive state st , and textual control metadata η. A vision-language backbone and
+Mixture-of-Transformers (MoT) action expert generate the action chunk at:t+H−1 through conditional flow matching from a
+noisy action chunk. (c) On the TTC route, the proposal model is invoked N times for each retained branch to generate N
+candidates. Given the branch’s head-camera image and a candidate, the world model predicts the terminal head-camera image,
+and the value model assigns a candidate-quality score conditioned on the task instruction, candidate, and predicted image.
+Beam search globally retains the top-B branches by cumulative score and recursively expands them to depth D. The figure
+illustrates the root expansion with N = 3 and B = 2, where local and cumulative scores coincide. Deeper expansion is omitted
+for clarity. The reflective model then conditions on h̄t and the final branch summaries Ct to generate the final subtask zt⋆ . This
+output may coincide with a retained proposal but is not restricted to the retained set and is passed to the low-level policy for
+execution.
+
+
+terminal head-camera image imagined for that branch. Routing                                     At depth d, the indexed collection of all children is
+decisions from proposal calls inside search are ignored.                                                
+                                                                                                               b,i
+                                                                                                                   
+   We write b ⊕ z for the child branch obtained by appending                                     At,d = b ⊕ zt,d     b∈Qt,d−1 ,   Qt,d = TopB (At,d , S) .
+                                                                                                                              i=1,...,N
+subtask z to branch b. Its path ρ(b⊕z) is the ordered sequence                                                                                            (11)
+ρ(b) followed by z. Let õ(b) be the head-camera image in ot                                  Before pruning, At,1 contains N children, while each sub-
+when b = broot and ô(b) otherwise. For each indexed proposal,                                sequent expansion produces at most BN children. The top-B
+the world and value models compute                                                            operation ranks all children globally by cumulative score. Each
+                                                                                          retained child’s predicted image and branch-local memory
+                    b,i                  b,i                                                  define the context for its next expansion. This process repeats
+            ô b ⊕ zt,d   = W õ(b), zt,d      ,
+                                                                             (9)        until depth D.
+                    b,i           b,i            b,i
+            v b ⊕ zt,d    = V ℓ, zt,d , ô b ⊕ zt,d     .                                        The final beam is summarized by the indexed collection
+                                                                                                                                     
+                                                                                                             Ct = ρ(b), ô(b), S(b) b∈Q ,                 (12)
+The child retains the corresponding memory Mb,i
+                                                                                                                                                                 t,D
+                                               t,d and pre-
+dicted image. Its cumulative score and context for the next                                   where ρ(b) is the imagined subtask path and ô(b) is its terminal
+expansion are                                                                                 predicted head-camera image.
+                                                                                              Reflective model. At the end of the TTC route at inference
+          
+                b,i
+                                
+                                            b,i
+                                                                                             step t, the reflective model conditions on the retained branch
+         S b ⊕ zt,d   = S(b) + v b ⊕ zt,d         ,
+                                                                                              summaries Ct and the observation-aligned real context h̄t =
+                                                                           (10)                   ⋆
+                b,i
+         h b ⊕ zt,d   = ℓ, Mb,i      b,i            b,i                                       (ℓ, Mt , zt−1 , ot ). It generates the final subtask passed to the
+                              t,d , zt,d , ô b ⊕ zt,d     .
+                                                                                              low-level policy:
+                                                                                                                         zt⋆ = F (h̄t , Ct ).               (13)
+All memories produced inside search are branch-local and
+never overwrite the persistent execution memory Mt .                                          Its output may reproduce a retained proposal but is not
+constrained to the candidate set. The reflective model does         Algorithm 1 Closed-loop system inference
+not update persistent execution memory.                             Require: Task instruction ℓ, models P, W, V, F, πθ
+                                                                    Require: Control metadata η, action horizon H, branching
+C. Low-Level Policy
+                                                                        factor N , beam width B, depth D
+   The low-level policy couples a vision-language backbone           1: Initialize M0 ← ∅ and z0⋆ ← ∅
+with a Mixture-of-Transformers (MoT) action expert. At each          2: for t = 1, 2, . . . until task termination do
+full-attention layer, the action tokens and backbone tokens          3:     Observe ot and st
+interact through joint attention while being processed by            4:     ht ← (ℓ, Mt−1 , zt−1  ⋆
+                                                                                                      , ot )
+separately parameterized Transformer streams. The policy             5:        dir
+                                                                            (zt , Mt ) ← P (ht )
+conditions on multi-view observations, proprioceptive state,         6:     Compute gt from the proposal token confidences
+and a language command. The action expert is trained with            7:                       ⋆
+                                                                            h̄t ← (ℓ, Mt , zt−1    , ot )
+conditional flow matching to learn a velocity field from noise       8:     if gt = 0 then
+to the distribution of action chunks. At inference, this field is    9:          zt⋆ ← ztdir                          ▷ fast route
+integrated to generate executable actions.                          10:     else
+Unified state and action space. We represent heterogeneous          11:          Ct ← S EARCH(ht , P, W, V, N, B, D)
+embodiments in a shared 40-dimensional state and action             12:          zt⋆ ← F (h̄t , Ct )
+space. Per-sample state and action masks select the valid           13:     end if
+channels, while the control metadata specifies the control          14:     at:t+H−1 ← πθ (ot , st , zt⋆ , η)
+parameterization. This interface allows the same policy to sup-     15:     Execute action chunk at:t+H−1
+port fixed-base and whole-body control without embodiment-          16: end for
+specific output heads. Appendix C-B provides the complete
+layout and action encoding.
+Masked flow matching.          Because different embodiments           Algorithm 1 presents these logical dependencies as a se-
+occupy different channels in the unified action space, we mask      quential procedure. In deployment, the high-level and low-
+both the flow path and its training objective. Let da denote        level policies are pipelined asynchronously, as detailed in
+the action dimension and let M ∈ {0, 1}da ×da be a diagonal         Appendix C-F. The same routing statistics are used across
+action-mask matrix, where [M]ii = 1 if channel i is active          tasks, with task-specific thresholds calibrated on held-out data.
+and [M]ii = 0 otherwise. The same matrix is applied to every        In direct-execution mode, the system bypasses the high-level
+action vector in the chunk. For each j ∈ {0, . . . , H − 1},        policy and conditions the low-level policy directly on ℓ.
+let at+j , ϵt+j ∈ Rda , where ϵt+j ∼ N (0, Ida ) and Ida is
+the da -dimensional identity matrix. We use the reverse-time                                 V. T RAINING
+parameterization of the linear flow path in π0 [3], matching the
+task-specific checkpoints evaluated in this work. A flow time       A. Data Sources
+τ ∈ [0, 1] is shared across the chunk, with τ = 1 denoting          Low-level policy data. The low-level policy is trained on
+noise and τ = 0 denoting a clean action. The interpolated           40,115 hours of heterogeneous real-world data spanning fixed-
+action and target velocity are                                      base, mobile, and bimanual embodiments. The corpus com-
+              aτt+j = τ Mϵt+j + (1 − τ )Mat+j ,                     bines human demonstrations, autonomous policy rollouts, and
+                                                            (14)    UMI-style recordings, covering manipulation, navigation, and
+              ut+j = M(ϵt+j − at+j ).                               whole-body coordination across diverse robot morphologies
+Given the complete noisy chunk, the action expert jointly           and control interfaces. We interleave these trajectories with
+predicts the velocities of all H action tokens. We supervise        multimodal vision-language data for instruction following, vi-
+only active channels and project inactive channels before each      sual grounding, spatial and depth reasoning, and robot-centric
+velocity-field evaluation and at the final output. Appendix C-B     perception. This co-training mixture preserves the semantic
+provides the full loss and sampling details.                        and visual capabilities of the VLM backbone during action
+                                                                    learning. Appendix C-D provides further details on the data
+D. System Inference                                                 composition and processing.
+    At inference, the high-level policy and low-level policy form   High-level policy data. Supervision for the high-level pol-
+a closed loop. At each logical inference step, the proposal         icy is derived automatically from existing task, stage, and
+model updates the execution memory and generates ztdir .            executable-subtask annotations together with segmented multi-
+When gt = 0, this direct proposal becomes the final subtask         view demonstrations. These sources supervise reasoning over
+zt⋆ . When gt = 1, test-time search produces Ct , and the           task progress, execution-memory updates, and subtask gener-
+reflective model generates zt⋆ from the observation-aligned         ation. We additionally construct memory-perturbed examples
+context and retained branch summaries. The low-level policy         that teach the policy to recover when its execution history lags
+then generates and executes an action chunk conditioned on          behind, runs ahead of, or otherwise conflicts with the observed
+zt⋆ . The resulting real observation is incorporated into memory    state. Subtask-aligned start–end frames supervise the world
+at the next inference step.                                         model. This construction requires no additional per-sample hu-
+man labeling. Appendix C-E describes the annotation, filtering,    Value model. We formulate value prediction as a multiple-
+and quality control pipeline.                                      choice VQA task. Conditioned on the global instruction,
+                                                                   candidate subtask, and its imagined terminal image, the model
+B. Low-Level Policy Training                                       predicts one of five ordinal quality levels, from clearly wrong
+   We initialize the low-level vision-language backbone from       to clearly correct, mapped to scalar values in [0.05, 0.95].
+Qwen3.5-2B [36] and attach the MoT action expert described         Training pairs each sampled state with a candidate subtask
+in Section IV-C. The resulting policy maps the current obser-      from offline rollouts generated by repeatedly applying the
+vation and language command to robot actions in the unified        proposal and world models. The candidates are graded against
+action space, as defined in Eq. (1). We train it in three          the ground-truth next step, aligning training with the proposals
+successive stages.                                                 that the value model scores during search.
+Stage 1: Knowledge-isolated co-training. We jointly train          Reflective model. We train the reflective model with the
+on multimodal and robot-action data with knowledge isolation       same observation-aligned context and retained-branch sum-
+(KI) [12]. The MoT action expert attends to the vision-            maries used at inference. The candidate plans come from
+language backbone, while action-loss gradients are blocked         the same offline rollouts together with their predicted future
+at the backbone interface. This allows the action expert to        states and scores. Each set is paired with the ground-truth next
+learn control-relevant representations without prematurely per-    subtask as an autoregressive target. This supervision teaches
+turbing the pretrained backbone, with multimodal supervision       the model to ground its generation in visual evidence and
+stabilizing training.                                              repair flawed candidate plans rather than simply copy the first
+Stage 2: End-to-end co-training. We remove KI and opti-            proposal.
+mize the full model end to end, retaining multimodal data as
+                                                                                         VI. E XPERIMENTS
+auxiliary supervision. This allows action gradients to adapt the
+backbone toward representations better suited for robot control       Our evaluation separates high-level decision quality, long-
+and strengthens the coupling between perception, language,         horizon system performance, and short-horizon execution
+and action prediction.                                             across embodiments. At the high level, we evaluate next-
+Stage 3: Task-specific adaptation. For each deployment             subtask prediction, test-time computation, and the contribution
+task, we fine-tune the policy on a small set of task-specific      of execution memory. We then evaluate the hierarchical system
+demonstrations, adapting it to the target embodiment, camera       on four long-horizon tasks, study test-time computation on
+viewpoints, object configurations, and success criteria.           Book Organization task, and evaluate the VLA through direct
+                                                                   execution on the shorter Collect Laundry and Tidy Makeup
+C. High-Level Policy Training                                      Table tasks.
+   The proposal, value, and reflective models are independently
+                                                                   A. Evaluation Setup
+fine-tuned from the same robot-pretrained VLM checkpoint
+initialized from Qwen3.5-9B [36]. The world model is ini-          Robot platforms. We evaluate on AGIBOT G1 for the four
+tialized from Step1X-Edit [24] and trained separately. We          primary long-horizon tasks, ARX AC One for Book Organi-
+describe the specific supervision for each model below.            zation and Collect Laundry, and a bimanual Franka Research
+Proposal model. The proposal model generates candidate             3 setup for Tidy Makeup Table. All platforms provide multi-
+subtasks while maintaining and updating execution memory.          view RGB observations and proprioceptive state and map their
+We train it on both aligned execution histories and automati-      controls into the unified action space. Hardware and sensing
+cally perturbed histories that lag behind, run ahead of, or mis-   details are deferred to Appendix C-A.
+represent progress after a failure. The corrected targets teach    Task suite.      The evaluation covers six household tasks
+the model to reconcile memory with visual evidence before          and one benchmark comprising three separately evaluated
+generating the next subtask. The perturbation types, recovery      instruction-following task groups. Clean Room, Prepare In-
+targets, and sampling mixture are detailed in Appendix C-E.        gredients, Tomato and Egg Stir Fry, and Collect Laundry
+World model. The world model is trained to predict the             require mobile manipulation. Make Milk Tea, Book Orga-
+visual outcome of a candidate subtask at completion. Each          nization, and the three Tidy Makeup Table groups require
+training example pairs the head-camera RGB observations            manipulation without base motion. We use Tidy Makeup Table
+at the beginning and end of an annotated subtask segment,          for instruction-following evaluation. Prepare Ingredients and
+conditioned on the corresponding subtask instruction. These        Tomato and Egg Stir Fry form a collaborative cooking work-
+subtask-aligned transitions are drawn from real trajectories.      flow for the same tomato and egg dish. One robot prepares
+   Starting from real observations, we construct multi-step        the ingredients, and another completes the cooking stage. We
+simulated rollouts by recursively alternating subtask proposal     therefore evaluate and report the two stages as separate tasks.
+with P and visual outcome prediction with W, using each               • Clean Room (25 steps). The robot enters the bedroom,
+predicted observation to condition the next proposal step.              retrieves two dirty garments from the nightstand and bed,
+These simulated rollouts form an offline dataset used to train          and places them in a laundry basket. It then hangs a
+the value and reflective models described below.                        handbag on a clothes rack, retrieves a blanket and hands
+  (a) Clean Room
+
+
+
+
+  (b) Prepare Ingredients
+
+
+
+
+  (c) Tomato and Egg Stir Fry
+
+
+
+
+  (d) Make Milk Tea
+
+
+
+
+  (e) Collect Laundry                                              (f) Tidy Makeup Table
+
+
+
+
+Fig. 3: Representative physical-robot evaluation tasks. (a) Clean Room requires collecting two dirty garments, placing them
+in a laundry basket, hanging a handbag, handing a blanket to a person, and disposing of table trash. (b) Prepare Ingredients
+requires retrieving a tomato and an egg, then cracking and stirring the egg while returning the tools. (c) Tomato and Egg Stir
+Fry requires chopping and transferring the tomatoes, cooking and seasoning the ingredients, plating the dish, and returning
+the cookware and utensils. (d) Make Milk Tea requires adding toppings, pouring milk and tea, sealing the cup, and inserting
+a straw. (e) Collect Laundry requires transferring a T-shirt from the bedside table to a laundry basket. (f) Tidy Makeup Table
+comprises three separately scored instruction-following groups that require different object selections and action sequences
+from matched visual states.
+
+
+    it to a person, leaves the bedroom, and disposes of snack-            and returns both arms to the home position. A typical
+    bag trash from the coffee table. A typical successful                 successful rollout lasts approximately 10 min.
+    rollout lasts approximately 8 min.                                  • Make Milk Tea (13 steps). The robot places a cup at the
+  • Prepare Ingredients (14 steps). The robot moves be-                   preparation station, adds two toppings, pours milk and tea
+    tween the refrigerator and preparation table, opens the               in sequence, seals the cup with a lid, and inserts a straw.
+    refrigerator, retrieves a tomato and an egg, and closes               A typical successful rollout lasts approximately 3 min.
+    the refrigerator. It then places the ingredients in bowls,          • Collect Laundry (5 steps). The robot searches for and
+    cracks the egg with an egg cracker, stirs the egg mixture,            moves to the drawer cabinet, picks up the dirty T-
+    and returns both tools to a porcelain plate. A typical                shirt from the bedside table with its left arm, closes
+    successful rollout lasts approximately 4 min.                         the cabinet door with its right arm, searches for and
+  • Tomato and Egg Stir Fry (22 steps). The robot chops                   moves to the laundry basket, and places the T-shirt in
+    the tomatoes and transfers the tomatoes and prepared                  the basket with its left arm. A typical successful rollout
+    egg mixture to the induction cooker. It turns on the                  lasts approximately 1 min.
+    cooker, adds oil and the egg mixture, stir-fries the eggs,          • Tidy Makeup Table (three task groups). This bench-
+    adds the tomatoes and salt, finishes stir-frying, plates the          mark pairs matched visual states with instructions that
+    dish, returns the cookware and utensils, turns off the                specify different target objects, active arms, action se-
+    cooker, places the finished dish on the preparation table,            quences, and destinations. We score three groups inde-
+      pendently. In Cotton Pad (2 steps), the left arm picks         retains progress across room transitions, whereas failures
+      up the cotton pad and places it in its designated com-         without this memory concentrate on handbag hanging and the
+      partment. In Eyelash Curler (2 steps), the left arm picks      later room-tidying stages.
+      up the eyelash curler and places it in its designated          Prepare Ingredients. Most failures in Prepare Ingredients
+      compartment. In Makeup Puff (4 steps), both arms open          trials arise during egg pickup, cracking, or stirring. Because
+      the drawer, the left arm picks up the makeup puff from         these actions are prerequisites for later preparation stages, an
+      the tabletop and places it inside, and both arms close the     early error blocks substantial downstream progress. Tracking
+      drawer. Executing all eight steps across the three task        completed stages is therefore particularly valuable on this task.
+      groups takes approximately 30 s in total.                      Tomato and Egg Stir Fry.              The decisive bottleneck in
+   • Book Organization (3 steps). The robot uses its two             Tomato and Egg Stir Fry is seasoning. Adding salt causes
+      arms to reorder four books of different heights across         little visible change, so the current observation alone cannot
+      four fixed slots, swapping any pair of books at each step      reliably reveal whether this step has already been completed.
+      until they are arranged from tallest to shortest. A typical    Direct-execution policies therefore tend to add salt repeatedly
+      successful rollout lasts approximately 1 min. We evaluate      or skip it entirely, either of which violates the success criterion.
+      two initial-state regimes while keeping the task objective     The hierarchical system resolves this ambiguity by recording
+      and action space fixed: in-domain initial arrangements         seasoning progress explicitly.
+      appear in the training data, whereas out-of-domain (OOD)       Make Milk Tea. Make Milk Tea presents a complementary
+      initial arrangements are not observed during training. The     regime in which both τ0 -VLA variants already complete most
+      OOD setting therefore evaluates the high-level policy’s        of the sequence reliably. Both achieve an SR of 5/10 and
+      ability to predict appropriate swaps from observations         more than 91% progress, outperforming the external baselines.
+      induced by unseen initial configurations.                      Their remaining failures occur during lid attachment or straw
+Evaluation protocols. We use complementary protocols for             insertion, after the preceding preparation stages have been
+high-level decision making and physical-robot execution.             completed. This pattern identifies final contact-rich manipula-
+High-level policy evaluation. We isolate high-level decision         tion as the main remaining bottleneck. When TTC is enabled,
+making on annotated subtask-boundary samples and report              the hierarchical policy further improves to an SR of 7/10 and
+next-subtask prediction accuracy and inference time. All meth-       95.38% progress, as reported in Table III.
+ods within each comparison receive the same inputs and output
+                                                                     C. Evaluation Across Embodiments
+format. Evaluation-set construction, variant-specific inputs,
+and judging details are provided in Appendix C-H.                       We evaluate the low-level policy on two additional embodi-
+Physical-robot evaluation. We report success rate (SR) and           ments using Collect Laundry and Tidy Makeup Table. Because
+progress using the same task-specific terminal conditions for        these tasks contain only two to five steps, each method
+all methods. SR measures the fraction of successful trials.          executes the full task instruction without task decomposition,
+A trial is successful only when every required milestone is          execution memory, or test-time search. This setting evalu-
+completed. Skipping a required milestone makes the trial             ates low-level control and language-conditioned manipulation
+unsuccessful. Progress measures how much of the task is              across embodiments, separately from the high-level policy
+completed using annotated milestones. Each milestone re-             used in the long-horizon tasks. Table II reports the results.
+ceives full, half, or zero credit based on completion quality,
+and dependent milestones count only after their required             Collect Laundry. Collect Laundry evaluates mobile ma-
+earlier steps are completed. Exact scoring rules, trial durations,   nipulation by the low-level policy. The observed failures
+reset procedures, and termination conditions are provided in         concentrate on T-shirt grasping and navigation around the bed:
+Appendix C-C.                                                        LingBot-VLA sometimes fails to lift the T-shirt, while GR00T
+                                                                     collides with the foot of the bed and terminates the rollout.
+B. Overall System Evaluation                                         Tidy Makeup Table. The Tidy Makeup Table benchmark
+   Table I reports the four long-horizon tasks: Clean Room,          evaluates instruction following under matched visual states.
+Prepare Ingredients, Tomato and Egg Stir Fry, and Make Milk          The language instruction changes the target object, active arm,
+Tea. These tasks require navigation, object search, manipula-        action order, and destination, so the observation alone does not
+tion, state tracking, and recovery across multiple stages. For       determine the correct action sequence. Cotton Pad and Eyelash
+the controlled comparison of our two variants, the observation       Curler emphasize instruction-conditioned object selection and
+and action interfaces and the low-level policy are fixed.            placement, whereas Makeup Puff adds bimanual drawer ma-
+Standalone τ0 -VLA conditions the low-level policy on the            nipulation. GR00T occasionally pauses during drawer motion
+full task instruction. The hierarchical system instead supplies      or selects the makeup puff instead of the eyelash curler.
+bounded subtasks from the high-level policy. Both variants in        LingBot-VLA generally follows the specified arm but tends
+this comparison run without beam search, which is evaluated          to select visually nearby objects rather than the instructed
+separately in the test-time computation experiments.                 target. π0.5 sometimes releases and re-grasps the makeup puff,
+Clean Room. Performance on Clean Room benefits clearly               closes the drawer less smoothly, or omits the cotton pad. These
+from explicit execution memory. The hierarchical system              failures distinguish language-grounding errors from low-level
+TABLE I: Long-horizon task performance. Each method–task setting uses 10 independently collected physical-robot trials.
+SR reports successful trials as x/10, and Progress is the normalized milestone-completion score. Avg. is the unweighted mean
+of the four task-level rates. The first four rows use direct execution. The final row uses the Hierarchical System with Plan
+Once and no beam search.
+
+                 Method                       Clean Room        Prepare Ingredients                Tomato and Egg Stir Fry                Make Milk Tea                             Avg.
+                                            SR ↑ Progress ↑ SR ↑       Progress ↑                  SR ↑             Progress ↑            SR ↑ Progress ↑                    SR ↑        Progress ↑
+           GR00T N1.7 [30]                  0/10   59.80%       1/10     68.57%                    0/10              24.32%               0/10        28.46%              2.50%           45.29%
+            LingBot-VLA [1]                 0/10   66.60%       0/10     35.00%                    0/10              12.27%               0/10        63.85%              0.00%           44.43%
+                 π0.5 [5]                   4/10   86.20%       2/10     73.93%                    0/10              49.77%               3/10        82.31%             22.50%           73.05%
+                 τ0 -VLA                    4/10   92.80%       2/10     66.43%                    0/10              65.00%               5/10        96.15%             27.50%           80.10%
+ τ0 -VLA (Hierarchical System, Plan Once)   5/10   94.80%       4/10     82.86%                    4/10              81.82%               5/10        91.92%             45.00%           87.85%
+
+
+TABLE II: Direct-execution performance across embodiments. Tidy Makeup Table comprises three independently scored
+instruction-following groups. All methods execute the full task instruction without a high-level policy. Each task or task group
+is evaluated over 10 trials. SR reports successful trials as x/10, and Progress is the normalized milestone-completion score.
+
+                        Method                 Collect Laundry                                                 Tidy Makeup Table
+                                                      T-shirt              Cotton Pad                               Eyelash Curler                     Makeup Puff
+                                              SR ↑        Progress ↑   SR ↑                   Progress ↑            SR ↑    Progress ↑               SR ↑            Progress ↑
+                  GR00T N1.7 [30]              4/10        76.00%      10/10                   87.50%               8/10      77.50%                 7/10              52.50%
+                  LingBot-VLA [1]              2/10        35.00%       9/10                   67.50%               3/10      22.50%                 3/10              33.75%
+                      π0.5 [5]                 9/10        88.00%       9/10                   85.00%               8/10      85.00%                 7/10              73.75%
+                      τ0 -VLA                 10/10        97.00%      10/10                   95.00%               9/10      92.50%                10/10              95.00%
+
+
+
+                                                                                                                           Plan Once             Best-of-N           TTC (Ours)
+execution inefficiencies: selecting or omitting the wrong object
+changes task completion, whereas re-grasping and hesitant                                     90                    87.3                  88.0                                                  87.0
+
+drawer motion reduce execution efficiency even when the                                                                            83.0
+
+                                                                                              80
+intended final state is reached.                                                                                                                                      74.0               74.0
+                                                                               Accuracy (%)
+
+
+
+
+                                                                                                                                                                                  72.0
+                                                                                                             70.0
+                                                                                              70
+D. Test-Time Computation Experiments                                                                  64.7
+                                                                                                                            66.0
+
+
+   We conduct several experiments to quantify the gains in                                    60                                                              57.5
+
+subtask-prediction accuracy achieved by test-time computa-                                                                                             50.0
+                                                                                              50
+tion (TTC) and assess whether these gains lead to higher
+success rates in closed-loop real-robot evaluation. Our TTC                                   40
+experiments cover the following tasks: Make Milk Tea, Book                                             Make Milk Tea       Book Organization          Book Organization             Clean Room
+                                                                                                                              (In-Domain)                  (OOD)
+Organization, and Clean Room. We evaluate Book Organi-
+zation both in-domain and out-of-domain (OOD) initial book                     Fig. 4: Next-subtask prediction accuracy under different
+arrangements: the former appears in the training data, whereas                 high-level inference methods. We compare Plan Once, Best-
+the latter does not. The OOD setting evaluates the high-level                  of-N , and TTC (Ours) across four evaluation settings: Make
+policy’s performance when planning from unseen initial ob-                     Milk Tea, Book Organization (In-Domain), Book Organization
+servations. We first measure next-subtask prediction accuracy                  (OOD), and Clean Room.
+in an open-loop setting, then evaluate TTC in closed-loop real-
+robot execution, and finally examine the relationship between
+computational cost and prediction accuracy.
+Open-loop Subtask Prediction. Following the high-level                            As shown in Figure 4, TTC achieves the highest accu-
+policy evaluation protocol above, we evaluate next-subtask                     racy across all four evaluation settings, demonstrating its
+prediction at different stages of each task. We compare TTC                    effectiveness in improving next-subtask prediction. Take the
+against two baselines. Plan Once makes one high-level predic-                  OOD Book Organization setting as an example, where TTC
+tion at each decision point without test-time search. It remains               achieves 74.0% accuracy, compared with 50.0% for Plan
+a variant of the high-level policy and is distinct from direct                 Once and 57.5% for Best-of-N . In the OOD setting, the
+execution, which bypasses the high-level policy. Best-of-N                     initial book arrangements are absent from the training data,
+samples N candidates, predicts the next observation for each                   placing the corresponding observations outside the high-level
+candidate using the same world model as TTC, and selects the                   policy’s training distribution. Under this distribution shift,
+candidate assigned the highest score by the same value model.                  directly predicting the next subtask with the fine-tuned VLM
+                                                  (a) Make Milk Tea                                                      (b) Book Organization
+                             90
+                                                                                                       80
+                             85
+                                                                                                       75
+              Accuracy (%)
+
+
+
+
+                                                                                        Accuracy (%)
+                             80                                                                        70
+                             75                                                                        65
+                             70                                                                        60
+                                                                  Plan Once (64.7%)                                                         Plan Once (55.3%)
+                             65                                                                        55
+                                  0.0   0.5     1.0   1.5    2.0  2.5     3.0         3.5                   0.0   0.5     1.0   1.5    2.0  2.5     3.0         3.5
+                                         Test-Time Compute (PFLOPs / sample)                                       Test-Time Compute (PFLOPs / sample)
+                                                                  TTC Result                Fitted Curve               Plan Once
+
+Fig. 5: Relationship between computational cost and subtask-prediction accuracy. The accuracy increases with additional
+computation for the Make Milk Tea and Book Organization tasks, shown in panels (a) and (b), respectively. Each point
+represents an experimental result obtained at a different computational cost. The orange dashed curves show saturation fits to
+these results, and the gray dashed lines indicate the Plan Once baselines.
+
+
+TABLE III: Closed-loop physical-robot performance with                                          which do not admit a fixed execution plan. These results show
+test-time computation. Each entry uses 10 independently                                         that the gains in next-subtask prediction accuracy achieved
+collected trials. Book Organization uses shuffled initial ar-                                   by TTC lead to more effective and efficient closed-loop task
+rangements and is reported without the in-domain and OOD                                        execution.
+split used in the open-loop evaluation. SR denotes task success
+                                                                                                Computational Cost vs. Subtask-Prediction Accuracy.
+rate, and Progress is the normalized milestone-completion
+                                                                                                Finally, we conduct an analysis of the relationship between
+score.
+                                                                                                test-time computational cost and subtask-prediction accuracy.
+             Make Milk Tea                 Book Organization       Clean Room                   Figure 5 reports this relationship for the Make Milk Tea and
+ Method
+                                                                                                Book Organization tasks. Each point represents an experi-
+            SR ↑             Progress ↑    SR ↑     Progress ↑   SR ↑   Progress ↑
+                                                                                                mental result with a different computational cost, and the
+Plan Once   5/10              91.92%       6/10      66.67%      5/10     94.80%                orange dashed curves provide approximate saturation fits to
+   TTC      7/10              95.38%       9/10      93.33%      7/10     97.60%                the observations. Specifically, we fit a saturating exponential
+                                                                                                function. The parameters are estimated by least squares using
+                                                                                                all experimental observations. Accuracy rises rapidly when
+is more prone to error. Instead, TTC recursively expands                                        computation is increased from a small budget, showing that
+candidate branches by using the world model to predict                                          additional search and reflection substantially improve subtask
+future observations and the value model to score the resulting                                  prediction in the low-compute regime. The marginal gain then
+imagined branches. The reflective model then uses the retained                                  gradually decreases and the fitted curves approach a plateau.
+branches as context to generate the current subtask. Unlike                                     This trend indicates that TTC provides a favorable compute–
+direct VLM prediction based solely on patterns learned during                                   accuracy trade-off at moderate budgets, while its benefit even-
+fine-tuning, TTC evaluates candidate consequences at decision                                   tually saturates as additional computation is allocated.
+time, resulting in improved next-subtask prediction accuracy.
+Although Best-of-N evaluates sampled candidates using the
+same world and value models, it performs only one-step                                                                        VII. C ONCLUSION
+selection without TTC’s multi-step expansion and reflective
+commitment. Consequently, its accuracy gains relative to Plan                                      We present τ0 -VLA, a hierarchical VLA system for long-
+Once are consistently smaller than those achieved by TTC                                        horizon manipulation that combines a memory-augmented
+across the evaluated settings.                                                                  high-level policy with a low-level policy. The high-level pol-
+Closed-loop Real-robot Evaluation.        We further assess                                     icy handles routine decisions efficiently and allocates world-
+whether TTC leads to higher task success rates in closed-loop                                   model-guided computation when a decision benefits from ex-
+real-robot evaluation. We deploy the high-level policy with                                     plicit consequence evaluation. The low-level policy is trained
+and without TTC while keeping the low-level policy fixed.                                       from heterogeneous robot and vision-language data for de-
+As reported in Table III, TTC improves both task progress                                       ployable whole-body mobile manipulation. Together, the two
+and success rate across all evaluated tasks. This benefit is                                    levels provide a practical way to allocate reasoning over long
+particularly important for tasks such as Book Organization,                                     task horizons while retaining stable real-robot execution.
+                        R EFERENCES                              [12] Danny Driess, Jost Tobias Springenberg, Brian Ichter,
+                                                                      Lili Yu, Adrian Li-Bell, Karl Pertsch, Allen Z. Ren,
+ [1] Ant Group. LingBot-VLA: A pragmatic vla foundation               Homer Walke, Quan Vuong, Lucy Xiaoyang Shi, and
+     model, 2026.                                                     Sergey Levine. Knowledge insulating vision-language-
+ [2] Suneel Belkhale, Tianli Ding, Ted Xiao, Pierre Sermanet,         action models: Train fast, run fast, generalize better.
+     Quon Vuong, Jonathan Tompson, Yevgen Chebotar, De-               In Advances in Neural Information Processing Systems,
+     bidatta Dwibedi, and Dorsa Sadigh. RT-H: Action hierar-          volume 38, 2025. URL https://openreview.net/forum?id=
+     chies using language. arXiv preprint arXiv:2403.01823,           cb0xbZ3APM.
+     2024.                                                       [13] Yilun Du, Sherry Yang, Bo Dai, Hanjun Dai, Ofir
+ [3] Kevin Black, Noah Brown, Danny Driess, Adnan Es-                 Nachum, Josh Tenenbaum, Dale Schuurmans, and Pieter
+     mail, Michael Equi, Chelsea Finn, Niccolo Fusai, Lachy           Abbeel. Learning universal policies via text-guided video
+     Groom, Karol Hausman, Brian Ichter, et al. π0 : A vision-        generation. Advances in Neural Information Processing
+     language-action flow model for general robot control.            Systems, 36:9156–9172, 2023.
+     arXiv preprint arXiv:2410.24164, 2024.                      [14] Yilun Du, Sherry Yang, Pete Florence, Fei Xia, Ayzaan
+ [4] Kevin Black, Mitsuhiko Nakamoto, Pranav Atreya,                  Wahid, Pierre Sermanet, Tianhe Yu, Pieter Abbeel,
+     Homer Walke, Chelsea Finn, Aviral Kumar, and Sergey              Joshua B Tenenbaum, Leslie Kaelbling, et al. Video
+     Levine. Zero-shot robotic manipulation with pretrained           language planning. In International Conference on
+     image-editing diffusion models. In International Confer-         Learning Representations, volume 2024, pages 31138–
+     ence on Learning Representations, volume 2024, pages             31155, 2024.
+     33431–33452, 2024.                                          [15] Yunhai Feng, Jiaming Han, Zhuoran Yang, Xiangyu Yue,
+ [5] Kevin Black, Noah Brown, James Darpinian, Karan                  Sergey Levine, and Jianlan Luo. Reflective planning:
+     Dhabalia, Danny Driess, Adnan Esmail, Michael Robert             Vision-language models for multi-stage long-horizon
+     Equi, Chelsea Finn, Niccolo Fusai, Manuel Y. Galliker,           robotic manipulation. In Joseph Lim, Shuran Song, and
+     et al. π0.5 : A vision-language-action model with open-          Hae-Won Park, editors, Proceedings of The 9th Confer-
+     world generalization. In Proceedings of The 9th Confer-          ence on Robot Learning, volume 305 of Proceedings of
+     ence on Robot Learning, volume 305 of Proceedings of             Machine Learning Research, pages 2038–2062. PMLR,
+     Machine Learning Research, pages 17–40, 2025. URL                2025. URL https://proceedings.mlr.press/v305/feng25b.
+     https://proceedings.mlr.press/v305/black25a.html.                html.
+ [6] Kevin Black, Manuel Y. Galliker, and Sergey Levine.         [16] Figure AI. Helix: A vision-language-action model for
+     Real-time execution of action chunking flow policies.            generalist humanoid control. https://www.figure.ai/news/
+     In Advances in Neural Information Processing Systems,            helix, 2025.
+     volume 38, 2025.                                            [17] Google DeepMind. Gemini Robotics 1.5: Pushing the
+ [7] Anthony Brohan, Noah Brown, Justice Carbajal, Yev-               frontier of generalist robots with advanced embodied
+     gen Chebotar, Joseph Dabis, Chelsea Finn, Keerthana              reasoning, thinking, and motion transfer, 2025.
+     Gopalakrishnan, Karol Hausman, Alex Herzog, Jasmine         [18] Wenkai Guo, Guanxing Lu, Haoyuan Deng, Zhenyu Wu,
+     Hsu, et al. RT-1: Robotics transformer for real-world            Yansong Tang, and Ziwei Wang. VLA-Reasoner: Em-
+     control at scale. arXiv preprint arXiv:2212.06817, 2022.         powering vision-language-action models with reasoning
+ [8] Jun Cen, Chaohui Yu, Hangjie Yuan, Yuming Jiang,                 via online Monte Carlo tree search. In 2026 IEEE
+     Siteng Huang, Jiayan Guo, Xin Li, Yibing Song,                   International Conference on Robotics and Automation
+     Hao Luo, Fan Wang, et al.           WorldVLA: Towards            (ICRA), 2026.
+     autoregressive action world model.        arXiv preprint    [19] David Ha and Jürgen Schmidhuber. World models. arXiv
+     arXiv:2506.21539, 2025.                                          preprint arXiv:1803.10122, 2018.
+ [9] Chi-Lam Cheang, Guangzeng Chen, Ya Jing, Tao Kong,          [20] Danijar Hafner, Jurgis Pasukonis, Jimmy Ba, and Timo-
+     Hang Li, Yifeng Li, Yuxiao Liu, Hongtao Wu, Jiafeng              thy P. Lillicrap. Mastering diverse control tasks through
+     Xu, Yichu Yang, et al. GR-2: A generative video-                 world models. Nature, 640(8059):647–653, 2025. doi:
+     language-action model with web-scale knowledge for               10.1038/s41586-025-08744-2. URL https://doi.org/10.
+     robot manipulation. arXiv preprint arXiv:2410.06158,             1038/s41586-025-08744-2.
+     2024.                                                       [21] Brian Ichter, Anthony Brohan, Yevgen Chebotar, Chelsea
+[10] Mingtong Dai, Lingbo Liu, Yongjie Bai, Yang Liu,                 Finn, Karol Hausman, Alexander Herzog, Daniel Ho,
+     Zhouxia Wang, Rui Su, Chunjie Chen, Liang Lin, and               Julian Ibarz, Alex Irpan, Eric Jang, et al. Do as i can, not
+     Xinyu Wu. RoVer: Robot reward model as test-time                 as i say: Grounding language in robotic affordances. In
+     verifier for vision-language-action model. arXiv preprint        Conference on Robot Learning, pages 287–318. PMLR,
+     arXiv:2510.10975, 2025.                                          2023.
+[11] DeepSeek-AI. Deepseek-r1: Incentivizing reasoning ca-       [22] Moo Jin Kim, Karl Pertsch, Siddharth Karamcheti, Ted
+     pability in LLMs via reinforcement learning. arXiv               Xiao, Ashwin Balakrishna, Suraj Nair, Rafael Rafailov,
+     preprint arXiv:2501.12948, 2025.                                 Ethan Foster, Grace Lam, Pannag Sanketi, et al. Open-
+     VLA: An open-source vision-language-action model.                arXiv:2412.16720, 2024.
+     arXiv preprint arXiv:2406.09246, 2024.                      [33] Jeongeun Park, Jihwan Yoon, Byungwoo Jeon, Juhan
+[23] Jacky Kwok, Christopher Agia, Rohan Sinha, Matt Fout-            Park, Jinwoo Shin, Namhoon Cho, Kyungjae Lee, Sang-
+     ter, Shulu Li, Ion Stoica, Azalia Mirhoseini, and Marco          doo Yun, and Sungjoon Choi. Hierarchical vision lan-
+     Pavone. RoboMonkey: Scaling test-time sampling and               guage action model using success and failure demon-
+     verification for vision-language-action models. In Joseph        strations. arXiv preprint arXiv:2512.03913, 2025.
+     Lim, Shuran Song, and Hae-Won Park, editors, Proceed-       [34] Karl Pertsch, Kyle Stachowicz, Brian Ichter, Danny
+     ings of The 9th Conference on Robot Learning, volume             Driess, Suraj Nair, Quan Vuong, Oier Mees, Chelsea
+     305 of Proceedings of Machine Learning Research, pages           Finn, and Sergey Levine.         FAST: Efficient action
+     3200–3217. PMLR, 2025. URL https://proceedings.mlr.              tokenization for vision-language-action models.        In
+     press/v305/kwok25a.html.                                         Proceedings of Robotics: Science and Systems, 2025.
+[24] Shiyu Liu, Yucheng Han, Peng Xing, Fukun Yin, Rui                doi: 10.15607/RSS.2025.XXI.012. URL https://www.
+     Wang, Wei Cheng, Jiaqi Liao, Yingming Wang, Hong-                roboticsproceedings.org/rss21/p012.html.
+     hao Fu, Chunrui Han, et al. Step1X-Edit: A practical        [35] Physical Intelligence, Bo Ai, Ali Amin, Raichelle An-
+     framework for general image editing. arXiv preprint              iceto, Ashwin Balakrishna, Greg Balke, Kevin Black,
+     arXiv:2504.17761, 2025.                                          et al. π0.7 : A steerable generalist robotic foundation
+[25] Songming Liu, Lingxuan Wu, Bangguo Li, Hengkai Tan,              model with emergent capabilities, 2026.
+     Huayu Chen, Zhengyi Wang, Ke Xu, Hang Su, and               [36] Qwen Team.           Qwen3.5.     https://huggingface.co/
+     Jun Zhu. RDT-1B: A diffusion foundation model for                docs/transformers/model doc/qwen3 5, 2026. Qwen3.5
+     bimanual manipulation. In The Thirteenth International           model family.
+     Conference on Learning Representations, 2025. URL           [37] Lucy Xiaoyang Shi, Brian Ichter, Michael Equi, Liy-
+     https://openreview.net/forum?id=yAzN4tz7oI.                      iming Ke, Karl Pertsch, Quan Vuong, James Tanner,
+[26] Zhen Liu, Xinyu Ning, Zhe Hu, Xinxin Xie, Weize                  Anna Walling, Haohuan Wang, Niccolo Fusai, et al.
+     Li, Zhipeng Tang, Chongyu Wang, Zejun Yang, Han-                 Hi Robot: Open-ended instruction following with hier-
+     lin Wang, Yitong Liu, and Zhongzhu Pu. Goal2Skill:               archical vision-language-action models. arXiv preprint
+     Long-horizon manipulation with adaptive planning and             arXiv:2502.19417, 2025.
+     reflection. arXiv preprint arXiv:2604.13942, 2026.          [38] Mustafa Shukor, Dana Aubakirova, Francesco Ca-
+[27] Qian Long, Yueze Wang, Jiaxi Song, Junbo Zhang,                  puano, Pepijn Kooijmans, Steven Palma, Adil Zouitine,
+     Peiyan Li, Wenxuan Wang, Yuqi Wang, Haoyang Li,                  Michel Aractingi, Caroline Pascal, Martino Russi, An-
+     Shaoxuan Xie, Guocai Yao, Hanbo Zhang, Xinlong                   dres Marafioti, et al. SmolVLA: A vision-language-
+     Wang, Zhongyuan Wang, Xuguang Lan, Huaping Liu,                  action model for affordable and efficient robotics. arXiv
+     and Xinghang Li. Scaling world model for hierarchical            preprint arXiv:2506.01844, 2025.
+     manipulation policies. arXiv preprint arXiv:2602.10983,     [39] Ajay Sridhar, Jennifer Pan, Satvik Sharma, and Chelsea
+     2026.                                                            Finn. Scaling up memory for robot control via ex-
+[28] Hao Luo, Ye Wang, Wanpeng Zhang, Sipeng Zheng,                   perience retrieval. In The Fourteenth International
+     Ziheng Xi, Chaoyi Xu, Haiweng Xu, Haoqi Yuan, Chi                Conference on Learning Representations, 2026. URL
+     Zhang, Yiqing Wang, Yicheng Feng, and Zongqing                   https://openreview.net/forum?id=1dH4ARGdwD.
+     Lu. Being-H0.5: Scaling human-centric robot learning        [40] Marcel Torne, Karl Pertsch, Homer Walke, Kyle Ved-
+     for cross-embodiment generalization. arXiv preprint              der, Suraj Nair, Brian Ichter, Allen Z. Ren, Haohuan
+     arXiv:2601.12993, 2026.                                          Wang, Jiaming Tang, Kyle Stachowicz, Karan Dhabalia,
+[29] Mitsuhiko Nakamoto, Oier Mees, Aviral Kumar, and                 Michael Equi, Quan Vuong, Jost Tobias Springenberg,
+     Sergey Levine. Steering your generalists: Improving              Sergey Levine, Chelsea Finn, and Danny Driess. MEM:
+     robotic foundation models via value guidance. In Pulkit          Multi-scale embodied memory for vision language action
+     Agrawal, Oliver Kroemer, and Wolfram Burgard, editors,           models. arXiv preprint arXiv:2603.03596, 2026. URL
+     Proceedings of The 8th Conference on Robot Learning,             https://arxiv.org/abs/2603.03596.
+     volume 270 of Proceedings of Machine Learning Re-           [41] Yilin Wu, Thomas Tian, Gokul Swamy, and Andrea
+     search, pages 4996–5013. PMLR, 2025. URL https:                  Bajcsy. From foresight to forethought: VLM-in-the-
+     //proceedings.mlr.press/v270/nakamoto25a.html.                   loop policy steering via latent alignment. In Proceed-
+[30] NVIDIA. Isaac GR00T N1.7: An open reasoning vision-              ings of Robotics: Science and Systems, 2025. doi:
+     language-action model for humanoid robots. https://              10.15607/RSS.2025.XXI.076.
+     huggingface.co/blog/nvidia/gr00t-n1-7, 2026. NVIDIA         [42] X-VLA Team.          X-VLA: Soft-prompted transformer
+     Isaac GR00T N1.7; foundational report: GR00T N1,                 as scalable cross-embodiment vision-language-action
+     arXiv:2503.14734.                                                model, 2025.
+[31] Octo Model Team. Octo: An open-source generalist robot      [43] Yanting Yang, Shenyuan Gao, Qingwen Bu, Li Chen,
+     policy, 2024.                                                    and Dimitris N. Metaxas. Seeing farther and smarter:
+[32] OpenAI. Openai o1 system card. arXiv preprint                    Value-guided multi-path reflection for VLM policy op-
+     timization. In 2026 IEEE International Conference on        Zhang, Hao Zhang, Tianbao Zhang, Xinbo Zhi, Mingyan
+     Robotics and Automation (ICRA), 2026.                       Zhou, and Rongxing Zhu for their valuable contributions to
+[44] Yi Yang, Zhihong Liu, Siqi Kou, Yiyang Chen, Yanzhe         data creation, annotation, and related data operations. We also
+     Hu, Jianbo Zhou, Boyuan Zhao, Zhijie Wei, Xiao Xia,         thank Yifei Chen for assistance with video recording and
+     Xueqi Li, Pengfei Liu, and Zhijie Deng.           World-    editing.
+     language-action model for unified world modeling, lan-
+                                                                                          A PPENDIX C
+     guage reasoning, and action synthesis. arXiv preprint
+                                                                                      A DDITIONAL D ETAILS
+     arXiv:2606.05979, 2026.
+[45] Zhilong Zhang, Wenyu Luo, Haonan Wang, Yifei Sheng,            This appendix provides additional details on the robot plat-
+     Yidi Wang, Hanyuan Guo, Haoxiang Ren, Xinghao Du,           forms, physical-robot evaluation protocol, low-level training
+     Yuhan Che, Tongtong Cao, Lei Yuan, and Yang Yu.             data, and high-level policy data construction.
+     Anticipation-VLA: Solving long-horizon embodied tasks
+                                                                 A. Robot Platform Details
+     via anticipation-based subgoal generation. arXiv preprint
+     arXiv:2605.01772, 2026.                                     AGIBOT G1. AGIBOT G1 is a wheeled humanoid with an
+[46] Brianna Zitkovich, Tianhe Yu, Sichun Xu, Peng Xu,           omnidirectional four-wheel-steering base, dual 7-DoF arms,
+     Ted Xiao, Fei Xia, Jialin Wu, Paul Wohlhart, Stefan         and modular end-effectors. Our setup uses parallel-jaw grip-
+     Welker, Ayzaan Wahid, et al. RT-2: Vision-language-         pers. Its sensing suite includes head-mounted RGB-D and
+     action models transfer web knowledge to robotic control.    fisheye cameras and a wrist-mounted camera on each arm.
+     In Conference on Robot Learning, pages 2165–2183.           ARX AC One. ARX AC One is a bimanual platform with
+     PMLR, 2023.                                                 dual 6-DoF X5 arms and parallel-jaw grippers. We use wrist-
+                                                                 mounted cameras together with a fixed central camera.
+                      A PPENDIX A                                Franka Research 3. Our bimanual Franka Research 3 setup
+                 AUTHOR C ONTRIBUTIONS                           comprises two 7-DoF torque-controlled arms with custom 3D-
+                                                                 printed grippers and three RGB cameras. Across all three
+High-Level Policy Training and Research: Xiaowei Cai,
+                                                                 embodiments, the policy receives multi-view RGB images
+Jingxiao Chen, Xinchen Li, Yifan Li, Yi Liu, Jianlan Luo,
+                                                                 and proprioceptive state, and the native robot commands are
+Junwen Miao, Ruiqi Ni, Buqing Nie, Jiaxu Wang, Dafeng Wei,
+                                                                 represented in the unified 40-dimensional action layout defined
+Pengwei Xie, Pu Yang, Hangjian Ye, Xiangyu Yue, and Jinyu
+                                                                 in Section IV-C.
+Zhang.
+Low-Level Policy Training and Research: Xiaowei Cai,             B. Unified State and Action Representation
+Bingao Chen, Jingxiao Chen, Jingshun Huang, Yi Liu, Jianlan         The canonical state vector st and each action vector at+j ,
+Luo, Junwen Miao, Dafeng Wei, Dongming Wu, Hangjian Ye,          for j ∈ {0, . . . , H − 1}, lie in R40 . The stacked action chunk
+Jinyu Zhang, and Pengfei Zhou.                                   therefore lies in RH×40 . State and action vectors use the slot
+                                                                 ordering shown in Table IV. State channels store the current
+Training Infra: Peiqi Wang, Sen Wang, and Qinglin Zhang.
+                                                                 values, and the end-effector and joint action channels use the
+Robot Infra: Tengyu Hou, Dong Li, Zhongyuan Liu, and             relative parameterization defined below. The left and right arm
+Xiaoyan Wang.                                                    blocks follow each embodiment’s native kinematic joint order.
+Writing and Illustration: Xiaowei Cai, Yunuo Cai, Jingxiao       A robot with fewer than eight joints per arm fills the leading
+Chen, Zhi Chen, Yi Liu, Jianlan Luo, Junwen Miao, Buqing         entries and masks the remainder.
+Nie, Dafeng Wei, Dongming Wu, and Jinyu Zhang.
+                                                                 TABLE IV: Canonical 40-D state and action layout. Dimen-
+Data Collection and Deployment: Zhi Chen, Siyuan Feng,           sions are one-indexed. For a rotation matrix R = [r1 , r2 , r3 ],
+Han Jiang, Runkun Ju, Shaowei Li, Mingjie Pan, Xinlin Ren,       we use Rot6D(R) = [r⊤        ⊤ ⊤
+                                                                                         1 , r2 ] .
+Jianheng Song, and Yue Zhou.
+                                                                     Coordinates             Dimensions State representation
+Data Infra: Mingxiang Li, Xueyong Zhao and Yue Zhou.
+                                                                     Left EEF position          1–3      Cartesian position in meters
+First Authors: Jinyu Zhang and Yi Liu.                               Left EEF orientation       4–9      Rot6D(RL )
+                                                                     Right EEF position        10–12     Cartesian position in meters
+Corresponding Author: Jianlan Luo.                                   Right EEF orientation     13–18     Rot6D(RR )
+                       A PPENDIX B                                   Left gripper                19      native opening coordinate
+                                                                     Right gripper               20      native opening coordinate
+                  ACKNOWLEDGMENTS                                    Waist                     21–22     two native coordinates
+  We gratefully acknowledge Hongwen Cai, Haoran Chen,                Planar base velocity      23–24     two native coordinates
+Yebin Chen, Zhibo Cui, Zihao Fan, Tao Gao, Yanan Gong,               Left arm joints           25–32     q1L , . . . , q8L in radians
+                                                                     Right arm joints          33–40     q1R , . . . , q8R in radians
+Minghao Gui, Bin He, Xinyan Hou, Lei Hua, Shuaishuai Li,
+Tong Li, Qingxiang Liu, Xiang Lü, Zongbao Song, Yuna Sun,
+Zhe Sun, Zhifeng Tang, Fuming Tian, Jiahao Wan, Hanying          Relative action encoding. Both end-effector and joint actions
+Wang, Hao Wang, Sijing Wang, Tao Wang, Le Yuan, Guozhu           are expressed relative to the current state. End-effector actions
+use position and rotation deltas from the current pose, with the        TABLE V: Maximum duration of each physical-robot trial.
+position delta expressed in the current end-effector frame. Joint
+                                                                              Task                              Maximum duration
+actions use angular offsets from the current joint configuration.
+Masks. Separate state and action masks identify the valid                     Clean Room                              20 min
+dimensions for each embodiment. They activate the applicable                  Prepare Ingredients                     20 min
+end-effector or joint slots, set unavailable dimensions to zero,              Tomato and Egg Stir Fry                 20 min
+                                                                              Make Milk Tea                           10 min
+and exclude inactive action dimensions from the training loss.
+                                                                              Book Organization                        5 min
+Control metadata. We serialize η together with the language                   Collect Laundry                          5 min
+command ct using the following prompt. The robot type,                        Tidy Makeup Table (each group)           5 min
+control mode, and whole-body fields comprise η, while the
+final field contains ct :
+ You are controlling a robot.                                           partial-completion state, and 0 otherwise. The prerequisite-
+ Robot type: <embodiment>                                               aware credit is
+ Control mode: <eef/eef_wbc/joint>
+ Whole-body control: <enabled/disabled>                                                         sr,i = er,i αr,i .             (16)
+ Task: <language command>
+                                                                        A completed retry can therefore receive half credit while still
+Masked flow-matching details. Using the notation in                     enabling later milestones. A partial-completion state enables
+Eq. (14), the stacked action chunk at:t+H−1 lies in RH×da .             descendants only when it meets the task-specific prerequisite
+Given the complete noisy chunk and the policy condition-                condition. A skipped required milestone receives no credit
+ing inputs (ot , st , ct , η, τ ), the action expert jointly predicts   and blocks only its descendants. Milestones on independent
+  τ
+vθ,t+j  ∈ Rda for each action token. The masked flow-                   branches remain eligible. For example, failure to add the
+matching objective is                                                   first topping in Make Milk Tea does not prevent credit for
+                                                                      a correctly added second topping. When an execution record
+                                H−1
+                       1         X
+                                           τ             2              groups multiple subtasks, we resolve the outcomes at the
+    LFM = E                           Mvθ,t+j  − ut+j 2  .    (15)
+                 H tr(M) j=0                                            original subtask granularity using the accompanying action-
+                                                                        level annotations.
+The expectation is over training examples, Gaussian noise,                 For a task with |V| annotated milestones and T evaluated
+and τ = 0.001 + 0.999x with x ∼ Beta(1.5, 1). The                       trials, progress is
+implementation caps each normalized per-sample loss at 100                                                  T
+before batch averaging. At inference, we initialize the chunk                                        100 X X
+                                                                                        Progress =             sr,i .              (17)
+from masked Gaussian noise and integrate the learned field                                           T |V| r=1
+                                                                                                                i∈V
+from τ = 1 to τ = 0. We apply the action mask to the
+current noisy chunk before every velocity-field evaluation and          The graph sizes used in Table I are |V| = 25, 14, 22, and
+to the final chunk after integration. The reported policies use         13 for Clean Room, Prepare Ingredients, Tomato and Egg Stir
+an action horizon of H = 30 and ten uniform Euler updates.              Fry, and Make Milk Tea, respectively. Book Organization uses
+                                                                        |V| = 3, and Collect Laundry uses |V| = 5. The three Tidy
+C. Physical-Robot Evaluation Protocol                                   Makeup Table groups use |V| = 2, 2, and 4 and are evaluated
+Success rate. We apply the same task-specific terminal condi-           separately.
+tions and milestone annotations to every method. SR requires            Task-specific rules. Repeated salt addition in Tomato and Egg
+every required annotated subtask and the terminal condition             Stir Fry is a prohibited action rather than an autonomous retry.
+to be completed. A required subtask completed after one or              It invalidates SR and assigns 0.5 progress credit to the salt-
+more failed autonomous attempts still satisfies the SR criterion,       addition subtask. Other autonomously completed subtasks are
+provided that no required subtask is skipped and no task-               scored according to the prerequisite graph.
+specific prohibited action occurs.                                      Trial accounting. Every method–task entry in Table I uses
+Progress. For each task, we construct a directed acyclic                ten independently collected physical-robot trials.
+prerequisite graph G = (V, E) from its original fine-grained               Each physical-robot trial uses a fixed wall-clock limit
+annotations. Each index i ∈ V identifies one required mile-             measured from the start of autonomous execution. The task-
+stone. A directed edge (i, j) ∈ E means that milestone i must           specific limits are summarized in Table V.
+reach its required task state before milestone j is eligible for        Reset policy. Before every trial, the robot is returned to the
+credit. Let Anc(i) denote all direct and indirect prerequisites         task-specific standardized initial pose, and all task objects,
+of milestone i.                                                         tools, articulated furniture, and consumables are restored to
+   For trial r, let er,i = 1 when every milestone in Anc(i)             their designated initial states. Object positions are either re-
+has reached its required task state before milestone i, and let         stored to fixed designated locations or, when a task specifies
+er,i = 0 otherwise. The local credit αr,i ∈ {0, 0.5, 1} is 1 for        randomized placement, resampled within the same predefined
+first-attempt completion, 0.5 for completion after one or more          range for every method. All state carried over from the
+failed autonomous attempts or for a predefined task-specific            preceding trial is cleared.
+Termination conditions. A trial terminates when the task            unchanged. Failures that undo prior progress, such as a
+success conditions are satisfied, the task-specific time limit      dropped object, trigger rollback to the preceding subtask. Sam-
+is reached, or the scene enters an irrecoverable state. Only the    ples marked restorable=false are skipped, and rollback
+first case is counted as success. All other termination cases       instances are capped at 10–15% to avoid teaching the high-
+are counted as failures. For progress, only valid milestones        level policy to distrust correct memory. We additionally apply
+completed before termination receive credit, following the          six-dimensional visually grounded augmentation to the L1/L2
+scoring rule in the main text.                                      task and stage instructions to improve instruction diversity and
+                                                                    zero-shot steerability.
+D. Low-Level Data Details                                           Quality control. Quality control operated in two phases.
+   The low-level training corpus combines approximately             During prompt development, fixed-seed stratified human spot-
+23.4K hours of internally collected demonstrations with 16.7K       checks on small batches surfaced failure modes, chiefly cross-
+hours from public robot datasets. The internal data comprise        task contamination, where the annotator hallucinated action
+21.9K hours on AGIBOT G1, 585 hours on AGIBOT G2,                   constraints from an unrelated task (e.g. milk-tea constraints
+578 hours on ARX AC One, and 347 hours on Franka. The               appearing under a fruit-shelving task). All visual prompts em-
+public data include 9.25K hours of open-source UMI data             bed a verification rule that requires omitting any attribute that
+together with additional selected datasets, supplying further       cannot be confirmed from the images (“when in doubt, leave
+embodiments, tasks, and contact-rich manipulation skills.           it out”), and each identified failure mode was hardened into
+   We additionally interleave multimodal instruction-following      a programmatic filter applied at scale: a cross-task contami-
+and robot-centric perception examples with the action data.         nation filter, an empty-<subtask> detector, and a memory-
+All sources follow a consistent sampling and preprocessing          contamination filter. Once the prompts and filters were fixed,
+pipeline throughout low-level training; the multimodal samples      the full corpus was pre-labeled and filtered programmatically,
+serve as auxiliary supervision for preserving the backbone’s        without further per-sample human inspection.
+vision-language capabilities.                                          The contamination filter builds a per-episode noun vocabu-
+                                                                    lary from the L1 and L3 annotations and rejects a constraint
+E. High-Level Policy Data Construction
+                                                                    whose operated object lies entirely outside this vocabulary, or
+   Supervision for the high-level policy is generated automat-      whose slot nouns overlap it by less than 20%. Tightening the
+ically from task instructions, stage descriptions, executable       criterion from a naive disjointness test (discard rate 0.33%,
+subtask annotations, segmented demonstrations, and videos.          with residual contamination) through an over-aggressive ratio
+In the data pipeline, we denote these three instruction levels      threshold (discard rate 2.32%, which removed many valid
+as L1, L2, and L3, respectively. Construction proceeds in           but verbose constraints) to the final two-rule filter with an
+three steps. (1) Pre-labeling. Using google/Gemma4-31B-it as        expanded stop-word list (discard rate 0.42%) left zero residual
+the annotator, we generate a <think> field that summarizes          contamination on a 3.26M-sample validation set. Structural
+scene state, progress, constraints, and failures, together with     dirty-data filtering additionally removes empty-<subtask>
+a <memory> field that compresses completed stages while             episodes and the downstream memory corruption they induce,
+retaining detail for the active subtask. The input includes the     using a three-tier policy by per-task dirty ratio (tasks above
+carried memory and previously committed subtask. The target         90% dirty are excluded outright, tasks between 10% and
+<memory> is aligned with the current observation, while the         90% are filtered at the episode level, and tasks below 10%
+target <subtask> reuses the executable-subtask annotation           have only their empty-<subtask> samples removed). This
+for what should be executed next. (2) Keyframe extraction.          discards 11.74% of episodes and retains 40.4M (88.26%) clean
+Following each subtask’s temporal range, we extract three syn-      samples. The held-out evaluation set for the high-level policy
+chronized views (top_head, hand_left, hand_right)                   is drawn from frames unseen in training.
+with ffmpeg. (3) VQA assembly. We combine the synchro-
+nized views with the generated fields and executable-subtask
+                                                                    F. Asynchronous Dual-System Serving
+annotations to form structured training examples for the high-
+level policy.                                                          The main text describes the logical dependency between
+   To make the high-level policy robust to deployment-time          high-level subtask generation and low-level action generation
+memory misalignment, we perturb only the input memory               as a sequential inference step. In deployment, we pipeline
+while reading the corrected target from the demonstration.          these stages asynchronously because a high-level decision is
+This procedure derives the five instance families in Table VI       far slower than one low-level control period. A background
+without additional annotation. Here Mn denotes the memory           worker continuously recomputes the next subtask for each
+upon entering segment n. The within-subtask family is the           active episode and publishes the generated subtask to a per-
+aligned case, and the remaining families target distinct failure    episode cache (refreshed about every 1 s). The control loop
+modes.                                                              only reads this cache: each tick takes the cached subtask as
+   For error-think, the <think> field first flags the failure and   the current language command and returns an action chunk
+then repairs memory according to the failure type. Recoverable      immediately, without waiting for the high-level policy. A
+failures, such as an empty grasp, are retried with memory           slow or failed high-level decision thus only delays the next
+TABLE VI: High-level instance families, synthesized by perturbing only the input memory while reading the corrected target
+from the demonstration. Mn is the memory upon entering segment n. A single unified <think>/<memory>/<subtask>
+format instantiates all of them at zero extra annotation.
+
+ Family           Sampling position         Input → target memory    Target subtask   Deployment failure countered              Mix
+ within-subtask   anywhere in seg. n        Mn → Mn                  seg. n           — (aligned, normal progression)           58%
+ transition       tail of seg. n            Mn → Mn+1                seg. n+1         starting a new subtask after completion   15%
+ catch-up         head of seg. n            Mn−1 → Mn                seg. n           memory lag (behind the visual state)      10%
+ rollback         late in seg. n            Mn+1...n+3 → Mn          retry seg. n     memory run-ahead (over-optimistic)        12%
+ error-think      annotated failure frame   Mn → type-dependent      recovery step    unnoticed execution failure                5%
+
+
+
+command refresh, while πθ keeps executing the current cached        subtask, and assigns one of three labels: equivalent, adjacent,
+subtask at the control rate (∼ 30 Hz).                              or wrong.
+                                                                        A prediction is equivalent only if it describes the same
+G. Book Organization Task Settings                                  immediate physical state transition as the ground truth. The
+   The Book Organization task contains four books of different      required arm, action, object, destination, and relevant material
+heights and four fixed slots. At the beginning of each trial, the   state must agree, while synonyms and harmless differences in
+four books are placed in a shuffled order. At each step, the        wording or granularity are allowed. A prediction is adjacent if
+robot can use its two arms to exchange the positions of any two     it is a physically valid preceding, following, or reorderable step
+books. The task is completed when all four books are arranged       toward the same task goal, but does not match the immediate
+from tallest to shortest. The high-level policy must therefore      transition specified by the ground truth. A prediction is wrong
+predict which pair of books should be exchanged next to make        if it uses an incompatible arm, action, object, destination, or
+progress toward the target ordering. In the in-domain setting,      state, hallucinates an action, or incorrectly terminates or resets
+the initial arrangement of the four books has appeared in the       the task. We do not allow the judge to infer omitted objects,
+training data. In the out-of-domain (OOD) setting, the initial      destinations, or second-arm actions.
+arrangement of the four books has not appeared in the training          Only equivalent predictions are counted as successful; ad-
+data. The OOD setting is designed to evaluate the robustness        jacent is retained as a diagnostic category. Each unique (goal,
+of the high-level policy to observations arising from initial       ground truth, prediction) tuple is evaluated by two separate
+book arrangements not encountered during training.                  temperature-zero calls. Disagreements receive a third judg-
+                                                                    ment; if all three labels differ, a fourth judgment is obtained.
+H. High-Level Evaluation Protocol                                   The final label is determined by majority vote.
+                                                                        prompt You are a strict evaluator of the immediate next
+   The high-level evaluation isolates decision making from
+                                                                    executable subtask in a robot plan. Given GOAL, GROUND-
+physical execution using annotated samples collected at sub-
+                                                                    TRUTH next subtask, and MODEL-PREDICTED subtask,
+task boundaries. Each sample contains the task instruction,
+                                                                    output one label.
+current robot observation, execution memory when applicable,
+                                                                        equivalent: the same immediate physical state transition.
+the previously committed subtask, and the ground-truth next
+                                                                    Required arm(s), action, object(s), destination, and material
+subtask. Within each comparison, all methods receive the same
+                                                                    state must match. Synonyms, capitalization, and harmless
+samples and produce the same next-subtask output format. The
+                                                                    wording or granularity differences are allowed.
+memory ablation changes only whether execution memory is
+                                                                        adjacent: a physically valid preceding, following, or reorder-
+provided. The comparison among Plan Once, Best-of-N , and
+                                                                    able step for the same goal, but it is a different immediate state
+TTC instead holds the evaluation inputs and output interface
+                                                                    transition from the ground truth.
+fixed while varying the decision-time inference procedure.
+                                                                        wrong: incompatible arm, action, object, destination, or
+I. LLM-as-a-Judge Protocol                                          state; hallucinated/nonsensical action; or done/reset when the
+                                                                    ground truth is another action.
+   For the open-loop TTC evaluation, each sample contains               Do not infer missing material objects, destinations, or
+a robot observation from a particular stage of a task and           a missing second-arm action. Respond only as compact
+the corresponding ground-truth next subtask. Each method            JSON:”label”:”equivalent—adjacent—wrong”,”reason”:”¡=16
+predicts the next subtask from the same input, and an LLM           words”.
+judge evaluates whether the prediction is correct with respect          GOAL: {task goal} GROUND-TRUTH next subtask:
+to the ground truth.                                                {ground truth} MODEL-PREDICTED subtask: {prediction}
+   Exact string matching can substantially underestimate per-       Classify.
+formance because the same executable subtask may be ex-
+pressed with different wording. We therefore use GPT-5.4 as         J. Adaptive Routing Details
+a semantic judge. For each sample, the judge is given the task        At deployment, the high-level policy and low-level policy
+goal, the ground-truth next subtask, and the predicted next         operate in the closed loop summarized in Algorithm 1. At
+inference step t, the proposal model produces ztdir and Mt
+from ht . We compute the routing decision from token logits
+already produced by this forward pass, so routing requires no
+additional model invocation.
+   Let pi be the probability assigned to the generated token at
+                  (1)      (2)
+position i. Let λi and λi be the largest and second-largest
+logits at that position, and define their margin as
+                              (1)      (2)
+                      mi = λi       − λi .                (18)
+The router uses the mean generated-token probability and the
+mean logit margin within the <memory> field:
+                            1 X
+                   uall
+                    t =                  pi ,
+                          |Iall |
+                                  i∈Iall
+                                                        (19)
+                             1        X
+                 umem
+                  t     =                     mi ,
+                          |Imem |
+                                     i∈Imem
+
+where Iall indexes all generated tokens and Imem indexes the
+tokens in the <memory> field. The binary routing decision is
+             gt = 1 uall           mem
+                                             
+                      t ≤ δall ∨ ut    ≤ δmem ,         (20)
+where 1[·] is the indicator function and δall and δmem are
+routing thresholds. The statistics and routing rule are shared
+across tasks. The thresholds are calibrated separately for each
+task on held-out validation data.
+   When gt = 0, the system sends ztdir directly to the low-
+level policy. When gt = 1, it searches over candidate subtasks,
+predicts and scores their visual outcomes, and conditions the
+reflective model on the retained branches to generate zt⋆ .
+
