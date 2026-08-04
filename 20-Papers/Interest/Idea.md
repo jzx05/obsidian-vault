@@ -9,3 +9,6 @@
   - Skill-expert MoE 架构
   - 只激活 top-k skill 的 adapter，attention 开销和 skill 库大小解耦
   - 对 4B/7B 特别有意义，因为你可以做「小 base + 大 skill bank」%%
+
+
+2. 通过训练期间重组 Harness，制造多样化的感知、工具、Skill、上下文和执行条件，迫使 Qwen3.5-9B 学到更通用的任务理解、状态判断、长时序规划、工具组合、失败恢复和结果验证能力，最终提高具身任务上的推理与执行泛化
