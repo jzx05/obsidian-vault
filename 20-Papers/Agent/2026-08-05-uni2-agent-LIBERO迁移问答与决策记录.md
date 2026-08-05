@@ -680,3 +680,51 @@ runtime /success 决定 reward。
 success=True 后 runtime 设置 terminated=True，后续 run_skill 返回 ok=false。
 模型仍可 observe，然后 submit 结束 ReAct。
 ```
+
+### 实现状态：按 grill 推荐补齐 mock 回归与 runtime contract
+
+本轮继续按推荐路线补齐：
+
+```text
+1. mock backend 增加 seen + held-out 场景。
+2. mock success 条件改成严格匹配 goal_object 和 goal_target。
+3. success=True 后 terminated=True，后续 run_skill 返回 ok=false。
+4. health endpoint 增加 protocol_version。
+5. LiberoTask.extra_info 增加 observation_mode、runtime_health、runtime_protocol_version、runtime_info。
+6. mock dataset builder 支持 --include-heldout。
+7. mock policy server 从 prompt 解析 Place X on/in Y，支持 held-out smoke。
+8. run_infer_libero_mock.sh 支持 INCLUDE_HELDOUT=1，并检测 policy server 启动失败。
+```
+
+mock 回归场景：
+
+```text
+seen:
+  task_id=0  Place the mug on the plate.
+
+heldout:
+  task_id=1  Place the bowl on the tray.
+  task_id=2  Place the cube in the basket.
+```
+
+验证命令：
+
+```bash
+cd /home/eren/codes/uni2-agent
+examples/quickstart/inference/run_infer_libero_mock.sh
+INCLUDE_HELDOUT=1 examples/quickstart/inference/run_infer_libero_mock.sh
+```
+
+验证结果：
+
+```text
+默认 seen smoke: resolved=1/1
+held-out smoke: resolved=3/3
+```
+
+仍未完成：
+
+```text
+当前 conda 环境没有 pytest / ruff，因此正式 pytest 和 ruff 没跑。
+本轮使用 py_compile、runtime smoke、dataset smoke、parallel_infer_api smoke 代替。
+```
