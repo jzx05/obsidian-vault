@@ -819,15 +819,16 @@ conda env /home/eren/miniconda3/envs/uni-agent 里没有 pytest，因此 pytest 
 新增：
 
 ```text
+examples/quickstart/libero/setup_libero_local.sh
 examples/quickstart/libero/run_libero_local.sh
 ```
 
 作用：
 
 ```text
-1. 默认使用 /home/eren/codes/cap-x/.venv-libero/bin/python。
+1. 在 uni2-agent 项目内使用 .venv-libero 和 third_party/LIBERO-PRO。
 2. 自动设置 MUJOCO_GL=egl 和 PYOPENGL_PLATFORM=egl。
-3. 检查 cap-x 的 LIBERO assets 路径。
+3. 检查本项目 third_party/LIBERO-PRO 的 LIBERO assets 路径。
 4. 如果 ~/.libero/config.yaml 不存在，则自动写入。
 5. 调用 examples/quickstart/libero/probe_libero.py 启动 local runtime probe。
 ```
@@ -836,7 +837,14 @@ examples/quickstart/libero/run_libero_local.sh
 
 ```bash
 cd /home/eren/codes/uni2-agent
+examples/quickstart/libero/setup_libero_local.sh
 examples/quickstart/libero/run_libero_local.sh
+```
+
+如果 GitHub clone 失败，但机器上已有 LIBERO-PRO，可以显式复制到本项目：
+
+```bash
+LIBERO_SOURCE=/home/eren/codes/cap-x/capx/third_party/LIBERO-PRO examples/quickstart/libero/setup_libero_local.sh
 ```
 
 切换任务：
@@ -848,16 +856,32 @@ SUITE=libero_goal TASK_ID=2 SEED=0 examples/quickstart/libero/run_libero_local.s
 当前验证：
 
 ```text
-脚本能检查到 /home/eren/codes/cap-x/.venv-libero/bin/python 尚不存在，并给出创建命令。
+脚本能检查到 /home/eren/codes/uni2-agent/.venv-libero/bin/python 尚不存在，并给出创建命令。
+已经支持 LIBERO_SOURCE=/path/to/LIBERO-PRO，把已有 LIBERO-PRO 复制到 uni2-agent/third_party/LIBERO-PRO。
+当前项目内 third_party/LIBERO-PRO 已经从本机已有 checkout 准备好。
 临时指定 LIBERO_PYTHON=/home/eren/miniconda3/envs/uni-agent/bin/python 时，脚本能写入 ~/.libero/config.yaml 并进入 probe；
 probe 返回标准 libero-runtime-v0 payload，提示当前 Python 不能 import libero。
 ```
 
-下一步仍是创建 cap-x 专用 LIBERO venv：
+当前阻塞：
+
+```text
+系统里没有 uv。
+python3.12 存在，但缺 ensurepip / python3.12-venv，因此 python3.12 -m venv 创建 .venv-libero 失败。
+```
+
+下一步仍是创建 uni2-agent 项目内的 LIBERO venv。两种方式任选一种：
 
 ```bash
-cd /home/eren/codes/cap-x
-uv venv .venv-libero --python 3.12
-source .venv-libero/bin/activate
-uv sync --active --extra libero --extra contactgraspnet
+python3 -m pip install --user uv
+cd /home/eren/codes/uni2-agent
+examples/quickstart/libero/setup_libero_local.sh
+```
+
+或者：
+
+```bash
+sudo apt install python3.12-venv
+cd /home/eren/codes/uni2-agent
+examples/quickstart/libero/setup_libero_local.sh
 ```
