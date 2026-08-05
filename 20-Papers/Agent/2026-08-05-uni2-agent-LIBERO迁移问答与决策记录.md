@@ -1020,3 +1020,134 @@ plus 先保留字段和错误信息。
 当前 local_server 仍用项目内 third_party/LIBERO-PRO，不依赖 cap-x。
 不要引入 RPent 的 rlinf 路线，除非后面需要 VLA / SAM / primitive stack。
 ```
+
+## Grill：下一步到底该做什么？
+
+当前 frontier 是：先决定下一阶段的目标边界，而不是直接把所有 embodied 组件一起迁进去。
+
+❓ Q1 - 下一步的唯一主目标是什么？
+
+可选方向：
+
+```text
+A. 先把 LIBERO runtime 真正变成可交互环境：reset / observe / run_skill / success 全链路可跑。
+B. 先接 RPent primitive / VLA / SAM，把工具能力做强。
+C. 先做训练闭环，把 trajectory、reward、patch、regression 管起来。
+```
+
+推荐答案：
+
+```text
+A。因为现在只有 lifecycle 通过，run_skill 还是 placeholder。没有真实 action loop，primitive / VLA / RL 都没有稳定落点。
+```
+
+❓ Q2 - 下一步的最小验收标准是什么？
+
+可选方向：
+
+```text
+A. 只要 local LIBERO reset 成功就算完成。
+B. agent 能调用一个最小 skill，让 step_count 增加，并返回新 observation。
+C. agent 能完成一个真实 LIBERO 任务。
+```
+
+推荐答案：
+
+```text
+B。A 已经做到了，C 太早。下一步应该验证模型可见工具 -> runtime server -> simulator step -> observation -> transcript 这条链。
+```
+
+❓ Q3 - run_skill 第一版应该接什么动作？
+
+可选方向：
+
+```text
+A. wait：执行零动作或 no-op，用来验证 env.step。
+B. raw_action：允许传 7D action，直接 step。
+C. pick/place 等高层 primitive。
+```
+
+推荐答案：
+
+```text
+A + B。先实现 wait 和 raw_action。高层 primitive 依赖感知、坐标、控制策略，应该晚一点接。
+```
+
+❓ Q4 - 是否现在就接 `--libero-type standard | pro | plus`？
+
+可选方向：
+
+```text
+A. 现在接字段和校验，但 plus 未安装时报明确错误。
+B. 等 plus 也能跑了再接。
+C. 只支持 pro，不暴露 libero_type。
+```
+
+推荐答案：
+
+```text
+A。因为 standard/pro 当前已经可用，plus 可以先做清晰边界。这个字段会成为后续多任务 routing 的基础。
+```
+
+❓ Q5 - 现在要不要引入 RPent 的 rlinf 启动路线？
+
+可选方向：
+
+```text
+A. 不引入，继续用项目内 OffScreenRenderEnv。
+B. 直接迁 RPent env_server.py + rlinf。
+C. 两套路同时存在。
+```
+
+推荐答案：
+
+```text
+A。现在目标是低耦合最小闭环。rlinf 路线能力更强，但依赖更重，会污染当前简洁结构。
+```
+
+❓ Q6 - 这一步要不要开始做 memory / skill library / recovery patch？
+
+可选方向：
+
+```text
+A. 暂时不做，只保留协议字段。
+B. 先做一个文件型 memory。
+C. 直接做 Harness-R1 风格 patch DSL。
+```
+
+推荐答案：
+
+```text
+A。没有稳定 trajectory 和 action loop，memory/patch 会变成空中楼阁。先让失败可观测，再谈把失败外化。
+```
+
+❓ Q7 - 下一步是否要跑 GPU？
+
+可选方向：
+
+```text
+A. 不需要，先 CPU/headless 跑 wait/raw_action。
+B. 需要，马上接 VLA。
+```
+
+推荐答案：
+
+```text
+A。当前阶段只验证 simulator step，不需要 GPU。GPU 是接 VLA 或视觉模型时再打开。
+```
+
+❓ Q8 - 成功条件怎么处理？
+
+可选方向：
+
+```text
+A. runtime success 后 terminated=True，后续 run_skill 拒绝改变环境，但模型仍可 submit。
+B. success 后继续允许动作，直到模型 submit。
+C. success 后 task 直接结束，不需要 submit。
+```
+
+推荐答案：
+
+```text
+A。训练信号干净，也兼容 Uni-Agent/ReAct 的 finish/submit 习惯。
+```
