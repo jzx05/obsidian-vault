@@ -1151,3 +1151,37 @@ C. success 后 task 直接结束，不需要 submit。
 ```text
 A。训练信号干净，也兼容 Uni-Agent/ReAct 的 finish/submit 习惯。
 ```
+
+实施更新：
+
+```text
+用户明确拍板：planner 绝对不传 7D action，低层 action 交给 primitive tool / runtime 内部处理。
+
+已实现最小链路：
+LLM tool call
+-> uni_agent/tools/libero.py
+-> LiberoRuntimeClient
+-> local_server /run_skill
+-> env.step(...)
+-> observation
+-> transcript
+
+具体实现：
+1. local_server 只暴露本地 supported skill: wait。
+2. planner 调用 libero_run_skill(name="wait", args={})。
+3. local_server 内部读取 env.action_dim，构造 no-op action，即 [0.0] * action_dim。
+4. local_server 调用 env.step(action)，更新 step_count、last_observation、success、info。
+5. probe_libero.py 现在通过 Toolbox 调 libero_run_skill，而不是直接打 client.run_skill，验证 model-visible tool 层也在链路内。
+6. task_config_libero_local.yaml 加入 libero_run_skill 工具。
+
+验证：
+1. examples/quickstart/libero/run_libero_local.sh 通过。
+2. 输出包含 tool_observation(libero_run_skill wait)。
+3. tool observation 里 Step 从 0 变成 1。
+4. runtime info 里 last_action_summary=no-op action_dim=7。
+5. .venv-libero/bin/python -m pytest tests/uni_agent/tasks/test_libero_local_server.py tests/uni_agent/tasks/test_libero_mock_task.py 通过，9 passed。
+
+注意：
+为了跑 async pytest，在本项目忽略目录 .venv-libero 里安装了 pytest-asyncio。
+没有向 planner 暴露 raw_action。
+```
