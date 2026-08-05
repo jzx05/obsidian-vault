@@ -31,3 +31,13 @@ parallel_infer_api.py
 ```
 
 ==目标：LIBERO 应该作为一个新的 task family 和一组 task-specific tools 接入，而不是在 `react` 里写 LIBERO 特判==
+
+
+
+LiberoTask(runtime_backend="libero_local")
+  -> start real LIBERO runtime server
+  -> /reset 调 env.reset()
+  -> /observe 返回真实 task_language/state/render summary
+  -> /run_skill 接一个最小 scripted skill backend
+  -> /success 读 official success / libero_terminated
+  -> /close 调 env.close()

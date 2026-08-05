@@ -728,3 +728,16 @@ held-out smoke: resolved=3/3
 当前 conda 环境没有 pytest / ruff，因此正式 pytest 和 ruff 没跑。
 本轮使用 py_compile、runtime smoke、dataset smoke、parallel_infer_api smoke 代替。
 ```
+
+### Review 后修复
+
+code review 后补齐：
+
+```text
+1. LIBERO tools 从 uni_agent.tools.__init__ eager import 改为 get_tool 按 registry key lazy-load。
+2. ReAct 结束工具检测不再读取 TOOL_REGISTRY，而是使用 Toolbox.names() 的模型可见函数名。
+3. XML/Qwen reasoning-only tool-call fallback 补了边界测试。
+4. LiberoTask.run() 在 finally 中调用 runtime_client.close()，mock server 记录 closed=True。
+5. LIBERO 设计文档加入 mkdocs.yml nav。
+6. mock runtime in-process 明确标为 Phase 0，只用于协议和工具闭环；真 LIBERO 阶段要换成 task-owned local process/docker/remote service。
+```
