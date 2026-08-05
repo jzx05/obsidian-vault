@@ -1216,3 +1216,34 @@ LLM tool call
 4. LIBERO_TYPE=plus SUITE=libero_spatial examples/quickstart/libero/run_libero_local.sh
    结果：按预期失败，提示 plus runtime 未安装。
 ```
+
+## Grill：先做可完成简单 LIBERO 任务的 primitive stack，LIBERO 具身任务格式需求
+
+用户拍板：
+
+```text
+下一阶段先做 A：一个可完成简单 LIBERO 任务的 primitive stack。
+planner 仍然不传 7D action；低层 action 由 primitive tool/runtime backend 处理。
+```
+
+参考 SWE-Bench 的可迁移链路：
+
+```text
+dataset row
+-> extra_info.tools_kwargs.task
+-> TaskConfigResolver 合并 YAML 默认配置、sample task config、runtime model
+-> get_task(...).run()
+-> TaskResult(reward, accuracy, finished, extra_info)
+```
+
+LIBERO 对应的格式需求草案：
+
+```text
+1. dataset row 仍然用 extra_info.tools_kwargs.task 携带完整 task config。
+2. YAML task_config 只放跨样本默认项：sandbox、agent、tools、runtime_backend、observation_mode、max_episode_steps。
+3. 每个样本 task config 放 instance_id、suite_name、task_id、seed、libero_type、task_language、split、primitive_policy。
+4. Task.run 仍然是唯一入口：创建 sandbox、启动 runtime、reset、运行 agent、success 评分、返回 TaskResult。
+5. reward 仍然是 runtime success：resolved = success_payload.success。
+6. extra_info 必须保留可训练和可回归字段：resolved、success、terminated、step_count、task_language、runtime_info、agent_info、failure_reason。
+7. primitive stack 先做 high-level ABI，不给 planner 暴露 7D action。
+```
