@@ -1286,3 +1286,29 @@ LLM policy 的 GPU 不在 task config 里，而是在 vLLM/sglang/verl 服务启
 5. failure_reason 第一版枚举是否固定。
 6. 代码质量门槛：类型、测试、schema、doc、禁止 raw_action。
 ```
+
+用户继续拍板：
+
+```text
+1. 用户追问 primitive_backend 是什么，以及 SWE-Bench 对应怎么做。
+2. GPU 不要在 LIBERO task schema 里显式做一等字段；和 SWE-Bench 统一，放在运行环境、sandbox provider 参数或外部服务启动参数里。
+3. 先做 5 个 high-level primitive ABI：locate_object、move_to_object、grasp_object、place_on、wait；其中前 4 个先留空/未实现，后面看 RPent 是否能迁移。
+4. prompt 不强行写“禁止 raw_action”，因为工具 schema 本身没有 raw_action。
+5. simple dataset 做 2 个样本：standard 一个，pro 一个。
+6. 代码质量门槛采用硬标准：schema、测试、文档、禁止 raw_action 回归。
+7. 先提交当前基线，再做下一阶段。
+```
+
+解释：
+
+```text
+SWE-Bench 没有 primitive_backend 这个概念，因为代码任务里的 action executor 就是 shell/editor tools + sandbox + reward tests。
+对应到 LIBERO，planner 调的是 high-level skill，但 skill 背后到底由谁执行，需要一个内部实现策略：
+- mock backend：假环境状态机；
+- scripted/oracle backend：读 privileged state，用规则控制；
+- rpent backend：接 RPent 的 primitive/VLA/SAM；
+- future vla backend：接 GPU 上的策略模型。
+
+为了和 uni-agent/SWE-Bench 命名更统一，后续可考虑不用 primitive_backend 这个名字，而改成 skill_backend。
+skill_backend 更贴合当前模型可见工具 libero_run_skill，也更明确：它是 skill 的内部执行后端，不是 planner API。
+```
