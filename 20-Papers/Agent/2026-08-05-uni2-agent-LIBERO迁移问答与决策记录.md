@@ -367,3 +367,109 @@ base Sandbox
 ## 后续对话记录
 
 后续关于 LIBERO 迁移方案、用户选择、实现决策和问题定位，都继续追加到这里。
+
+### Q：primitive 那套也就是 tool，现在也接入吗？
+
+用户问题：
+
+```text
+primitve 那套也就是tool 你准备现在也接入吗
+```
+
+建议答复：
+
+```text
+现在先接 tool interface 和 mock primitive，不立刻整套接入真实 RPent primitives。
+```
+
+原因：
+
+- 当前第一目标是验证 Uni-Agent 低耦合具身链路：
+  `LiberoTask -> runtime server/client -> Uni-Agent tools -> ReActAgent -> TaskResult`。
+- 如果一开始直接接完整 RPent primitive/VLA/SAM，会同时引入 LIBERO、MuJoCo、VLA、
+  perception、controller、tool-calling 多类不确定性，调试成本太高。
+- 先定义稳定 tool surface，后面把 mock backend 换成 RPent/cap-x backend 即可。
+
+第一版应该接入：
+
+```text
+libero_observe
+libero_run_skill
+libero_submit
+```
+
+其中 `libero_run_skill` 先支持少量高层 skill name：
+
+```text
+move_to
+pick
+place
+open
+close
+wait
+```
+
+Phase 1：
+
+```text
+tool schema + mock runtime
+```
+
+Phase 2：
+
+```text
+同一套 tool schema 接真实 LIBERO runtime
+```
+
+Phase 3：
+
+```text
+把 RPent 的真实 primitives / VLA / SAM 能力挂到 runtime backend 后面
+```
+
+关键原则：
+
+```text
+模型看到的是稳定 tools。
+tools 调的是 EmbodiedRuntimeClient。
+RuntimeClient 背后可以是 mock、cap-x、RPent 或真 LIBERO。
+不要让 ReActAgent 或 Task 直接依赖 RPent primitive 实现。
+```
+
+### 决策：先实现 Mock LIBERO，采用方案 C
+
+用户拍板：
+
+```text
+需要。先跑一个 mock libero。严格模仿 uni2-agent 风格，写在 uni2-agent 项目中。
+采用方案 C，按照推荐默认选择。
+```
+
+实现范围：
+
+```text
+1. 新增 embodied 通用 runtime client/context 小抽象。
+2. 新增 libero task family。
+3. 新增 mock LIBERO runtime server/client。
+4. 新增普通 Uni-Agent tools：
+   - libero_observe
+   - libero_run_skill
+   - libero_submit
+5. 新增 example task config。
+6. 新增 tiny mock dataset builder，方便 parallel_infer_api.py 跑通。
+7. 不接真实 LIBERO/MuJoCo/RPent primitives。
+8. 不修改 ReActAgent 的 LIBERO 专用逻辑。
+```
+
+成功标准：
+
+```text
+parallel_infer_api.py
+  -> TaskConfigResolver
+  -> LiberoTask.run()
+  -> start mock runtime server
+  -> ReActAgent.run()
+  -> tools call mock runtime
+  -> libero_submit
+  -> TaskResult(reward/extra_info)
+```
