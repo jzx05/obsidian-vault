@@ -1312,3 +1312,36 @@ SWE-Bench 没有 primitive_backend 这个概念，因为代码任务里的 actio
 为了和 uni-agent/SWE-Bench 命名更统一，后续可考虑不用 primitive_backend 这个名字，而改成 skill_backend。
 skill_backend 更贴合当前模型可见工具 libero_run_skill，也更明确：它是 skill 的内部执行后端，不是 planner API。
 ```
+
+命名修正：
+
+```text
+用户指出：后面这个 backend 会由包、环境代码、RPent/VLA/SAM 等实现提供，不应该叫 skill_backend。
+更准确的名字应该是 tool_backend。
+
+最终命名拍板倾向：
+runtime_backend: mock | local | remote
+  表示 LIBERO runtime server 怎么启动/连接。
+
+tool_backend: stub_v0 | oracle_state_v0 | rpent_v0 | vla_v0
+  表示 libero_run_skill 这个 tool 背后的执行后端。
+
+planner-visible tool:
+  libero_observe
+  libero_run_skill
+  submit
+
+planner-visible skill names:
+  locate_object
+  move_to_object
+  grasp_object
+  place_on
+  wait
+
+绝不暴露：
+  raw_action
+  7D action
+  delta pose
+  joint command
+  controller 参数
+```
