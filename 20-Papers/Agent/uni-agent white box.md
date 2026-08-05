@@ -29,3 +29,5 @@ parallel_infer_api.py
   -> Toolbox.call(...)
   -> Task reward
 ```
+
+==目标：LIBERO 应该作为一个新的 task family 和一组 task-specific tools 接入，而不是在 `react` 里写 LIBERO 特判==
