@@ -1247,3 +1247,42 @@ LIBERO 对应的格式需求草案：
 6. extra_info 必须保留可训练和可回归字段：resolved、success、terminated、step_count、task_language、runtime_info、agent_info、failure_reason。
 7. primitive stack 先做 high-level ABI，不给 planner 暴露 7D action。
 ```
+
+用户本轮拍板：
+
+```text
+1. dataset row 沿用 extra_info.tools_kwargs.task。
+2. 采用前面提出的 LIBERO task_config 格式。
+3. YAML 放公共默认配置，sample 放具体任务实例。
+4. primitive 只暴露 high-level skill；以后绝对不要暴露底层 action，这不是 planner 做的事情。
+5. primitive 返回格式要正式化。
+6. 第一批只做单物体 pick-place。
+7. 需要确认 uni-agent 本身 GPU 怎么处理；用户明天可以接 GPU。
+8. prompt 要给默认操作流程。
+9. runtime success 作为 reward。
+10. failure 先结构化存起来。
+11. primitive_backend 默认放 YAML，样本可覆盖。
+12. 代码质量要写硬。
+```
+
+关于 GPU 的事实结论：
+
+```text
+uni-agent 本身没有把 GPU 做成 TaskConfig 的一等字段。
+TaskConfig.sandbox 只有 provider、runtime_timeout、image、sandbox_kwargs。
+DockerSandbox 通过 sandbox_kwargs.run_args 透传 docker run 参数，因此本地 Docker GPU 可写 run_args: ["--gpus", "all"]。
+ModalSandbox 也通过 sandbox_kwargs 把 provider-specific 参数透传给 modal.Sandbox.create。
+LLM policy 的 GPU 不在 task config 里，而是在 vLLM/sglang/verl 服务启动时配置，例如 tensor parallel、CUDA_VISIBLE_DEVICES 等。
+当前 LIBERO local runtime 是 host-side local server；后面接 VLA/SAM/primitive GPU backend 时，应放在 primitive_backend/runtime 侧配置，不进入 planner tool schema。
+```
+
+下一轮需要拍板的设计 frontier：
+
+```text
+1. primitive_backend 第一版到底叫 oracle_state_v0、scripted_oracle_v0，还是 gpu_vla_v0。
+2. GPU 配置是否只进 runtime/primitive config，不进 sample identity，不进 planner。
+3. 第一批 primitive ABI 是否固定为 locate_object、move_to_object、grasp_object、place_on、wait。
+4. primitive 返回结构是否固定 skill_result_v0。
+5. failure_reason 第一版枚举是否固定。
+6. 代码质量门槛：类型、测试、schema、doc、禁止 raw_action。
+```
