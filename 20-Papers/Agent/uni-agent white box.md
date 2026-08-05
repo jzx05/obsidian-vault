@@ -16,3 +16,16 @@
 |instance_id|suite + task_id + seed|
 |prompt issue|task language goal|
 |sandbox filesystem|simulator state|
+
+当前 SWE 风格执行链路是：
+
+```text
+parallel_infer_api.py
+  -> TaskConfigResolver
+  -> get_task(config).run()
+  -> Task.build_sandbox()
+  -> Task.build_agent()
+  -> Agent.run(sandbox, messages)
+  -> Toolbox.call(...)
+  -> Task reward
+```
