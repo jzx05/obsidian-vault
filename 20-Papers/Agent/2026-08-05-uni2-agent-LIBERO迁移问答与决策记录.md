@@ -594,3 +594,89 @@ ReActAgent
 Toolbox
 base Sandbox
 ```
+
+### Q：Runtime Server 协议为什么要改成正式 v0 契约？
+
+用户问题：
+
+```text
+Runtime Server 的协议要不要现在就冻结成第一版契约？
+这个我没懂，讲解下，改成正式的。
+```
+
+解释：
+
+```text
+所谓正式协议，就是 mock LIBERO server 和未来真实 LIBERO server 都讲同一种 JSON 语言。
+tools 和 task 只读稳定字段，不猜 backend 私有字段。
+```
+
+如果不固定协议，后面很容易出现：
+
+```text
+mock 返回 success/libero_terminated/text
+真 LIBERO 返回 is_success/done/obs
+RPent backend 返回 terminal/finished/description
+```
+
+这样会导致：
+
+```text
+1. tools 要写很多 if else 猜字段。
+2. Task reward 容易读错。
+3. trajectory schema 不稳定，后面 RL 和 Harness patch 很难消费。
+4. held-out regression 很难比较不同 runtime backend。
+```
+
+正式 v0 协议已经落到：
+
+```text
+uni_agent/tasks/libero/protocol.py
+```
+
+除 `/health` 和 `/close` 外，episode endpoint 都返回：
+
+```json
+{
+  "ok": true,
+  "message": "placed mug on plate",
+  "observation": "Task: ...",
+  "success": true,
+  "terminated": true,
+  "step_count": 3,
+  "task_language": "Place the mug on the plate.",
+  "info": {},
+  "protocol_version": "libero-runtime-v0"
+}
+```
+
+字段语义：
+
+```text
+ok              这次 runtime 请求是否被接受并执行
+message         短原因，给模型和日志读
+observation     模型可见 observation 文本
+success         任务是否成功，reward 只读它
+terminated      环境是否结束，结束后不再允许 run_skill 改状态
+step_count      环境动作步数
+task_language   当前任务语言
+info            backend 私有诊断信息
+protocol_version 协议版本
+```
+
+三个结束概念必须分开：
+
+```text
+success     -> reward 是否为 1
+terminated  -> runtime 是否还允许改变环境
+submit      -> ReAct interaction 是否结束
+```
+
+因此：
+
+```text
+submit 不决定 reward。
+runtime /success 决定 reward。
+success=True 后 runtime 设置 terminated=True，后续 run_skill 返回 ok=false。
+模型仍可 observe，然后 submit 结束 ReAct。
+```
