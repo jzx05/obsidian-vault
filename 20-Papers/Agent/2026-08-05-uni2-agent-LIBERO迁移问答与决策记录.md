@@ -473,3 +473,124 @@ parallel_infer_api.py
   -> libero_submit
   -> TaskResult(reward/extra_info)
 ```
+
+### 实现状态：Mock LIBERO 方案 C 已落到 uni2-agent
+
+本轮已经在 `/home/eren/codes/uni2-agent` 中实现第一版 mock LIBERO 闭环。
+
+新增/修改的核心内容：
+
+```text
+uni_agent/tasks/embodied/
+  __init__.py
+  runtime_client.py
+
+uni_agent/tasks/libero/
+  __init__.py
+  client.py
+  server.py
+  task.py
+
+uni_agent/tools/libero.py
+uni_agent/tasks/registry.py
+uni_agent/tools/__init__.py
+uni_agent/agents/react/agent.py
+
+examples/quickstart/inference/task_config_libero_mock.yaml
+examples/quickstart/inference/make_libero_mock_dataset.py
+examples/quickstart/inference/mock_libero_policy_server.py
+examples/quickstart/inference/run_infer_libero_mock.sh
+tests/uni_agent/tasks/test_libero_mock_task.py
+```
+
+实际架构：
+
+```text
+parallel_infer_api.py
+  -> TaskConfigResolver
+  -> get_task({"name": "libero", ...})
+  -> LiberoTask.run()
+  -> 普通 local sandbox
+  -> task-owned mock_libero_runtime_server
+  -> ReActAgent.run()
+  -> Toolbox
+  -> libero_observe / libero_run_skill / submit
+  -> LiberoRuntimeClient HTTP 调 runtime
+  -> TaskResult(reward=1.0 when success)
+```
+
+关键实现决策：
+
+```text
+1. Runtime server/client 放在 uni_agent/tasks/libero 内部。
+2. 工具是普通 Uni-Agent tools，不改 base Sandbox。
+3. ReActAgent 不加入 LIBERO 专用逻辑。
+4. libero_submit 的 registry key 是 libero_submit，但模型看到的函数名是 submit。
+5. ReAct 的 finish-tool 检测已改成按注册工具解析 model-facing name，因此 libero_submit 也会被识别为结束工具。
+6. 第一版 runtime_backend 只支持 mock。
+```
+
+验证结果：
+
+```text
+py_compile: 通过
+mock runtime + Toolbox 直接调用: 通过
+dataset builder: 通过，生成 /tmp/libero_mock.parquet
+TaskConfigResolver -> LiberoTask -> ReActConfig runtime 注入: 通过
+一键 smoke 脚本: 通过
+```
+
+一键 smoke 命令：
+
+```bash
+cd /home/eren/codes/uni2-agent
+examples/quickstart/inference/run_infer_libero_mock.sh
+```
+
+成功输出摘要：
+
+```text
+resolved       1   (100.0%)
+wrong-ans      0
+timeout/err    0
+total          1
+```
+
+注意事项：
+
+```text
+当前 /home/eren/miniconda3/envs/uni-agent 环境没有 pytest，所以 pytest 单测没有正式跑。
+已用 py_compile 和端到端 smoke 代替验证。
+脚本默认优先使用 /home/eren/miniconda3/envs/uni-agent/bin/python。
+直接用 python examples/inference/parallel_infer_api.py 时建议设置 PYTHONPATH=/home/eren/codes/uni2-agent，
+否则可能导入不到当前工作区源码。
+```
+
+下一阶段接真 LIBERO 时优先替换的位置：
+
+```text
+uni_agent/tasks/libero/server.py
+```
+
+也就是把 mock server 后面的状态机换成真实 LIBERO env：
+
+```text
+reset -> env.reset()
+observe -> env/render/state/task_language
+run_skill -> primitive/controller/VLA/SAM/backend
+success -> official success / libero_terminated
+close -> env.close()
+```
+
+保持不变的部分：
+
+```text
+LiberoTask
+LiberoRuntimeClient protocol
+libero_observe
+libero_run_skill
+libero_submit/submit
+ReActAgent
+Toolbox
+base Sandbox
+```
