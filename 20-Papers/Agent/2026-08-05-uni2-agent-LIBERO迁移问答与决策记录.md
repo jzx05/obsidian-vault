@@ -870,6 +870,39 @@ probe 返回标准 libero-runtime-v0 payload，提示当前 Python 不能 import
 python3.12 存在，但缺 ensurepip / python3.12-venv，因此 python3.12 -m venv 创建 .venv-libero 失败。
 ```
 
+已解决：
+
+```text
+使用 /home/eren/miniconda3/envs/uni-agent/bin/python 作为 VENV_PYTHON 创建项目内 .venv-libero。
+默认安装 examples/quickstart/libero/requirements-minimal.txt。
+为了避免 torch 拉 CUDA 运行库，setup 脚本单独从 PyTorch CPU index 安装 torch==2.1.2+cpu。
+为了兼容 robosuite==1.4.0，mujoco pin 到 2.3.7；mujoco 3.11.0 会报 AttributeError: 'MjData' object has no attribute 'qM'。
+```
+
+最小启动验证已通过：
+
+```text
+examples/quickstart/libero/run_libero_local.sh
+
+health.ok=true
+reset.ok=true
+observe.ok=true
+success.ok=true
+runtime_protocol_version=libero-runtime-v0
+task_language="pick up the black bowl between the plate and the ramekin and place it on the plate"
+```
+
+当前环境版本：
+
+```text
+/home/eren/codes/uni2-agent/.venv-libero/bin/python
+Python 3.10
+mujoco==2.3.7
+torch==2.1.2+cpu
+robosuite==1.4.0
+libero editable: /home/eren/codes/uni2-agent/third_party/LIBERO-PRO
+```
+
 下一步仍是创建 uni2-agent 项目内的 LIBERO venv。两种方式任选一种：
 
 ```bash
