@@ -1185,3 +1185,34 @@ LLM tool call
 为了跑 async pytest，在本项目忽略目录 .venv-libero 里安装了 pytest-asyncio。
 没有向 planner 暴露 raw_action。
 ```
+
+后续实施更新：
+
+```text
+已继续实现：
+1. LiberoTaskConfig 增加 libero_type 字段，默认 pro。
+2. local_server 支持 libero_type: standard / pro / plus。
+3. standard 会校验 suite_name 必须是标准 LIBERO suite。
+4. pro 允许当前 LIBERO-PRO benchmark 里注册的 suite，但会额外检查本地 bddl_files 资源是否真实存在。
+5. plus 当前明确报错：libero_type='plus' is not installed in this local runtime。
+6. 新增 uni_agent/tasks/libero/primitives.py，把 planner-visible skill 到 simulator action 的转换从 local_server 中拆出来。
+7. 当前 primitive registry 只支持 wait，不暴露 raw_action。
+8. examples/quickstart/libero/run_libero_local.sh 支持 LIBERO_TYPE 环境变量。
+9. examples/quickstart/libero/probe_libero.py 支持 --libero-type 参数。
+10. examples/quickstart/inference/task_config_libero_local.yaml 显式写 libero_type: pro，并把 suite_name 改成当前真实可跑的 libero_spatial_swap。
+
+重要发现：
+当前 LIBERO-PRO checkout 的 benchmark 注册里有 libero_spatial_task 等 suite，但磁盘上没有对应 bddl_files/libero_spatial_task 目录。
+因此 libero_spatial_task 会 reset 失败，不是 action loop 问题，而是本地资源不完整或命名没有对齐。
+当前真实可跑的 PRO 示例是 libero_spatial_swap。
+
+验证：
+1. .venv-libero/bin/python -m pytest tests/uni_agent/tasks/test_libero_local_server.py tests/uni_agent/tasks/test_libero_mock_task.py
+   结果：13 passed。
+2. LIBERO_TYPE=standard SUITE=libero_spatial examples/quickstart/libero/run_libero_local.sh
+   结果：通过，tool observation 里 Step: 1/600。
+3. LIBERO_TYPE=pro SUITE=libero_spatial_swap examples/quickstart/libero/run_libero_local.sh
+   结果：通过，tool observation 里 Step: 1/600。
+4. LIBERO_TYPE=plus SUITE=libero_spatial examples/quickstart/libero/run_libero_local.sh
+   结果：按预期失败，提示 plus runtime 未安装。
+```
