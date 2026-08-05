@@ -741,3 +741,75 @@ code review 后补齐：
 5. LIBERO 设计文档加入 mkdocs.yml nav。
 6. mock runtime in-process 明确标为 Phase 0，只用于协议和工具闭环；真 LIBERO 阶段要换成 task-owned local process/docker/remote service。
 ```
+
+### 实现状态：新增 local LIBERO lifecycle backend
+
+本轮按“方案 C：普通 Sandbox + task-owned Runtime Server”继续推进，但命名和配置保持简单：
+
+```text
+runtime_backend: mock | local
+```
+
+新增文件：
+
+```text
+uni_agent/tasks/libero/local_server.py
+examples/quickstart/libero/probe_libero.py
+examples/quickstart/inference/task_config_libero_local.yaml
+tests/uni_agent/tasks/test_libero_local_server.py
+```
+
+代码边界：
+
+```text
+LiberoTask 只负责选择 backend。
+ReActAgent 不加 LIBERO 特判。
+Sandbox 不加 LIBERO 方法。
+真实 LIBERO import、OffScreenRenderEnv、bddl/init state/success 检查都收在 local_server.py。
+```
+
+当前 local backend 只实现真实 LIBERO 生命周期：
+
+```text
+/health
+/reset
+/observe
+/success
+/close
+```
+
+`/run_skill` 在 local backend 中暂时返回：
+
+```text
+ok=false
+message="local run_skill is not implemented yet"
+```
+
+这是刻意保守的第一步：先确认真实 LIBERO 能 reset、observe、读 official success、close，
+再接 RPent/CaP-X primitive 或 skill controller。这样不会把环境配置、primitive、VLA、
+SAM/GraspNet 和 agent loop 混在一起调。
+
+验证结果：
+
+```text
+py_compile: passed
+fake LIBERO lifecycle smoke: passed
+real local probe in 当前 uni-agent env: 返回标准 protocol payload，提示 LIBERO 未安装
+mock inference smoke: resolved=1/1
+```
+
+当前阻塞：
+
+```text
+conda env /home/eren/miniconda3/envs/uni-agent 里没有 pytest，因此 pytest 未跑。
+当前 env 也不能 import libero，因此真实 LIBERO reset 还没跑通。
+```
+
+下一步：
+
+```text
+1. 单独配 LIBERO runtime env，让 probe_libero.py 能 reset 成功。
+2. 从 RPent/CaP-X 迁移第一版 primitive/skill controller。
+3. local backend 的 /run_skill 从 placeholder 改为真实 step。
+4. 再把 task_config_libero_local.yaml 的 tools 加回 libero_run_skill。
+```
