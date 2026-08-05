@@ -86,12 +86,13 @@ Harness-R1 改变的是学习对象：
 
 Engineer 不能任意修改整个 Agent repo，而是在宿主 runtime 暴露的四个位置安装受约束的 Python hook：
 
-| Hook | 调用时机 | 允许产生的效果 | 典型用途 |
-|---|---|---|---|
-| `on_init` | 第一次决策前 | 添加通用 task guidance / tool hint | 初始化流程、技能和约束 |
-| `make_pre_hint` | 每次决策前 | 注入依赖当前状态的消息 | 提醒接口约束、补充检索信息 |
-| `on_before_action` | Agent 提议 action 后、环境执行前 | block、reprompt，部分环境可 rewrite/force | 阻止超预算购买、非法或重复动作 |
-| `on_post_step` | 环境反馈后 | 注入恢复提示，部分环境可安排下一动作 | 处理错误、循环、停滞和 fallback |
+| Hook               | 调用时机                    | 允许产生的效果                            | 典型用途                 |
+| ------------------ | ----------------------- | ---------------------------------- | -------------------- |
+| `on_init`          | 第一次决策前                  | 添加通用 task guidance / tool hint     | 初始化流程、技能和约束          |
+| `make_pre_hint`    | 每次决策前                   | 注入依赖当前状态的消息                        | 提醒接口约束、补充检索信息        |
+| `on_before_action` | Agent 提议 action 后、环境执行前 | block、reprompt，部分环境可 rewrite/force | 阻止超预算购买、非法或重复动作      |
+| `on_post_step`     | 环境反馈后                   | 注入恢复提示，部分环境可安排下一动作                 | 处理错误、循环、停滞和 fallback |
+|                    |                         |                                    |                      |
 
 Engineer 输出严格的 JSON patch，动作类型为 `ADD_CODE_HOOK`，代码必须定义 `hook(ctx, nb)`，不能 import、不能依赖 global state，也不能硬编码 task ID、产品 ID、对象编号或答案。宿主只解释预定义的 structured effect。
 
