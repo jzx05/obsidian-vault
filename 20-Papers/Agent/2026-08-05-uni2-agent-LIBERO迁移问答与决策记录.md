@@ -918,3 +918,105 @@ sudo apt install python3.12-venv
 cd /home/eren/codes/uni2-agent
 examples/quickstart/libero/setup_libero_local.sh
 ```
+
+## Q：当前 PRO 能不能支持 `--libero-type standard | pro | plus`？RPent 怎么启动 LIBERO？
+
+结论：
+
+```text
+uni2-agent 当前已经能启动项目内的 LIBERO-PRO checkout，并且可见 benchmark 同时包含标准 LIBERO suite 和很多 PRO 变体 suite。
+所以 standard / pro 可以先在 uni2-agent 内做成正式配置字段。
+plus 不能只靠当前 LIBERO-PRO checkout 支持，需要额外的 LIBERO-plus 包或资源；在安装前应该清晰报错，而不是假装支持。
+```
+
+当前 `third_party/LIBERO-PRO` 可见的标准 suite：
+
+```text
+libero_spatial
+libero_object
+libero_goal
+libero_10
+libero_90
+libero_100
+```
+
+当前可见的 PRO 风格变体包括：
+
+```text
+libero_spatial_task
+libero_spatial_swap
+libero_spatial_lan
+libero_spatial_object
+libero_spatial_env
+libero_goal_task
+libero_goal_swap
+libero_goal_lan
+libero_goal_object
+libero_goal_env
+libero_object_task
+libero_object_swap
+libero_object_lan
+libero_object_object
+libero_object_env
+libero_10_task
+libero_10_swap
+libero_10_lan
+libero_10_object
+libero_10_env
+```
+
+RPent 的启动方式：
+
+```text
+1. CLI 注册 --libero-type，choices 是 standard / pro / plus。
+2. 如果用户没传 --libero-type，就读取环境变量 LIBERO_TYPE，默认 pro。
+3. RPent 启动 robots/libero/env_server.py 子进程。
+4. 启动子进程时把 LIBERO_TYPE、MUJOCO_GL=egl、ROBOT_PLATFORM=LIBERO 注入环境变量。
+5. env_server.py 不直接用原生 OffScreenRenderEnv，而是通过 rlinf.envs.libero.libero_env.LiberoEnv 创建环境。
+6. standard / pro / plus 的真实包和资源路由主要交给 rlinf-libero、rpent-liberopro、rlinf-liberoplus 这些安装 extras。
+```
+
+相关代码：
+
+```text
+/home/eren/codes/RPent/robots/libero/__init__.py
+  parser.add_argument("--libero-type", choices=["standard", "pro", "plus"])
+  libero_type = args.libero_type or get_libero_type()
+  ProcessDaemon(..., env=_subprocess_env(..., LIBERO_TYPE=libero_type, MUJOCO_GL="egl", ROBOT_PLATFORM="LIBERO"))
+
+/home/eren/codes/RPent/rpent/utils/config.py
+  def get_libero_type() -> str:
+      return os.environ.get("LIBERO_TYPE", "pro")
+
+/home/eren/codes/RPent/robots/libero/env_server.py
+  from rlinf.envs.libero.libero_env import LiberoEnv
+  from rlinf.envs.libero.utils import benchmark as _bench_mod
+  suite = _bench_mod.get_benchmark(suite_name)()
+  return LiberoEnv(...)
+```
+
+uni2-agent 的推荐设计：
+
+```text
+runtime_backend: mock | local
+libero_type: standard | pro | plus
+suite_name: 仍然明确写真实 suite 名，例如 libero_spatial 或 libero_spatial_task
+```
+
+`libero_type` 不应该替代 `suite_name`。它应该负责：
+
+```text
+1. 校验当前 suite 是否属于这个类型；
+2. 设置必要的运行时环境变量；
+3. 后续接多套 LIBERO 安装时做资源根目录或 import 路由；
+4. 在 plus 未安装时给出明确错误。
+```
+
+短期拍板：
+
+```text
+先实现 standard / pro。
+plus 先保留字段和错误信息。
+当前 local_server 仍用项目内 third_party/LIBERO-PRO，不依赖 cap-x。
+不要引入 RPent 的 rlinf 路线，除非后面需要 VLA / SAM / primitive stack。
+```
