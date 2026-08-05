@@ -813,3 +813,51 @@ conda env /home/eren/miniconda3/envs/uni-agent 里没有 pytest，因此 pytest 
 3. local backend 的 /run_skill 从 placeholder 改为真实 step。
 4. 再把 task_config_libero_local.yaml 的 tools 加回 libero_run_skill。
 ```
+
+### 实现状态：最小 LIBERO 启动脚本
+
+新增：
+
+```text
+examples/quickstart/libero/run_libero_local.sh
+```
+
+作用：
+
+```text
+1. 默认使用 /home/eren/codes/cap-x/.venv-libero/bin/python。
+2. 自动设置 MUJOCO_GL=egl 和 PYOPENGL_PLATFORM=egl。
+3. 检查 cap-x 的 LIBERO assets 路径。
+4. 如果 ~/.libero/config.yaml 不存在，则自动写入。
+5. 调用 examples/quickstart/libero/probe_libero.py 启动 local runtime probe。
+```
+
+运行：
+
+```bash
+cd /home/eren/codes/uni2-agent
+examples/quickstart/libero/run_libero_local.sh
+```
+
+切换任务：
+
+```bash
+SUITE=libero_goal TASK_ID=2 SEED=0 examples/quickstart/libero/run_libero_local.sh
+```
+
+当前验证：
+
+```text
+脚本能检查到 /home/eren/codes/cap-x/.venv-libero/bin/python 尚不存在，并给出创建命令。
+临时指定 LIBERO_PYTHON=/home/eren/miniconda3/envs/uni-agent/bin/python 时，脚本能写入 ~/.libero/config.yaml 并进入 probe；
+probe 返回标准 libero-runtime-v0 payload，提示当前 Python 不能 import libero。
+```
+
+下一步仍是创建 cap-x 专用 LIBERO venv：
+
+```bash
+cd /home/eren/codes/cap-x
+uv venv .venv-libero --python 3.12
+source .venv-libero/bin/activate
+uv sync --active --extra libero --extra contactgraspnet
+```
