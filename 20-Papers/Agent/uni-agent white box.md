@@ -41,3 +41,7 @@ LiberoTask(runtime_backend="libero_local")
   -> /run_skill 接一个最小 scripted skill backend
   -> /success 读 official success / libero_terminated
   -> /close 调 env.close()
+
+
+`view_driver_state`  --> 主观测口
+
