@@ -28,21 +28,21 @@ RPent 的 LIBERO 入口是 `LiberoToolkit`。它把工具 schema 从 `robots.lib
 
 ### RPent 工具表
 
-| RPent tool 名 | RPent 是否暴露给 planner | 类型 | 背后 backend | 适合迁入 uni2-agent 的方式 |
-|---|---:|---|---|---|
-| `view_driver_state` | 是 | observation / state inspection | 读 `states.json`、图像路径、world map 路径、上一步 command/result | 可迁成 `libero_observe` 的内部实现，不建议作为单独 planner tool 暴露 |
-| `view_camera_meta` | 是 | camera calibration inspection | 读取 agentview / wrist camera metadata | 内部给 `locate_object` 使用 |
-| `back_project` | 是 | perception geometry | 从预计算 world map 里把像素或区域反投影成 world XYZ | 内部给 `locate_object` 使用 |
-| `segment` | 是 | perception | `Sam3Client.segment(...)`，输出 mask、box、score、world_xyz、overlay artifact | 可直接作为 `locate_object` 的核心 backend |
-| `move_to` | 是 | low-level motion primitive | 计算 7D OSC action，循环 `LiberoEnvClient.step(action)` | 不建议直接暴露；可隐藏在 `move_to_object` / `place_on` 内部 |
-| `pi0_pick` | 是 | learned VLA primitive | `VLAClient.predict_action_batch(...)` 产生 action chunk，再 `env.chunk_step(actions)` | 可作为 `grasp_object` backend 候选 |
-| `pi0_doubled` | 是 | learned VLA contact primitive | VLA action chunk，靠 LIBERO termination 判断任务是否成功 | 可作为接触类任务 backend，暂不放进第一版高层 ABI |
-| `release` | 是 | gripper primitive | 循环发送打开夹爪的 7D action | 不建议直接暴露；放进 `place_on` 内部 |
-| `set_gripper` | 是 | gripper primitive | 保持当前 EEF pose，发送夹爪 action | 不建议直接暴露；作为 backend 内部辅助 |
-| `rotate_wrist` | 是 | wrist orientation primitive | 计算 yaw 误差，发送 action[5] | 不建议直接暴露；作为复杂放置 backend 内部辅助 |
-| `rotate_pitch` | 是 | wrist orientation primitive | 计算 pitch 误差，发送 action[3] | 不建议直接暴露；作为复杂放置 backend 内部辅助 |
-| `move_pose` | 是 | pose servo primitive | 同时控制 xyz、pitch、yaw，发送 7D action | 不建议直接暴露；可用于 `move_to_object` / `place_on` 的内部执行 |
-| `place` | 否，当前 toolkit 未注册 | learned VLA place primitive | VLA 按 `place it on {target}` 执行动作 chunk | 值得迁入 backend；需要先在 RPent 侧确认稳定性 |
+| RPent tool 名        | RPent 是否暴露给 planner | 类型                             | 背后 backend                                                                        | 适合迁入 uni2-agent 的方式                                |
+| ------------------- | ------------------: | ------------------------------ | --------------------------------------------------------------------------------- | -------------------------------------------------- |
+| `view_driver_state` |                   是 | observation / state inspection | 读 `states.json`、图像路径、world map 路径、上一步 command/result                              | 可迁成 `libero_observe` 的内部实现，不建议作为单独 planner tool 暴露 |
+| `view_camera_meta`  |                   是 | camera calibration inspection  | 读取 agentview / wrist camera metadata                                              | 内部给 `locate_object` 使用                             |
+| `back_project`      |                   是 | perception geometry            | 从预计算 world map 里把像素或区域反投影成 world XYZ                                              | 内部给 `locate_object` 使用                             |
+| `segment`           |                   是 | perception                     | `Sam3Client.segment(...)`，输出 mask、box、score、world_xyz、overlay artifact            | 可直接作为 `locate_object` 的核心 backend                  |
+| `move_to`           |                   是 | low-level motion primitive     | 计算 7D OSC action，循环 `LiberoEnvClient.step(action)`                                | 不建议直接暴露；可隐藏在 `move_to_object` / `place_on` 内部      |
+| `pi0_pick`          |                   是 | learned VLA primitive          | `VLAClient.predict_action_batch(...)` 产生 action chunk，再 `env.chunk_step(actions)` | 可作为 `grasp_object` backend 候选                      |
+| `pi0_doubled`       |                   是 | learned VLA contact primitive  | VLA action chunk，靠 LIBERO termination 判断任务是否成功                                    | 可作为接触类任务 backend，暂不放进第一版高层 ABI                     |
+| `release`           |                   是 | gripper primitive              | 循环发送打开夹爪的 7D action                                                               | 不建议直接暴露；放进 `place_on` 内部                           |
+| `set_gripper`       |                   是 | gripper primitive              | 保持当前 EEF pose，发送夹爪 action                                                         | 不建议直接暴露；作为 backend 内部辅助                            |
+| `rotate_wrist`      |                   是 | wrist orientation primitive    | 计算 yaw 误差，发送 action[5]                                                            | 不建议直接暴露；作为复杂放置 backend 内部辅助                        |
+| `rotate_pitch`      |                   是 | wrist orientation primitive    | 计算 pitch 误差，发送 action[3]                                                          | 不建议直接暴露；作为复杂放置 backend 内部辅助                        |
+| `move_pose`         |                   是 | pose servo primitive           | 同时控制 xyz、pitch、yaw，发送 7D action                                                   | 不建议直接暴露；可用于 `move_to_object` / `place_on` 的内部执行    |
+| `place`             |    否，当前 toolkit 未注册 | learned VLA place primitive    | VLA 按 `place it on {target}` 执行动作 chunk                                           | 值得迁入 backend；需要先在 RPent 侧确认稳定性                     |
 
 ### RPent backend 链路
 
@@ -260,13 +260,13 @@ CaP-X 的 LIBERO env 是 `FrankaLiberoEnv`，它包装 LIBERO 的 offscreen simu
 
 ## 迁移到 uni2-agent 的统一映射
 
-| uni2-agent 高层 tool | RPent backend 候选 | CaP-X backend 候选 | 说明 |
-|---|---|---|---|
-| `locate_object` | `segment` + `back_project` + state artifacts | `get_object_3d_points_and_masks_from_language`，或 Reduced 的 `segment_sam3_*` + `mask_to_world_points` | planner 只传 object name，不传 pixel / xyz |
-| `move_to_object` | `locate_object` 后内部 `move_to` / `move_pose` | `locate_object` 后内部 `goto_pose` / `solve_ik` / `move_to_joints` | planner 不直接传 7D action，也尽量不传 world xyz |
-| `grasp_object` | `pi0_pick(prompt=...)`，或 scripted move + gripper | `sample_grasp_pose` / `plan_grasp` + `goto_pose` + `close_gripper` | 成功后返回结构化结果和 observation |
-| `place_on` | locate target + `move_to` / `move_pose` + `release`，或验证后的 `place` | locate target + pose plan + `goto_pose` + `open_gripper` | 放置失败要记录 failure，不要让 planner 调底层补动作 |
-| `wait` | no-op / 短步进 | no-op / 短步进 | 已有 stub，可以保留 |
+| uni2-agent 高层 tool | RPent backend 候选                                                  | CaP-X backend 候选                                                                                     | 说明                                     |
+| ------------------ | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| `locate_object`    | `segment` + `back_project` + state artifacts                      | `get_object_3d_points_and_masks_from_language`，或 Reduced 的 `segment_sam3_*` + `mask_to_world_points` | planner 只传 object name，不传 pixel / xyz  |
+| `move_to_object`   | `locate_object` 后内部 `move_to` / `move_pose`                       | `locate_object` 后内部 `goto_pose` / `solve_ik` / `move_to_joints`                                      | planner 不直接传 7D action，也尽量不传 world xyz |
+| `grasp_object`     | `pi0_pick(prompt=...)`，或 scripted move + gripper                  | `sample_grasp_pose` / `plan_grasp` + `goto_pose` + `close_gripper`                                   | 成功后返回结构化结果和 observation                |
+| `place_on`         | locate target + `move_to` / `move_pose` + `release`，或验证后的 `place` | locate target + pose plan + `goto_pose` + `open_gripper`                                             | 放置失败要记录 failure，不要让 planner 调底层补动作     |
+| `wait`             | no-op / 短步进                                                       | no-op / 短步进                                                                                          | 已有 stub，可以保留                           |
 
 ## 不建议直接暴露给 planner 的函数
 
