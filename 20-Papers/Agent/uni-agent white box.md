@@ -96,3 +96,65 @@ open_gripper
 close_gripper
 
 (decompose_transform内置有需要的用)
+
+
+| 你整理的方法                      | `uni2-agent` 当前对应                                  | 结论                         |     |
+| --------------------------- | -------------------------------------------------- | -------------------------- | --- |
+| `get_observation`           | `libero_inspection.view_driver_state` + 返回的场景/腕部图像 | 有类似能力，但不是同名单一函数            |     |
+| `point_prompt_molmo`        | 没有                                                 | 需要新增                       |     |
+| `segment_sam3_point_prompt` | `libero_perception.segment`，但当前主要通过 SAM3 grounding | 部分对应，需要扩展为 point prompt    |     |
+| `segment_sam3_text_prompt`  | `libero_perception.segment`                        | 基本对应                       |     |
+| `plan_grasp`                | 没有 Contact-GraspNet 版本                             | 需要新增                       |     |
+| `select_top_down_grasp`     | 没有                                                 | 需要新增，或作为 `plan_grasp` 内部逻辑 |     |
+| `goto_pose`                 | `libero_motion.move_to` / `move_pose`              | 只有部分对应，底层机制不同              |     |
+| `open_gripper`              | `libero_motion.set_gripper(gripper="open")`        | 对应                         |     |
+| `close_gripper`             | `libero_motion.set_gripper(gripper="close")`       | 对应                         |     |
+| `decompose_transform`       | 没有对 agent 暴露的对应函数                                  | 应该内部使用，不暴露                 |     |
+
+
+get_observation  和     view_driver_state
+    view_camera_meta  功能差不多吗  可以集成变成get_observation吗？     rotate_wrist
+    rotate_pitch  这两个我决定删掉  move_to` / `move_pose` 换成 `goto_pose` 应该就行
+
+  保留 
+get_observation
+point_prompt_molmo
+segment_sam3_point_prompt
+segment_sam3_text_prompt
+plan_grasp
+goto_pose
+open_gripper
+close_gripper
+release
+vla_pick
+vla_doubled
+finish
+
+观察层
+└── get_observation
+
+感知层
+├── point_prompt_molmo
+├── segment_sam3_point_prompt
+└── segment_sam3_text_prompt
+
+抓取规划层
+└── plan_grasp
+    ├── Contact-GraspNet
+    ├── decompose_transform
+    └── select_top_down_grasp
+
+运动执行层
+├── goto_pose
+│   ├── solve_ik
+│   └── move_to_joints
+├── open_gripper
+├── close_gripper
+└── release
+
+学习策略
+├── vla_pick
+├── vla_doubled
+
+
+结束层 ：finish
