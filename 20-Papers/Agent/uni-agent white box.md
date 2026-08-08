@@ -63,3 +63,36 @@ LiberoTask(runtime_backend="libero_local")
 - `checkpoints/contact_graspnet/checkpoints/model.pt` — Contact-GraspNet,抓取位姿预测
 - 5 个 PointNet++ 的 `best_model.pth`(classification / part_seg / sem_seg)—— 点云网络,是 Contact-GraspNet 的骨干
 Contact-GraspNet 的输入是场景/目标的 3D 几何信息，输出是带评分的 6D 夹爪抓取位姿和接触点；它是“抓哪里、以什么方向抓”的模型，不是“识别什么”和“执行完整动作轨迹”的模型。
+
+
+
+  |方法|输入|输出/作用|
+|---|---|---|
+|`get_observation()`|无|获取场景 RGB、深度、相机内外参、腕部相机、末端位姿和关节状态|
+|`point_prompt_molmo(image, text_prompt)`|RGB 图像、目标描述|Molmo 根据语言返回目标像素坐标|
+|`segment_sam3_text_prompt(rgb, text_prompt)`|RGB、目标文本|SAM3 根据文字生成目标 mask、框和分数|
+|`segment_sam3_point_prompt(rgb, point_coords)`|RGB、像素 `(x,y)`|SAM3 根据 Molmo 给出的点生成目标 mask|
+
+
+plan_grasp
+select_top_down_grasp
+
+
+goto_pose(position, quaternion)
+
+
+
+
+
+get_observation
+point_prompt_molmo
+segment_sam3_point_prompt
+segment_sam3_text_prompt
+plan_grasp
+select_top_down_grasp
+
+goto_pose （内置solve_ik，move_to_joints ？）
+open_gripper
+close_gripper
+
+(decompose_transform内置有需要的用)
