@@ -62,3 +62,4 @@ LiberoTask(runtime_backend="libero_local")
 
 - `checkpoints/contact_graspnet/checkpoints/model.pt` — Contact-GraspNet,抓取位姿预测
 - 5 个 PointNet++ 的 `best_model.pth`(classification / part_seg / sem_seg)—— 点云网络,是 Contact-GraspNet 的骨干
+Contact-GraspNet 的输入是场景/目标的 3D 几何信息，输出是带评分的 6D 夹爪抓取位姿和接触点；它是“抓哪里、以什么方向抓”的模型，不是“识别什么”和“执行完整动作轨迹”的模型。
