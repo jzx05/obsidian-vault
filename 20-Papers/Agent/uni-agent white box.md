@@ -173,3 +173,7 @@ release
 vla_pick
 vla_doubled
 finish
+
+
+写太麻烦了  太复杂了  我需要的是简单 可拓展  把文件变成主目录有/preprocess.py 和 task.py 的
+  然后后面也写文件放在model_servers文件下就行，不要有scripted这种字样，我需要正式的  而不是脚本
