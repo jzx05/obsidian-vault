@@ -130,6 +130,7 @@ vla_pick
 vla_doubled
 finish
 
+////////////////////////////////////////////////////////
 观察层
 └── get_observation
 
@@ -140,14 +141,10 @@ finish
 
 抓取规划层
 └── plan_grasp
-    ├── Contact-GraspNet
-    ├── decompose_transform
-    └── select_top_down_grasp
+└──plan_grasp_from_point_clouds
 
 运动执行层
 ├── goto_pose
-│   ├── solve_ik
-│   └── move_to_joints
 ├── open_gripper
 ├── close_gripper
 └── release
@@ -157,8 +154,9 @@ finish
 ├── vla_doubled
 
 
-结束层 ：finish
-
+结束层 
+├── finish
+////////////////////////////////////////////////////////
 
 
 get_observation
