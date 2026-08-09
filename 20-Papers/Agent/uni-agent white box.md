@@ -158,3 +158,44 @@ finish
 
 
 结束层 ：finish
+
+
+
+观察层
+└── get_observation
+
+感知层
+├── point_prompt_molmo
+├── segment_sam3_point_prompt
+└── segment_sam3_text_prompt
+
+几何/点云层
+├── depth_to_point_cloud
+├── mask_to_world_points
+├── filter_noise
+├── subsample_point_cloud
+└── merge_multiview_point_clouds
+
+抓取规划层
+└── plan_grasp
+    ├── 单视角 depth + mask
+    │   └── Contact-GraspNet
+    ├── 多视角 point cloud
+    │   └── Contact-GraspNet
+    ├── decompose_transform
+    └── select_top_down_grasp
+
+运动执行层
+├── goto_pose
+│   ├── solve_ik
+│   └── move_to_joints
+├── open_gripper
+├── close_gripper
+└── release
+
+学习策略
+├── vla_pick
+└── vla_doubled
+
+结束层
+└── finish
