@@ -182,7 +182,7 @@ finish
 
 尚未动过的按文件简化候选：tools/libero.py、backends/base.py、task.py、recorder.py、artifacts.py、preprocess.py、model_servers/*。要我继续往下做
 
-2. 视频需要及时更新
+2. /root/rivermind-data/codes/uni2-agent/logs/202608101208-external-gpt-5.6-sol-0-0-ee59e16469ab4d37bef68df6d0722c00/artifacts/agentview.mp4 视频需要及时更新刷新
 3. 鼓励使用vla_pick，vla_double
 4. graphNet 策略的结果会有一定的偏差  你查一下大概多少偏差  需要多少弥补
 5. artifact_reader   改成 file_reader 名字，molmo 要改成 molmo2
