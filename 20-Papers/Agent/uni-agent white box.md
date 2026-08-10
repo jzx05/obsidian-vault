@@ -183,4 +183,5 @@ finish
 尚未动过的按文件简化候选：tools/libero.py、backends/base.py、task.py、recorder.py、artifacts.py、preprocess.py、model_servers/*。要我继续往下做
 
 2. 视频需要及时更新
-3. 鼓励使用vla_pick
+3. 鼓励使用vla_pick，vla_double
+4. graphNet 策略的结果会有一定的偏差  你查一下大概多少偏差  需要多少弥补
