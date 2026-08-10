@@ -222,3 +222,7 @@ LIBERO model RPC listening on http://127.0.0.1:8084
   warnings.warn(msg + ':\n {}'.format('\n  '.join(_unvendored)))
 model func:  <module 'contact_graspnet_pytorch.contact_graspnet' from '/root/rivermind-data/codes/uni2-agent/third_party/contact_graspnet_pytorch/contact_graspnet_pytorch/contact_graspnet.py'>
 /root/rivermind-data/codes/uni2-agent/third_party/contact_graspnet_pytorch/checkpoints/contact_graspnet/checkpoints/model.pt  waring 消除
+
+
+
+{"action":"plan_grasp","args":"{\"segment_ref\":\"seg_1\",\"top_k\":5}"}  何意为top_k？
