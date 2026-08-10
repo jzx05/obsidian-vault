@@ -181,3 +181,6 @@ finish
 
 
 尚未动过的按文件简化候选：tools/libero.py、backends/base.py、task.py、recorder.py、artifacts.py、preprocess.py、model_servers/*。要我继续往下做
+
+2. 视频需要及时更新
+3. 鼓励使用vla_pick
