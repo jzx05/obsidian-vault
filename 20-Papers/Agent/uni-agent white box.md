@@ -186,3 +186,4 @@ finish
 3. 鼓励使用vla_pick，vla_double
 4. graphNet 策略的结果会有一定的偏差  你查一下大概多少偏差  需要多少弥补
 5. artifact_reader   改成 file_reader 名字，molmo 要改成 molmo2
+6. 现在的代码结构完整  但是我后面需要用harness enginner agent 修改harness，所以我希望代码可不可以简单一点，当然代码的注释和说明要干净，不要过于冗余，同时不要缺失核心功能
