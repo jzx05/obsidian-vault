@@ -187,3 +187,38 @@ finish
 4. graphNet 策略的结果会有一定的偏差  你查一下大概多少偏差  需要多少弥补
 5. artifact_reader   改成 file_reader 名字，molmo 要改成 molmo2
 6. 现在的代码结构完整  但是我后面需要用harness enginner agent 修改harness，所以我希望代码可不可以简单一点，当然代码的注释和说明要干净，不要过于冗余，同时不要缺失核心功能
+
+o.yaml
+2026-08-10 06:12:03,668 | WARNING | UNI_AGENT_DEBUG_INLINE=1: running rollouts inline without Ray
+/root/.vscode-server/extensions/ms-python.debugpy-2026.6.0-linux-x64/bundled/libs/debugpy/adapter/../../debugpy/launcher/../../debugpy/../debugpy/_vendored/force_pydevd.py:18: UserWarning: incompatible copy of pydevd already imported:
+ /root/rivermind-data/venvs/uni2-libero/lib/python3.10/site-packages/pydevd_plugins/extensions/pydevd_plugin_omegaconf.py
+  warnings.warn(msg + ':\n {}'.format('\n  '.join(_unvendored)))
+LIBERO model RPC listening on http://127.0.0.1:8081
+Loading weights: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 199/199 [00:00<00:00, 6937.86it/s]
+[transformers] BertModel LOAD REPORT from: /root/rivermind-data/codes/uni2-agent/checkpoints/bert-base-uncased
+Key                                        | Status     | Details
+-------------------------------------------+------------+--------
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |        
+cls.predictions.bias                       | UNEXPECTED |        
+cls.predictions.transform.dense.weight     | UNEXPECTED |        
+cls.predictions.transform.dense.bias       | UNEXPECTED |        
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |        
+cls.seq_relationship.bias                  | UNEXPECTED |        
+cls.seq_relationship.weight                | UNEXPECTED |        
+
+Notes:
+- UNEXPECTED:   can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+Loading weights: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 211/211 [00:00<00:00, 6810.82it/s]
+LIBERO model RPC listening on http://127.0.0.1:8082
+/root/.vscode-server/extensions/ms-python.debugpy-2026.6.0-linux-x64/bundled/libs/debugpy/adapter/../../debugpy/launcher/../../debugpy/../debugpy/_vendored/force_pydevd.py:18: UserWarning: incompatible copy of pydevd already imported:
+ /root/rivermind-data/venvs/uni2-libero/lib/python3.10/site-packages/pydevd_plugins/extensions/pydevd_plugin_omegaconf.py
+  warnings.warn(msg + ':\n {}'.format('\n  '.join(_unvendored)))
+Using a slow image processor as `use_fast` is unset and a slow processor was saved with this model. `use_fast=True` will be the default behavior in v4.52, even if the model was saved with a slow processor. This will result in minor differences in outputs. You'll still be able to use a slow processor with `use_fast=False`.
+Loading checkpoint shards: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 4/4 [00:26<00:00,  6.54s/it]
+Molmo2 loaded from /root/rivermind-data/models/molmo2-4b on cuda
+LIBERO model RPC listening on http://127.0.0.1:8084
+/root/.vscode-server/extensions/ms-python.debugpy-2026.6.0-linux-x64/bundled/libs/debugpy/adapter/../../debugpy/launcher/../../debugpy/../debugpy/_vendored/force_pydevd.py:18: UserWarning: incompatible copy of pydevd already imported:
+ /root/rivermind-data/venvs/uni2-libero/lib/python3.10/site-packages/pydevd_plugins/extensions/pydevd_plugin_omegaconf.py
+  warnings.warn(msg + ':\n {}'.format('\n  '.join(_unvendored)))
+model func:  <module 'contact_graspnet_pytorch.contact_graspnet' from '/root/rivermind-data/codes/uni2-agent/third_party/contact_graspnet_pytorch/contact_graspnet_pytorch/contact_graspnet.py'>
+/root/rivermind-data/codes/uni2-agent/third_party/contact_graspnet_pytorch/checkpoints/contact_graspnet/checkpoints/model.pt  waring 消除
