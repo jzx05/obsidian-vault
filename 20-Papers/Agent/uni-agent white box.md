@@ -177,3 +177,7 @@ finish
 
 需求文档：
 
+
+
+
+尚未动过的按文件简化候选：tools/libero.py、backends/base.py、task.py、recorder.py、artifacts.py、preprocess.py、model_servers/*。要我继续往下做
