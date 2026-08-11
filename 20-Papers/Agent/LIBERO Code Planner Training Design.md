@@ -1709,17 +1709,17 @@ same backend versions
 
 ### A. 项目边界
 
-1. 新项目名字叫什么？是否仍放在 `/home/eren/codes/` 下？
-2. 是否完全独立 repo，还是作为 `uni2-agent` sibling project？
-3. 是否需要保留 `uni-agent` 的命名体系，例如 Task、Agent、Harness、Gateway？
+1. 新项目名字叫什么？是否仍放在 `/home/eren/codes/` 下？ 名字你定，在`/home/eren/codes/` 下
+2. 是否完全独立 repo，还是作为 `uni2-agent` sibling project？完全独立 repo 
+3. 是否需要保留 `uni-agent` 的命名体系，例如 Task、Agent、Harness、Gateway？ 可以
 
 ### B. Planner 模型与输入
 
 4. Qwen3.5-9B VLM-code model 的具体 checkpoint/source 是什么？
-5. Planner prompt 里 raw image 是直接给模型，还是 image ref + VLM description 双路都给？
-6. VLM description 是由同一个 planner 模型生成，还是由单独 VLM backend 生成？
-7. Episode 第一轮是否强制输出 global subgoal plan？
-8. 后续每轮是否必须写 `# Subgoal: ...` comment？
+5. Planner prompt 里 raw image 是直接给模型，还是 image ref + VLM description 双路都给？  直接给模型
+6. VLM description 是由同一个 planner 模型生成，还是由单独 VLM backend 生成？ 
+7. Episode 第一轮是否强制输出 global subgoal plan？  需要
+8. 后续每轮是否必须写 `# Subgoal: ...` comment？  需要  还要写每一步的思维链和comment
 
 ### C. API surface
 
