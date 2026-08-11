@@ -43,6 +43,7 @@
 | Planner 模型 | VLM-code model，基于 Qwen3.5-9B |
 | 视觉反馈 | harness 执行后返回 VLM 对图片/视频的描述、工具结果、stdout/stderr、错误信息；planner 可是 VLM-code model |
 | Tool/API 来源 | 第一版参考 CaP-X reduced API 的十多种方法，因为符合正规测评 |
+| VLA | 第一版不使用 VLA；所有机器人执行原语来自 CaP-X reduced API |
 | Executor | 第一版做 restricted executor |
 | Namespace | 多轮 code block 之间保留有限 session state，要求可序列化、可重放 |
 | SFT 数据来源 | 用强 teacher model，例如 GPT-5.6 等，生成成功数据来训练 Qwen3.5-9B |
@@ -117,9 +118,9 @@ project/
   backends/
     libero_runtime
     capx_reduced_api_adapter
-    vla_backend
     sam3_backend
     molmo_backend
+    grasp_backend
     motion_backend
 
   training/
@@ -154,7 +155,7 @@ task instruction
   -> harness parses code block
   -> restricted executor validates code
   -> code calls allowlisted harness APIs
-  -> APIs call VLA / SAM3 / Molmo / grasp / motion / LIBERO backend
+  -> APIs call CaP-X reduced API backends: SAM3 / Molmo / grasp / motion / LIBERO runtime
   -> executor captures stdout/stderr/errors
   -> harness computes reward/progress/success
   -> harness builds next observation
@@ -352,9 +353,24 @@ Geometry / reusable helpers:
   select_top_down_grasp
 ```
 
-### 6.2 VLA extension
+### 6.2 不使用 VLA
 
-不需要有VLA，VLA并不稳定，不好训练code 
+用户已修正: 第一版不需要 VLA。所有机器人执行原语都来自 CaP-X reduced API。
+
+因此默认 API surface 不包含:
+
+```text
+vla_pick
+vla_place
+vla_act
+```
+
+这会让训练目标更清楚:
+
+```text
+code planner 学习组合 CaP-X reduced API，
+而不是学习在 VLA 与几何/抓取/motion pipeline 之间做策略选择。
+```
 
 ### 6.3 Harness-only API
 
@@ -369,28 +385,46 @@ get_last_tool_result()
 
 这些 API 不一定直接操作机器人，但对 VLM-code planner 很重要。
 
-### 6.4 API 分层
+### 6.4 API 分层: Level 1 / Level 2 的含义
 
-不要把所有函数平铺给模型。建议分三层:
+这里的 Level 1 / Level 2 不是 CaP-X 原生术语，而是本项目为了控制训练动作空间定义的 **API exposure profile**。
+
+**Level 1 API** 指第一版默认暴露给 Qwen3.5 code planner 的稳定执行原语。它来自 CaP-X reduced API 中最直接、最必要的函数。模型在 SFT 和 RL 中都可以调用这些函数。
+
+**Level 2 API** 指 skill-library variant 或 expert helper 中的几何/点云/姿态转换辅助函数。它们不是新的机器人后端，而是把 Level 1 的 observation、perception、grasp、motion 结果串起来的 reusable glue functions。是否暴露给 planner 应该由 `api_profile` 控制。
+
+建议分三层:
 
 ```text
-Planner-visible APIs:
+Level 1 / planner-visible APIs:
   get_observation
   describe_scene
   point_prompt_molmo
   segment_sam3_text_prompt
   segment_sam3_point_prompt
   plan_grasp
+  get_oriented_bounding_box_from_3d_points
   goto_pose
   open_gripper
   close_gripper
   finish
 
-Expert-visible APIs:
+Level 2 / expert helper APIs:
   solve_ik
   move_to_joints
   plan_grasp_from_point_clouds
-  geometry helpers
+  goto_home_joint_position
+  subsample_point_cloud
+  filter_noise
+  rotation_matrix_to_quaternion
+  decompose_transform
+  depth_to_point_cloud
+  mask_to_world_points
+  pixel_to_world_point
+  transform_points
+  interpolate_segment
+  normalize_vector
+  select_top_down_grasp
 
 Harness-internal APIs:
   raw simulator
@@ -401,7 +435,26 @@ Harness-internal APIs:
   artifact store
 ```
 
-第一版可以通过 harness config 控制是否给 planner 看 expert-visible APIs。
+第一版可以通过 harness config 控制是否给 planner 看 Level 2 APIs。
+
+关键原则:
+
+```text
+SFT label 中出现的可执行 API，必须和 RL executor 暴露的 API profile 对齐。
+```
+
+如果 SFT 让 Qwen3.5 学会调用 Level 2，但 RL 只暴露 Level 1，就会产生 train/RL action-space mismatch。因此默认推荐:
+
+```text
+teacher_full:
+  强模型可以使用 Level 1 + Level 2 生成成功轨迹。
+
+student_default:
+  给 Qwen3.5 的 SFT label 与 RL executor 使用同一个 api_profile。
+
+optional_expert_ablation:
+  如果要训练 Qwen3.5 直接调用 Level 2，则 SFT 和 RL 都应暴露 Level 2。
+```
 
 ## 7. Restricted Executor
 
@@ -450,8 +503,7 @@ safe_globals = {
     "segment_sam3_text_prompt": harness.segment_sam3_text_prompt,
     "segment_sam3_point_prompt": harness.segment_sam3_point_prompt,
     "plan_grasp": harness.plan_grasp,
-    "vla_pick": harness.vla_pick,
-    "vla_place": harness.vla_place,
+    "get_oriented_bounding_box_from_3d_points": harness.get_oriented_bounding_box_from_3d_points,
     "goto_pose": harness.goto_pose,
     "open_gripper": harness.open_gripper,
     "close_gripper": harness.close_gripper,
@@ -670,8 +722,10 @@ desc = describe_scene(question="Is the red cube held by the gripper?")
 print(desc.summary)
 
 if "held" not in desc.summary.lower():
-    result = vla_pick("red cube")
-    print(result)
+    obs = get_observation()
+    cam = obs["agentview"]
+    masks = segment_sam3_text_prompt(cam["images"]["rgb"], "red cube")
+    print("Need retry. SAM3 masks:", len(masks))
 else:
     state["current_subgoal"] = 2
 ```
@@ -714,7 +768,7 @@ failure: 0.0
 - timeout_rate。
 - tool_failure_rate。
 - perception_empty_rate。
-- vla_failed_rate。
+- grasp_failed_rate。
 - motion_failed_rate。
 - average_code_blocks。
 - average_tool_calls。
@@ -987,7 +1041,7 @@ ctx.state:
   current_subgoal
   repeated_subgoal_count
   perception_empty_count
-  vla_failure_count
+  grasp_failure_count
   motion_failure_count
 
 ctx.visual:
@@ -1025,7 +1079,7 @@ ctx.predicates:
 ```python
 return {
     "skills": [{"text": "Use visual differencing after every movement-heavy code block."}],
-    "tool_hint": "Prefer VLA pick when segmentation repeatedly fails.",
+    "tool_hint": "If text segmentation repeatedly fails, try Molmo point prompting followed by SAM3 point segmentation.",
     "visual_policy": "image_diff"
 }
 ```
@@ -1237,7 +1291,7 @@ episodes:
         progress_summary
     recurring_signals:
       perception_empty_count
-      vla_failure_count
+      grasp_failure_count
       motion_failure_count
       repeated_subgoal_count
       no_progress_count
@@ -1259,7 +1313,6 @@ timeout
 tool_failed
 perception_empty
 perception_wrong_object
-vla_failed
 grasp_failed
 motion_failed
 no_progress
@@ -1419,7 +1472,7 @@ timeout_rate
 tool_failure_rate
 perception_empty_rate
 motion_failure_rate
-vla_failure_rate
+grasp_failure_rate
 average_turns
 average_tool_calls
 average_vlm_calls
@@ -1532,7 +1585,7 @@ same backend versions
 
 - 注册 allowlisted APIs。
 - 从 CaP-X reduced API adapter 导入函数。
-- 包装 VLA/SAM3/Molmo/motion。
+- 包装 SAM3/Molmo/grasp/motion。
 - 给 prompt 生成 API docs。
 - 记录 parsed tool calls。
 
@@ -1609,8 +1662,8 @@ same backend versions
 
 9. 第一版到底用 `FrankaLiberoApiReduced`，还是 `FrankaControlApiReduced`，还是二者抽象合并？
 10. 是否启用 skill-library variant 的 geometry helper？
-11. VLA API 第一版具体叫什么: `vla_pick`、`vla_place`、`vla_act`，还是别的？
-12. 是否允许 planner 使用 `solve_ik` / `move_to_joints` 这种 expert-level API？
+11. SFT 和 RL 是否使用同一个 `api_profile`？我建议必须一致。
+12. 是否允许 planner 使用 `solve_ik` / `move_to_joints` 这种 Level 2 expert API？
 13. 是否允许 planner 使用 point cloud helper，例如 `mask_to_world_points`？
 
 ### D. Executor
@@ -1677,7 +1730,8 @@ API:
   LIBERO 第一版参考 FrankaLiberoApiReduced
   启用基础 reduced API
   skill-library helper 可配置开启
-  增加 vla_pick / vla_place / finish / describe_scene
+  不使用 VLA
+  增加 finish / describe_scene / describe_transition 这类 harness-only non-robot wrappers
 
 Executor:
   restricted executor
