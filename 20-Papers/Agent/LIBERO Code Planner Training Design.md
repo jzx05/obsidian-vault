@@ -322,7 +322,7 @@ CaP-X 文档中的 CaP-RL 使用 GRPO 训练 code-as-policy agents。
 **推荐答案:** 新建独立子项目或独立包，暂时不要和当前 `uni2-agent` 的 LIBERO tools 强耦合。可以复用代码、文档和思想，但项目边界要服务于 “code planner + harness co-training”，否则会被现有 `uni2-agent` 的工具设计牵着走。
 
 **待确认:** 代码落点、包名、是否还叫 `uni2-agent`。
-
+同意你的建议，新建一个项目
 ### Q2 - Agent 输出契约
 
 **问题:** 模型每轮输出到底是 CaP-X 原生 Python code，还是带强约束的 Python action block？
