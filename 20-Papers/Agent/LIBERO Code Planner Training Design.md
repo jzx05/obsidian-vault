@@ -606,18 +606,12 @@ Teacher:
 
 ### 9.2 数据来源
 
-主数据来源:
+数据来源:
 
 ```text
 strong teacher successful rollouts
 ```
 
-辅助数据:
-
-- 少量 hand-written canonical traces，用来规范 API 语法。
-- CaP-X successful artifacts，转成 step-wise messages。
-- 后续 RL successful traces，做 rejection sampling。
-- failed-but-recovered traces，训练错误恢复。
 
 ### 9.3 SFT 样本格式
 
@@ -665,7 +659,7 @@ stdout/stderr
 error messages
 ```
 
-重要: 用户明确要求训练 `plan comment + code`。因此 assistant label 不是纯 code。
+重要: 用户明确要求训练 `plan comment思维链 + code`。因此 assistant label 不是纯 code。
 
 推荐 assistant block:
 
