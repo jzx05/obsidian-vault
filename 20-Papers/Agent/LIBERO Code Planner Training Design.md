@@ -164,7 +164,7 @@ task instruction
 
 ### 4.2 Assistant 输出格式
 
-模型每轮输出一个 code block。code block 里允许短 plan comment。
+模型每轮输出一个 code block。code block 里允许 plan comment 和思维链。
 
 推荐格式:
 
@@ -239,14 +239,8 @@ Block 3: place target
 Block 4: verify and finish
 ```
 
-每个 block 内可以有多个工具调用，但需要预算限制:
+每个 block 内可以有多个工具调用，暂时不需要预算限制:
 
-- `max_code_blocks_per_episode`: 初始建议 8-12。
-- `max_tool_calls_per_block`: 初始建议 3-5，因为 subgoal 可能需要 observe + perception + action。
-- `max_total_tool_calls`: 初始建议 30-40。
-- `max_stdout_chars_per_block`: 初始建议 4096。
-- `max_stderr_chars_per_block`: 初始建议 4096。
-- `max_code_chars_per_block`: 初始建议 4096-8192。
 
 ## 5. CaP-X 继承关系
 
@@ -360,24 +354,7 @@ Geometry / reusable helpers:
 
 ### 6.2 VLA extension
 
-用户场景里还明确有 VLA。因此我们需要在 CaP-X reduced API 基础上加 VLA wrapper。
-
-候选:
-
-```text
-vla_pick(object_or_instruction)
-vla_place(object_or_instruction, target_or_instruction)
-vla_act(instruction, max_steps=None)
-```
-
-第一版建议只暴露一个或两个高层 VLA API:
-
-```text
-vla_pick
-vla_place 或 vla_act
-```
-
-不要让 planner 同时拿到过多低层 VLA 控制选项。
+不需要有VLA，VLA并不稳定，不好训练code 
 
 ### 6.3 Harness-only API
 
@@ -404,8 +381,6 @@ Planner-visible APIs:
   segment_sam3_text_prompt
   segment_sam3_point_prompt
   plan_grasp
-  vla_pick
-  vla_place / vla_act
   goto_pose
   open_gripper
   close_gripper
