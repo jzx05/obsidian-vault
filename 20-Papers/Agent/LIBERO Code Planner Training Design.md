@@ -1886,3 +1886,13 @@ Evaluation:
 1. **Code Planner SFT/RL**: VLM-code planner 是否能通过 step-wise code-as-policy 学会 LIBERO manipulation。
 2. **Harness-R1 for Embodiment**: failure trajectory -> runtime patch -> rerun delta reward 是否能修补具身 harness。
 3. **Planner + Harness Co-Training**: 训练 planner 与训练 harness engineer 是否有互补收益。
+
+
+
+  multimodal closed-loop code policy
+
+  输入:
+    任务 + 当前图片 + 当前状态 + 历史代码 + 执行反馈
+
+  输出:
+    下一段 Python code block
