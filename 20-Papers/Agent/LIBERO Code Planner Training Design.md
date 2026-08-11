@@ -423,7 +423,7 @@ observation
 
 **推荐答案:** 按每个 model turn 捕获 response，但 episode 内共享同一个 final reward。也就是多轮 rollout 中每个 code block 都是可训练 response token，环境反馈进入下一轮 prompt，mask 为 0。reward 可以先稀疏写到最终 turn，后续再试 episode reward 分配到所有 assistant turns。
 
-**待确认:** 你希望优先兼容 uni-agent Gateway 的 token-level trajectory，还是优先兼容 CaP-X / verl 当前 GRPO pipeline。
+uni-agent Gateway 的 token-level trajectory
 
 ### Q12 - Reward
 
