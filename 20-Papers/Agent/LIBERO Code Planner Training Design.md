@@ -42,13 +42,15 @@
 | Subgoal | episode 开始时允许模型输出对 goal 的多个 subgoal |
 | Planner 模型 | VLM-code model，基于 Qwen3.5-9B |
 | 视觉反馈 | harness 执行后返回 VLM 对图片/视频的描述、工具结果、stdout/stderr、错误信息；planner 可是 VLM-code model |
-| Tool/API 来源 | 第一版参考 CaP-X reduced API 的十多种方法，因为符合正规测评 |
+| Tool/API 来源 | 第一版使用 CaP-X full reduced API + skill-library helpers |
 | VLA | 第一版不使用 VLA；所有机器人执行原语来自 CaP-X reduced API |
 | Executor | 第一版做 restricted executor |
 | Namespace | 多轮 code block 之间保留有限 session state，要求可序列化、可重放 |
 | SFT 数据来源 | 用强 teacher model，例如 GPT-5.6 等，生成成功数据来训练 Qwen3.5-9B |
 | SFT label | 训练 `plan comment + code`，不只是纯 code |
 | Harness 修补参考 | 迁移 Harness-R1 思路 |
+| API profile | Teacher / Student SFT / Student RL 统一使用 `full_reduced_skill_library` |
+| Canonicalization | 第一版不做任何 API 级别 canonicalization |
 
 ## 2. 非目标
 
@@ -305,11 +307,30 @@ reset env
 
 ## 6. 第一版 API 边界
 
-用户倾向: 第一版按照 CaP-X reduced API 的十多种方法，因为符合正规测评。
+用户已确认: 第一版不做 API 分层暴露，不做 canonicalization。Teacher、Student SFT、Student RL 全部使用同一个 `full_reduced_skill_library` profile。
 
-### 6.1 LIBERO reduced API 候选
+```text
+Teacher rollout:
+  full reduced + skill-library
 
-从 CaP-X 的 `FrankaLiberoApiReduced.functions()` 看，候选 API 包括:
+Student SFT:
+  full reduced + skill-library
+
+Student RL:
+  full reduced + skill-library
+```
+
+这个选择的含义是:
+
+- SFT label 中出现的函数，RL executor 也必须能执行。
+- 强 teacher 生成的成功代码可以更直接进入 SFT 数据。
+- 不需要把 teacher 代码离线改写成更低层或更高层的 canonical action。
+- 模型要直接学习几何、点云、抓取、motion helper 的组合。
+- 动作空间会更大，Qwen3.5-9B 在 SFT 和 RL 初期的 invalid call / wrong argument 风险会更高。
+
+### 6.1 LIBERO reduced API 基础函数
+
+从 CaP-X 的 `FrankaLiberoApiReduced.functions()` 看，基础 API 包括:
 
 ```text
 Observation:
@@ -374,7 +395,7 @@ code planner 学习组合 CaP-X reduced API，
 
 ### 6.3 Harness-only API
 
-为了训练稳定，harness 还应该提供一些不是 CaP-X 原生的 wrapper:
+为了训练稳定，harness 还应该提供一些不是 CaP-X 原生、但由 harness 控制的辅助 API:
 
 ```text
 describe_scene(question)
@@ -385,37 +406,46 @@ get_last_tool_result()
 
 这些 API 不一定直接操作机器人，但对 VLM-code planner 很重要。
 
-### 6.4 API 分层: Level 1 / Level 2 的含义
+### 6.4 API profile: full reduced + skill-library
 
-这里的 Level 1 / Level 2 不是 CaP-X 原生术语，而是本项目为了控制训练动作空间定义的 **API exposure profile**。
+之前讨论过 “Teacher 用 Level 2、Student/RL 只用 Level 1” 的路线，但第一版不采用。这里的 Level 1 / Level 2 不是 CaP-X 原生术语，只是早期为了讨论 API 暴露粒度提出的 profile 名称。
 
-**Level 1 API** 指第一版默认暴露给 Qwen3.5 code planner 的稳定执行原语。它来自 CaP-X reduced API 中最直接、最必要的函数。模型在 SFT 和 RL 中都可以调用这些函数。
-
-**Level 2 API** 指 skill-library variant 或 expert helper 中的几何/点云/姿态转换辅助函数。它们不是新的机器人后端，而是把 Level 1 的 observation、perception、grasp、motion 结果串起来的 reusable glue functions。是否暴露给 planner 应该由 `api_profile` 控制。
-
-建议分三层:
+第一版主线固定为:
 
 ```text
-Level 1 / planner-visible APIs:
+api_profile = "full_reduced_skill_library"
+
+Teacher rollout:
+  full reduced + skill-library
+
+Student SFT:
+  full reduced + skill-library
+
+Student RL:
+  full reduced + skill-library
+```
+
+完整 planner-visible API surface:
+
+```text
+CaP-X reduced:
   get_observation
-  describe_scene
-  point_prompt_molmo
   segment_sam3_text_prompt
   segment_sam3_point_prompt
+  point_prompt_molmo
   plan_grasp
+  plan_grasp_from_point_clouds
   get_oriented_bounding_box_from_3d_points
-  goto_pose
-  open_gripper
-  close_gripper
-  finish
-
-Level 2 / expert helper APIs:
   solve_ik
   move_to_joints
-  plan_grasp_from_point_clouds
+  goto_pose
   goto_home_joint_position
+  open_gripper
+  close_gripper
   subsample_point_cloud
   filter_noise
+
+Skill-library helpers:
   rotation_matrix_to_quaternion
   decompose_transform
   depth_to_point_cloud
@@ -426,35 +456,42 @@ Level 2 / expert helper APIs:
   normalize_vector
   select_top_down_grasp
 
-Harness-internal APIs:
-  raw simulator
-  env.step
-  backend clients
-  reward evaluator
-  task identity
-  artifact store
+Harness-only helpers:
+  describe_scene
+  describe_transition
+  finish
+  get_last_tool_result
 ```
 
-第一版可以通过 harness config 控制是否给 planner 看 Level 2 APIs。
-
-关键原则:
+仍然不暴露:
 
 ```text
-SFT label 中出现的可执行 API，必须和 RL executor 暴露的 API profile 对齐。
+raw simulator
+env.step
+backend clients
+reward evaluator
+task identity
+artifact store mutation
+filesystem
+network
+process
 ```
 
-如果 SFT 让 Qwen3.5 学会调用 Level 2，但 RL 只暴露 Level 1，就会产生 train/RL action-space mismatch。因此默认推荐:
+因此第一版不需要:
+
+- Teacher code 到 Student code 的 API canonicalization。
+- `execute_grasp_from_mask(...)` 这类人为下沉出来的 compact macro action。
+- SFT 和 RL 两套不同 action space。
+
+第一版真正要训练 Qwen3.5-9B 学的是:
 
 ```text
-teacher_full:
-  强模型可以使用 Level 1 + Level 2 生成成功轨迹。
-
-student_default:
-  给 Qwen3.5 的 SFT label 与 RL executor 使用同一个 api_profile。
-
-optional_expert_ablation:
-  如果要训练 Qwen3.5 直接调用 Level 2，则 SFT 和 RL 都应暴露 Level 2。
+在同一个 full API profile 下，
+根据任务、图像观察、VLM 描述、结构化状态、工具结果和错误信息，
+step-wise 生成下一段可执行 Python code block。
 ```
+
+这比 compact API 更难，但规格更干净: teacher 写什么，SFT 学什么，RL 继续优化什么，executor 就执行什么。
 
 ## 7. Restricted Executor
 
@@ -496,18 +533,44 @@ safe_globals = {
     "np": numpy,
     "math": math,
     "state": session_state,
+
+    # Harness-only helpers
     "get_observation": harness.get_observation,
     "describe_scene": harness.describe_scene,
     "describe_transition": harness.describe_transition,
+    "finish": harness.finish,
+    "get_last_tool_result": harness.get_last_tool_result,
+
+    # Perception
     "point_prompt_molmo": harness.point_prompt_molmo,
     "segment_sam3_text_prompt": harness.segment_sam3_text_prompt,
     "segment_sam3_point_prompt": harness.segment_sam3_point_prompt,
+
+    # Grasp
     "plan_grasp": harness.plan_grasp,
+    "plan_grasp_from_point_clouds": harness.plan_grasp_from_point_clouds,
     "get_oriented_bounding_box_from_3d_points": harness.get_oriented_bounding_box_from_3d_points,
+
+    # Motion / control
+    "solve_ik": harness.solve_ik,
+    "move_to_joints": harness.move_to_joints,
     "goto_pose": harness.goto_pose,
+    "goto_home_joint_position": harness.goto_home_joint_position,
     "open_gripper": harness.open_gripper,
     "close_gripper": harness.close_gripper,
-    "finish": harness.finish,
+
+    # Point cloud / geometry
+    "subsample_point_cloud": harness.subsample_point_cloud,
+    "filter_noise": harness.filter_noise,
+    "rotation_matrix_to_quaternion": harness.rotation_matrix_to_quaternion,
+    "decompose_transform": harness.decompose_transform,
+    "depth_to_point_cloud": harness.depth_to_point_cloud,
+    "mask_to_world_points": harness.mask_to_world_points,
+    "pixel_to_world_point": harness.pixel_to_world_point,
+    "transform_points": harness.transform_points,
+    "interpolate_segment": harness.interpolate_segment,
+    "normalize_vector": harness.normalize_vector,
+    "select_top_down_grasp": harness.select_top_down_grasp,
 }
 ```
 
@@ -1660,11 +1723,23 @@ same backend versions
 
 ### C. API surface
 
-9. 第一版到底用 `FrankaLiberoApiReduced`，还是 `FrankaControlApiReduced`，还是二者抽象合并？
-10. 是否启用 skill-library variant 的 geometry helper？
-11. SFT 和 RL 是否使用同一个 `api_profile`？我建议必须一致。
-12. 是否允许 planner 使用 `solve_ik` / `move_to_joints` 这种 Level 2 expert API？
-13. 是否允许 planner 使用 point cloud helper，例如 `mask_to_world_points`？
+已确认主线:
+
+```text
+Teacher / Student SFT / Student RL:
+  full reduced + skill-library
+
+canonicalization:
+  第一版不做
+```
+
+仍需落实的实现问题:
+
+9. 第一版 adapter 是否直接以 `FrankaLiberoApiReducedSkillLibrary` 为准，还是在项目内抽象成 `full_reduced_skill_library` profile？
+10. `FrankaControlApiReduced` 是否暂不纳入第一版，只保留 LIBERO 路线？
+11. API docs 是否给每个函数补充参数 schema、返回值 schema、失败类型和最小例子？
+12. harness-only helper 的最终签名是否固定为 `describe_scene(question)`、`describe_transition(question)`、`finish(reason)`、`get_last_tool_result()`？
+13. full API 是否仍允许单函数 feature flag？默认不做限制；只有遇到 simulator/runtime 不稳定时才临时关闭某个函数。
 
 ### D. Executor
 
@@ -1727,11 +1802,11 @@ Planner:
   每轮强制 # Subgoal comment
 
 API:
-  LIBERO 第一版参考 FrankaLiberoApiReduced
-  启用基础 reduced API
-  skill-library helper 可配置开启
+  LIBERO 第一版使用 full_reduced_skill_library
+  Teacher / Student SFT / Student RL 暴露同一套 full reduced + skill-library API
+  第一版不做 canonicalization
   不使用 VLA
-  增加 finish / describe_scene / describe_transition 这类 harness-only non-robot wrappers
+  增加 finish / describe_scene / describe_transition / get_last_tool_result 这类 harness-only helper
 
 Executor:
   restricted executor
