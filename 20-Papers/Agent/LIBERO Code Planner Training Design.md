@@ -321,7 +321,6 @@ CaP-X 文档中的 CaP-RL 使用 GRPO 训练 code-as-policy agents。
 
 **推荐答案:** 新建独立子项目或独立包，暂时不要和当前 `uni2-agent` 的 LIBERO tools 强耦合。可以复用代码、文档和思想，但项目边界要服务于 “code planner + harness co-training”，否则会被现有 `uni2-agent` 的工具设计牵着走。
 
-**待确认:** 代码落点、包名、是否还叫 `uni2-agent`。
 同意你的建议，新建一个项目
 ### Q2 - Agent 输出契约
 
@@ -329,7 +328,7 @@ CaP-X 文档中的 CaP-RL 使用 GRPO 训练 code-as-policy agents。
 
 **推荐答案:** 第一版用 **CaP-X-style Python code block + harness-controlled API boundary**。也就是模型看起来在写 Python，但 executor 只给它 allowlisted functions，不给 direct `env`。这样保留 code generator 的表达力，同时为 SFT/RL 提供稳定动作空间。
 
-**待确认:** 是否允许 import `numpy`、是否允许定义 helper function、是否允许 class、loop、condition。
+同意你的推荐
 
 ### Q3 - Multi-turn 语义
 
@@ -347,7 +346,7 @@ observation
 
 不要强依赖 `REGENERATE`。`finish()` 应该是 code API 或特殊 action，而不是自然语言 `FINISH`。CaP-X 的 `REGENERATE` 适合评测时修代码，但对 SFT/RL 的 mask 和 credit assignment 不如标准 assistant turn 清楚。
 
-**待确认:** 是否仍保留 `REGENERATE` 作为兼容 CaP-X trace 的导入格式。
+同意你的建议
 
 ### Q4 - 执行粒度
 
@@ -355,28 +354,22 @@ observation
 
 **推荐答案:** 第一版限制为小 block: 最多 1-3 个 tool calls 或一个小子目标。不要一次性生成完整 episode 程序。具身任务状态变化大，尤其依赖图像反馈，长程序失败后很难定位 reward credit。
 
-**待确认:** 初始 budget 是每 episode 8、10、12 还是更多 code blocks。
-
+一个 code block 做一个小子目标。就是让模型在刚开始输出对goal的多个subgoal。
 ### Q5 - 视觉反馈契约
 
 **问题:** code planner 第一版是否直接吃 raw image，还是只吃 VLM 对图像/视频的描述？
 
 **推荐答案:** 第一版主要吃 **VLM visual description / visual differencing text**。raw image 作为 artifact 保存，可选给 VLM，不强制给 planner。这样可以先训练 text/code model，也避免多模态 rollout 系统复杂度直接爆炸。
 
-**待确认:** planner 模型是否确定是纯文本 code LLM，还是 VLM-code model。
+ VLM-code model。 基于Qwen3.5-9B
 
 ### Q6 - 底层工具 API
 
 **问题:** harness 暴露给 code planner 的底层方法有哪些？是 VLA/SAM/Molmo2/motion primitive，还是更低层的 robot control API？
 
-**推荐答案:** 暴露两层，但模型默认只看上层:
 
-- planner-visible APIs: `observe()`、`describe_scene()`、`query_object()`、`segment()`、`vla_pick()`、`move_to()`、`open_gripper()`、`close_gripper()`、`finish()`。
-- harness-internal APIs: raw simulator、IK、motion backend、VLA server、SAM/Molmo server、reward evaluator。
 
-模型不应该直接碰 harness-internal APIs。
-
-**待确认:** VLA 应该是一个 callable tool，还是作为底层 primitive 由 code planner 通过更抽象的 `pick(object)` 间接调用。
+**待确认:** 目前的就是按照cap-x的 reducedapi里的十多种的方法  应该是 ，因为那个符合正规的测评。
 
 ### Q7 - Executor 安全边界
 
@@ -393,7 +386,7 @@ observation
 - stdout/stderr 截断。
 - exception 结构化。
 
-**待确认:** 是否为了快速原型先允许 full Python，然后在训练前收紧。
+同意你的建议
 
 ### Q8 - Namespace 是否持久
 
@@ -401,7 +394,7 @@ observation
 
 **推荐答案:** 保留有限 session state，但必须可序列化和可重放。允许保存字符串、数字、list/dict、点、mask id、object id、pose id，不允许保存 simulator object、open file、socket、thread、backend client。
 
-**待确认:** 是否需要显式 `state` dict，例如 `state["target"] = ...`，而不是任意 globals。
+同意
 
 ### Q9 - SFT 数据来源
 
@@ -413,7 +406,7 @@ observation
 - scripted/oracle demos: 自动转成 step-wise code traces。
 - CaP-X successful artifacts: 把 `all_responses.json`、`code.py`、stdout/stderr、visual feedback 转换成 messages。
 
-**待确认:** 你是否已经有 LIBERO oracle/demo，可以转成 code traces。
+用强模型gpt5.6等模型得到的成功数据  训练SFT  qwen3.5-9B
 
 ### Q10 - SFT label
 
@@ -421,7 +414,8 @@ observation
 
 **推荐答案:** 只把 assistant 的 code block 作为主要 label。允许代码开头有短注释，但不要训练长自然语言推理。observation、VLM feedback、tool output、stdout/stderr 全部作为 context，loss mask 为 0。
 
-**待确认:** 是否要强制 “只输出代码，不输出解释”。
+需要 训练 plan comment + code
+
 
 ### Q11 - RL trajectory
 
