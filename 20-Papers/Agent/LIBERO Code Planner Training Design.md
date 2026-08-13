@@ -1896,3 +1896,47 @@ Evaluation:
 
   输出:
     下一段 Python code block
+
+
+
+//////////////////////  实验 
+  
+00 ='get_observation'
+
+01 ='step_code'
+
+02 ='point_prompt_molmo'
+
+03 ='segment_sam3_text_prompt'
+
+04 ='segment_sam3_point_prompt'
+
+05 ='plan_grasp'
+
+06 ='get_oriented_bounding_box_from_3d_points'
+
+07 ='solve_ik'
+
+08 ='move_to_joints'
+
+09 ='open_gripper'
+
+10 ='close_gripper'
+
+11 ='rotation_matrix_to_quaternion'
+
+12 ='decompose_transform'
+
+13 ='depth_to_point_cloud'
+
+14 ='mask_to_world_points'
+
+15 ='pixel_to_world_point'
+
+16 ='transform_points'
+
+17 ='interpolate_segment'
+
+18 ='normalize_vector'
+
+19 ='select_top_down_grasp'
