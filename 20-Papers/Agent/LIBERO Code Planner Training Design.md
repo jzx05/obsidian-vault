@@ -1958,4 +1958,10 @@ Evaluation:
 
 
 1. 为什么  code planner 需要这么写？ 有病？？
-2. 
+2. 目前的观测为什么一步直接生成全部代码  不过这个倒也没啥，后面在第二轮基础上可以改代码就行
+3.             include_builtin_skills=cfg.enable_builtin_skill_library,
+
+            builtin_skill_collision_policy=cfg.builtin_skill_collision_policy, 到底指什么内容
+
+4. 'SyntaxError: invalid character \'’\' (U+2019) (<unknown>, line 1)\nTraceback (most recent call last):\n  File "/root/rivermind-data/codes/capr1/capr1/agents/code_planner/executor.py", line 126, in execute\n    module = ast.parse(code, mode="exec")\n  File "/root/rivermind-data/venvs/capr1-robosuite/lib/python3.10/ast.py", line 50, in parse\n    return compile(source, filename, mode, flags,\n  File "<unknown>", line 1\n    I’m going to localize the cube, plan a top-down grasp, move above it, then close the gripper and lift to verify the pick.# Subgoal: inspect the current scene, segment the red cube, estimate a grasp pose, and execute a pick-and-lift.\n     ^\nSyntaxError: invalid character \'’\' (U+2019)\n' 存在这个问题
+
