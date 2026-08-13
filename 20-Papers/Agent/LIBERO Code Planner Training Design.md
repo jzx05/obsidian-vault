@@ -1940,3 +1940,18 @@ Evaluation:
 18 ='normalize_vector'
 
 19 ='select_top_down_grasp'
+
+
+  RobosuiteTask.run()
+      |
+      |-- with_episode_context(...)
+      |
+      |-- _attach_initial_images(...)
+      |       |
+      |       |-- runtime.read_image(...)
+      |       |-- 添加 initial_text
+      |       |-- 添加初始图片
+      |
+      |-- agent.run(messages=messages)
+              |
+              |-- _with_code_planner_system(messages)
