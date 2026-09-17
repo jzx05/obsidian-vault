@@ -1,3 +1,7 @@
+### zero-shot Real-to-Sim-to-Real Policy Transfer
+### In-scene Editing for Scene Expansion
+
+
 1. **生成实例提取阶段**
 2. **两阶段位姿与缩放对齐方法**：**可微旋转优化器（DRO）**来估计旋转，并引入**顶视空间对齐（TSA）机制**来提供物理先验
 3. 仿真器中组装这些实例并附加物理属性
@@ -13,4 +17,3 @@ Real-to-Sim-to-Real:
 2. 图片驱动的3D场景生成
 
 `Generative Instance Extraction`： 生成式实例提取：把一张桌面场景图拆成若干完整、独立、能够放入仿真器的3D物体
-1.  
