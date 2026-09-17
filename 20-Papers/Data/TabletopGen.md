@@ -11,4 +11,6 @@ Real-to-Sim-to-Real:
 	A. LLM直接生成布局
 	B. 先生成场景图或空间约束	
 2. 图片驱动的3D场景生成
-		
+
+`Generative Instance Extraction`： 生成式实例提取：把一张桌面场景图拆成若干完整、独立、能够放入仿真器的3D物体
+1.  
