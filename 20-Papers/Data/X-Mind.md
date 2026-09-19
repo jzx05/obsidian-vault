@@ -438,7 +438,7 @@ $$
 | image decoder | 随机解码一层计算监督 | 可选，用于输出 sketch |
 | planner | 有控制 GT | 输出实际控制/轨迹 |
 
-详见 [[X-Mind 训练与推理流程]]。
+下面的训练/推理对照表和第 16 节伪代码共同给出完整实现逻辑。
 
 ## 11. 数据与实验
 
@@ -545,7 +545,7 @@ Sketch 的强语义来自车辆、地图、信号灯、导航和限速等标签�
 | OneVL | future-supervised latent | 否 | 否 | future decoder 训练后丢弃 |
 | DriveVLA-W0 | future-image auxiliary objective | 通常否 | 否 | 世界建模主要提供密集预训练监督 |
 
-详见 [[X-Mind 相关工作定位]]。
+第 17 节进一步按照“世界模型嵌入策略的强度”整理相关工作。
 
 ## 15. 最简心智模型
 
@@ -576,3 +576,143 @@ $$
 }
 $$
 
+## 16. 训练与推理伪代码
+
+### 16.1 训练
+
+```text
+输入：当前 7 路图像、文本/导航、自车状态、未来 12 帧 sketch GT、控制 GT
+
+1. z_clean = DC-AE-Enc(B_gt)
+2. epsilon ~ N(0, I)
+3. v_target = z_clean - epsilon
+4. 编码 camera / text / ego / trajectory tokens
+5. 对 k = 0...4：
+   a. z_tk = (1-t_k) epsilon + t_k z_clean
+   b. 用 EncProj(z_tk)+PE2D 覆盖当前层组的 96 个 sketch positions
+   c. 运行第 k 个 LLM block group
+   d. 提取 sketch hidden states h_bev^(l_k)
+   e. v_k = shared_TransEnc(Proj(h_bev^(l_k)))
+   f. 累积 ||v_k-v_target||^2
+6. 随机选择一个层 r，解码其 latent 并计算 MSE + LPIPS
+7. planning head 从未来条件化 hidden states 输出 acceleration / yaw rate
+8. 计算 control L1 loss
+9. 联合反向传播
+```
+
+训练时在每个层组边界重新注入由 GT 构造的 $z_{t_k}$，因此每个 block 都在正确 noise level 上学习。这类似 layer-wise teacher forcing，而不是让早期 block 的错误一直传播到后续 block。
+
+### 16.2 推理
+
+```text
+输入：当前 7 路图像、文本/导航、自车状态
+
+1. 编码 camera / text / ego tokens
+2. z_0 ~ N(0, I)
+3. 初始化 sketch positions = EncProj(z_0)+PE2D
+4. 对 k = 0...4：
+   a. 运行第 k 个 LLM block group
+   b. 提取 sketch hidden states
+   c. v_k = shared_TransEnc(Proj(h_bev^(l_k)))
+   d. z_(k+1) = z_k + (t_(k+1)-t_k) v_k
+   e. 将 EncProj(z_(k+1))+PE2D 写入下一层组的 sketch positions
+5. final trajectory hidden states -> acceleration / yaw rate
+6. 车辆运动学积分 -> future trajectory
+7. 可选：DC-AE-Dec(z_5) -> 可视化 future sketch video
+```
+
+### 16.3 两条并行的 block-to-block 状态流
+
+```mermaid
+flowchart LR
+    ZK[z_k] --> EP[EncProj + PE2D]
+    EP --> S[96 个 sketch positions]
+    C[Camera/Text/Ego tokens] --> B[LLM block group k]
+    T[Trajectory hidden] --> B
+    S --> B
+    B --> HB[Sketch hidden]
+    B --> HT[Updated trajectory hidden]
+    HB --> VP[Shared TransEnc + Proj]
+    VP --> VK[v_k]
+    VK --> EU[Euler update]
+    ZK --> EU
+    EU --> ZN[z_k+1]
+    ZN --> NEXT[下一 block group]
+    HT --> NEXT
+```
+
+1. $z_k\rightarrow z_{k+1}$：显式未来 latent 经过 velocity prediction 和 Euler integration 更新；
+2. $H_{\mathrm{traj}}^{(k)}\rightarrow H_{\mathrm{traj}}^{(k+1)}$：轨迹 token 通过 self-attention 持续吸收逐渐清晰的未来信息。
+
+## 17. 相关工作定位
+
+### 17.1 世界模型嵌入策略的强度
+
+| Level | 机制 | 典型形式 | 代表工作 |
+|---|---|---|---|
+| L1 | 世界模型只提供训练监督 | 推理时丢弃 future decoder | OneVL、SimWAM、Metis |
+| L2 | 推理时预测一个未来，再据此规划 | $o\rightarrow\hat z_{future}\rightarrow a$ | **X-Mind**、FSDrive、FutureX |
+| L3 | 未来与动作联合生成 | $p(z_{future},a\mid o)$ | DriveWAM、WA-JEPA、BrainWAM |
+| L4 | 对候选动作生成反事实未来并评分 | $a^{(i)}\rightarrow\hat z^{(i)}\rightarrow score$ | LCDrive、MM-Future、MindDrive |
+
+X-Mind 属于 L2：它确实在推理时生成未来，但尚未公开展示对不同候选动作分别进行反事实 rollout。
+
+### 17.2 最接近 X-Mind 的工作
+
+| 工作 | 内部表示 | 推理时生成未来 | 动作条件化未来 | 与 X-Mind 的差别 |
+|---|---|---:|---:|---|
+| [FSDrive](https://arxiv.org/abs/2505.17685) | future image + lane/box priors | 是 | 未明确 | 更接近 RGB，生成成本较高 |
+| [FutureX](https://arxiv.org/abs/2512.11226) | latent future scene | 按需 | 部分 | Auto-think switch 决定是否 rollout |
+| [LCDrive](https://arxiv.org/abs/2512.10226) | action/world tokens 交替 | 是 | **是** | action-aligned latent CoT，更接近反事实推演 |
+| [X-Foresight](https://arxiv.org/abs/2605.24892) | future video chunks | 是 | 未充分说明 | 联合学习视频预测与实时动作，计算更重 |
+| [WA-JEPA](https://arxiv.org/abs/2608.20974) | future scene latent | 是 | 联合耦合 | future tokens 与 trajectory 共同 flow matching |
+| [MM-Future](https://arxiv.org/abs/2609.20377) | 多组 scene-action hypotheses | 是 | **是** | 联合演化多种可能未来并评分 |
+| [MindDrive](https://arxiv.org/abs/2512.04441) | ego-conditioned future scene | 是 | **是** | what-if simulation + VLM evaluator，更接近 MPC |
+
+### 17.3 训练期世界模型和 latent distillation
+
+| 工作 | 世界模型作用 | 推理阶段 |
+|---|---|---|
+| [DriveVLA-W0](https://arxiv.org/abs/2510.12796) | 未来图像预测提供 dense supervision | 轻量 action expert，不一定生成未来 |
+| [OneVL](https://arxiv.org/abs/2604.18486) | latent 同时重建 text CoT 与 future-frame tokens | 辅助 decoder 全部丢弃 |
+| [LaST-VLA](https://arxiv.org/abs/2603.01928) | 3D geometry 和 world dynamics 蒸馏到 latent | latent 直接指导轨迹 |
+| [SimWAM](https://arxiv.org/abs/2608.07468) | video/action joint flow matching | action 绕过 future generation |
+| [Metis](https://arxiv.org/abs/2606.15869) | video expert 与 action expert 联合训练 | action expert 不显式生成未来 |
+
+这些方法应称为 world-model-supervised policy，而不是测试时“先想象再行动”的在线世界模型。
+
+### 17.4 有内部 CoT、但没有显式未来 rollout
+
+| 工作 | Reasoning | Action interface |
+|---|---|---|
+| [AutoVLA](https://arxiv.org/abs/2506.13757) | 同一自回归模型选择 fast/slow textual CoT | discrete physical action tokens |
+| [ReCogDrive](https://arxiv.org/abs/2506.08052) | VLM 学习分层驾驶认知 | VLM prior 注入 diffusion planner |
+| [ORION](https://arxiv.org/abs/2503.19755) | LLM 结合历史进行场景推理 | generative planner |
+| [CoT4AD](https://arxiv.org/abs/2511.22532) | 训练时显式 CoT，推理时隐式 reasoning | trajectory planning |
+| [ColaVLA](https://arxiv.org/abs/2512.22939) | 文本认知压缩为 meta-action latent | hierarchical parallel planner |
+| [[Fast-ThinkAct]] | 6 个 latent reasoning + 5 个 spatial tokens | spatial-token KV 注入 diffusion policy |
+
+## 18. 可复现性清单
+
+论文当前没有公开以下关键实现信息：
+
+- Large Drive Model 的具体 backbone、层数和五个 block group 的边界；
+- multimodal token 顺序和 attention mask；
+- 96-token latent 的精确 shape 及时间/空间排列；
+- `EncProj`、`Proj` 和 shared `TransEnc` 的宽度、层数；
+- DC-AE architecture、预训练数据、压缩率和完整 loss；
+- 12 帧的采样间隔和完整预测 horizon；
+- planner head 与车辆运动学积分公式；
+- 所有损失权重 $\lambda$；
+- 绝对端到端延迟、部署硬件和显存占用；
+- 公开闭环 benchmark 上的碰撞率、route completion 与 success rate。
+
+## 19. 可以继续研究的方向
+
+1. **Action-conditioned RBD**：每组 future tokens 同时接收候选轨迹条件；
+2. **Multi-hypothesis rollout**：并行生成多个 future-action pairs，表达交通多模态性；
+3. **Future-conditioned scorer**：从碰撞、法规、舒适和通行效率评价候选动作；
+4. **Self-supervised sketch latent**：减少对完整结构化 GT 的依赖；
+5. **Closed-loop RL/post-training**：用真实交互后果训练 rollout，而不仅是日志 imitation；
+6. **Uncertainty calibration**：未来不确定时主动减速，而不是输出单个过度确定的 sketch；
+7. **公开闭环评测**：补充 Bench2Drive/HUGSIM 等交互环境中的安全、成功率和实时性指标。
