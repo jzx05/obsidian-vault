@@ -47,7 +47,7 @@ Fast-ThinkAct 的目标不是简单地让模型“少说几句”，而是将 li
 
 给定 timestep $t$ 的 observation $o_t$ 和 instruction $l$：
 
-\[
+$$
 (o_t,l)
 \xrightarrow{\mathcal F_\theta}
 \{z_1,\ldots,z_M\},\{s_1,\ldots,s_K\}
@@ -55,14 +55,14 @@ Fast-ThinkAct 的目标不是简单地让模型“少说几句”，而是将 li
 c_t
 \xrightarrow{\pi_\phi}
 a_t.
-\]
+$$
 
 - $\mathcal F_{\theta^T}$：Textual Teacher VLM，生成 explicit CoT 和 visual-plan answer；
 - $\mathcal F_\theta$：Latent Student VLM，生成 compact latent CoT $z$ 和 spatial tokens；
 - $\mathcal V_\psi$：Verbalizer，仅在训练时把 latent CoT 解码为文本；
 - $\pi_\phi$：Diffusion Transformer-based Action Model，将 visual planning 转成 action chunk；
-- (M=6)：latent reasoning token 数量；
-- (K=5)：trajectory waypoint / spatial token 数量。
+- $M=6$：latent reasoning token 数量；
+- $K=5$：trajectory waypoint / spatial token 数量。
 
 核心层级为：
 
@@ -87,183 +87,325 @@ Teacher 和 Student 使用相同 backbone 和相同 CoT-SFT initialization，这
 
 ## 5. Efficient Embodied Reasoning
 
-### 5.1 Teacher GRPO and preference construction
+### 5.0 Unified notation
 
-Teacher 对同一个输入采样 (N=5) 条 reasoning rollouts：
+| Symbol | Meaning |
+|---|---|
+| $x_t=(o_t,l)$ | 当前 visual observation 与 language instruction |
+| $\mathcal F_{\theta^T}$ | Textual Teacher VLM |
+| $\mathcal F_\theta$ | Latent Student VLM |
+| $\mathcal V_\psi$ | Verbalizer |
+| $\pi_\phi$ | Diffusion Action Model |
+| $\tau_i$ | Teacher 生成的第 $i$ 条 textual reasoning trace |
+| $G(x_t)$ | 同一输入的 rollout group，$|G|=N=5$ |
+| $z=(z_1,\ldots,z_M)$ | Student latent CoT，$M=6$ |
+| $s_1,\ldots,s_K$ | learnable spatial tokens，$K=5$ |
+| $\hat p_i$ / $p_i$ | ground-truth / predicted waypoint |
+| $c_t$ | spatial-token KV 构成的 visual planning context |
+| $\hat a_t$ | ground-truth action chunk |
 
-\[
-\{\tau_1,\ldots,\tau_N\}.
-\]
+Superscript $T$ 表示 Teacher；time index 始终写在 subscript $t$。
 
-每条 rollout 获得 task、trajectory 或 QA reward，并在 group 内归一化：
+### 5.1 Teacher GRPO objective
 
-\[
-A(\tau)=
-\frac{R_\tau-\operatorname{mean}(\{R_i\})}
-{\operatorname{std}(\{R_i\})}.
-\]
+Teacher 对同一输入 $x_t$ 采样 $N=5$ 条 rollouts。首先定义 policy ratio：
 
-随后选出：
+$$
+r_{\theta^T}(\tau)
+=
+\frac{p_{\theta^T}(\tau\mid x_t)}
+{p_{\theta^T_{\mathrm{old}}}(\tau\mid x_t)}.
+$$
 
-\[
-\tau^+=\arg\max_{\tau\in G}A(\tau),
+Teacher 最大化论文 Eq. (1) 的 clipped GRPO objective：
+
+$$
+\boxed{
+\mathcal J_{\mathrm{GRPO}}(\theta^T)
+=
+\mathbb E_{\tau\sim\mathcal F_{\theta^T}}
+\left[
+\min\left(
+r_{\theta^T}(\tau)A(\tau),
+\operatorname{clip}\!\left(r_{\theta^T}(\tau),1-\varepsilon,1+\varepsilon\right)A(\tau)
+\right)
+\right]
+}
+\tag{1}
+$$
+
+每条 trace 的 reward 在同一 rollout group 内标准化：
+
+$$
+\boxed{
+A(\tau)
+=
+\frac{R_\tau-\operatorname{mean}_{\tau_i\in G(x_t)}R_i}
+{\operatorname{std}_{\tau_i\in G(x_t)}R_i}
+}
+\tag{2}
+$$
+
+$A(\tau)>0$ 表示该 trace 优于同组平均水平。Preference pair 为：
+
+$$
+\boxed{
+\tau^+=\arg\max_{\tau\in G(x_t)}A(\tau),
 \qquad
-\tau^-=\arg\min_{\tau\in G}A(\tau).
-\]
+\tau^-=\arg\min_{\tau\in G(x_t)}A(\tau)
+}
+\tag{3}
+$$
 
-$\tau^+$ 和 $\tau^-$ 分别构成 preferred / rejected reasoning trace。Reward 并不直接回归到 Student latent，而是用来构造 preference pair。
+Reward 不直接作为 Student 的 scalar regression target，而是通过 $\tau^+\succ\tau^-$ 这一 preference relation 提供监督。
 
 ### 5.2 Student latent CoT
 
-Student 不生成 textual reasoning，而是 autoregressively 生成 (M) 个 continuous latent vectors：
+Student autoregressively 生成固定长度的 continuous latent sequence：
 
-\[
-z=\{z_m\}_{m=1}^{M},
-\qquad z_m\in\mathbb R^d,
-\qquad M=6.
-\]
+$$
+z=(z_1,\ldots,z_M),
+\qquad
+z_m\in\mathbb R^d,
+\qquad
+M=6.
+$$
 
-主要效率收益来自把约 250 个 textual tokens 缩短为 6 个 latent tokens。这里仍然是 autoregressive latent generation，只是 sequence length 大幅缩短。
+约 250 个 textual reasoning tokens 被压缩为 6 个 latent tokens。这里仍有 dependency $p(z_m\mid z_{<m},x_t)$，只是 decoding steps 大幅减少。
 
 ## 6. Three Training Losses
 
-Student 的总目标为：
+三项 supervision 分别来自 preference pair、Teacher hidden state 和 ground-truth waypoints：
 
-\[
-\mathcal L_{\text{student}}
+```text
+tau+, tau-  --Verbalizer----------> Lverb
+tau+        --Teacher hidden state-> Ldistill
+waypoints   --spatial-token MLP----> Lans
+```
+
+### 6.1 Verbalization loss: $\mathcal L_{\mathrm{verb}}$
+
+Continuous latent 没有直接的 token-level label。Verbalizer $\mathcal V_\psi$ 读取 $z$，并为 textual trace 计算 conditional likelihood。先定义 reference-adjusted score：
+
+$$
+s_\psi(\tau;z)
 =
-\mathcal L_{\text{verb}}
-+
-\mathcal L_{\text{distill}}
-+
-\mathcal L_{\text{ans}}.
-\]
+\log p_\psi(\tau\mid z)
+-
+\log p_{\mathrm{ref}}(\tau).
+$$
 
-论文未报告额外的 loss weights，正文按等权相加描述。
+其中整条 trace 的 log-likelihood 是 token log-likelihood 之和：
 
-### 6.1 Verbalization loss: \(\mathcal L_{\text{verb}}\)
+$$
+\log p_\psi(\tau\mid z)
+=
+\sum_{j=1}^{|\tau|}
+\log p_\psi(\tau_j\mid\tau_{<j},z).
+$$
 
-#### Motivation
+定义 preference margin：
 
-Continuous latent space 没有 token-level ground truth。作者用 Verbalizer $\mathcal V_\psi$ 将 latent $z$ 解码为 natural-language reasoning，并要求 latent 更支持高质量的 $\tau^+$，而不是低质量的 $\tau^-$。
+$$
+\Delta_\psi(z)
+=
+s_\psi(\tau^+;z)-s_\psi(\tau^-;z).
+$$
 
-#### Objective
+论文 Eq. (4) 可重写为：
 
-\[
-\mathcal L_{\text{verb}}
-=-\mathbb E\left[
+$$
+\boxed{
+\mathcal L_{\mathrm{verb}}
+=
+-\mathbb E\left[
+\log\sigma\!\left(\beta\Delta_\psi(z)\right)
+\right],
+\qquad \beta=0.1
+}
+\tag{4}
+$$
+
+展开后等价于：
+
+$$
+\mathcal L_{\mathrm{verb}}
+=
+-\mathbb E\left[
 \log\sigma\left(
-\beta\left(
+\beta\left[
 \log\frac{p_\psi(\tau^+\mid z)}{p_{\mathrm{ref}}(\tau^+)}
 -
 \log\frac{p_\psi(\tau^-\mid z)}{p_{\mathrm{ref}}(\tau^-)}
+\right]
 \right)
-\right)
-\right],
-\qquad \beta=0.1.
-\]
+\right].
+$$
 
-$p_{\mathrm{ref}}$ 是不使用 latent conditioning 的 reference model，用来抵消语言模型本身对某类句子的 prior preference。
+最小化该 loss 会增大 preferred trace 相对 rejected trace 的 score。它约束的是“latent 支持哪一种 reasoning”，而非要求 Student 逐 token 复现 Teacher。
 
-该 loss 不要求 Student 逐 token 复制 Teacher，而是要求 (z) 中包含足够的信息，使 Verbalizer 对 preferred reasoning 的相对 likelihood 高于 rejected reasoning。
+#### Verbalizer warm-up
 
-#### Optimization target
+前 3000 iterations 使用 $\tau^+$ 做 teacher forcing：
 
-- 保留 task-relevant semantic reasoning；
-- 压制低 reward、冗余或错误的 reasoning pattern；
-- 让 latent 保持 verbalizable，而不是不可解释的 arbitrary vector。
-
-#### Warm-up strategy
-
-- 前 3000 iterations：使用 $\tau^+$ 作为 ground truth，以 standard language-modeling loss 训练 Verbalizer 与 Student；
-- 后 1500 iterations：冻结 Verbalizer，使用 $\mathcal L_{\text{verb}}$ 更新 Student；
-- Student 在两个阶段始终更新。
-
-后半程中，冻结的 Verbalizer 相当于 differentiable semantic evaluator，梯度通过它回传到 Student latent。
-
-### 6.2 Visual-plan distillation loss: \(\mathcal L_{\text{distill}}\)
-
-只有 language preference 不能保证 latent 包含机器人控制所需的 spatial planning。作者因此对齐 Teacher 和 Student 在 `<answer>` token 位置的 hidden state：
-
-\[
-\mathcal L_{\text{distill}}
+$$
+\mathcal L_{\mathrm{warm}}
 =
-\left\|h_t^T-h_t\right\|_2^2.
-\]
+-\mathbb E\left[
+\sum_{j=1}^{|\tau^+|}
+\log p_\psi(\tau_j^+\mid\tau_{<j}^+,z)
+\right].
+$$
 
-- $h_t^T$：Teacher 在 preferred trace $\tau^+$ 之后、`<answer>` token 位置的 hidden state；
-- $h_t$：Student 在 latent CoT 之后、`<answer>` token 位置的 hidden state。
+该阶段同时更新 $\psi$ 和 $\theta$，建立 $z\leftrightarrow\text{text}$ 的映射。后 1500 iterations 冻结 $\psi$ 并改用 $\mathcal L_{\mathrm{verb}}$；梯度穿过 frozen Verbalizer，只更新 Student $\theta$。
 
-`<answer>` 是 reasoning 与 final answer / visual plan 之间的 special boundary token。其 contextual hidden state 已经聚合 image、instruction 和 preceding reasoning，因此可作为“准备输出 visual plan 时的内部状态”。
+### 6.2 Visual-plan distillation loss: $\mathcal L_{\mathrm{distill}}$
 
-使用该位置的好处是 Teacher 的长 textual CoT 和 Student 的 6 个 latent tokens 无法逐步对齐，但二者都共享 `<answer>` 这一语义边界。
+定义 Teacher 与 Student 在 `<answer>` boundary 处的 contextual hidden states：
 
-该 loss 的监督链条是：
-
-```text
-trajectory/task reward
-    -> preferred Teacher rollout tau+
-    -> Teacher <answer> hidden state
-    -> Student hidden-state alignment
-```
-
-### 6.3 Waypoint regression loss: \(\mathcal L_{\text{ans}}\)
-
-Student 在 latent sequence 后追加 (K=5) 个 learnable spatial tokens：
-
-\[
-s_1,\ldots,s_K.
-\]
-
-每个 spatial token 的 final hidden state 通过 MLP 并行预测 waypoint：
-
-\[
-p_i=\operatorname{MLP}(h'(s_i)),
-\]
-
-\[
-\mathcal L_{\text{ans}}
+$$
+h_{\mathrm{ans}}^T
 =
-\sum_{i=1}^{K}\|p_i-\hat p_i\|_2^2.
-\]
+H_{\theta^T}(x_t,\tau^+,\texttt{<answer>}),
+$$
 
-实现中每个 waypoint 为六维：
+$$
+h_{\mathrm{ans}}^S
+=
+H_\theta(x_t,z,\texttt{<answer>}).
+$$
 
-\[
-p_i=
-[x_{\text{single}},y_{\text{single}},
-x_{\text{left}},y_{\text{left}},
-x_{\text{right}},y_{\text{right}}].
-\]
+论文 Eq. (5) 使用 L2 alignment：
 
-- single-arm sample：监督前两维，mask 后四维；
-- bimanual sample：监督左右夹爪对应的后四维，mask 前两维。
+$$
+\boxed{
+\mathcal L_{\mathrm{distill}}
+=
+\left\|h_{\mathrm{ans}}^T-h_{\mathrm{ans}}^S\right\|_2^2
+}
+\tag{5}
+$$
 
-Teacher 用文本表示 5 个 waypoint 时需要约 60--70 tokens；Student 将 5 个 spatial tokens 预先放进序列，在一次 Transformer forward 中同时回归全部 waypoint。
+Teacher 与 Student 的 reasoning sequence 长度和表示形式不同，因此无法逐 token 对齐；`<answer>` 是两条路径共享的 semantic boundary。该 loss 只使用 preferred trace $\tau^+$ 的 Teacher state，将 action-aligned visual planning representation 迁移给 Student。
 
-### 6.4 Roles of the three losses
+### 6.3 Waypoint regression loss: $\mathcal L_{\mathrm{ans}}$
 
-| Loss | Supervision source | What it constrains |
-|---|---|---|
-| $\mathcal L_{\text{verb}}$ | preferred/rejected Teacher traces | semantic reasoning quality |
-| $\mathcal L_{\text{distill}}$ | Teacher `<answer>` hidden state | internal visual-plan representation |
-| $\mathcal L_{\text{ans}}$ | ground-truth 2D gripper trajectory | explicit spatial grounding |
+Student 在 latent CoT 后追加 $K=5$ 个 learnable spatial tokens。第 $i$ 个 token 的 final hidden state 经过 waypoint head：
 
-可以简化为：
+$$
+p_i
+=
+f_{\mathrm{wp}}\!\left(h'(s_i)\right)
+\in\mathbb R^6.
+$$
 
-```text
-Lverb    : think correctly
-Ldistill : inherit Teacher visual planning
-Lans     : ground planning in actual coordinates
-```
+六个维度统一编码 single-arm 和 bimanual trajectories：
+
+$$
+p_i
+=
+\left[
+x_{\mathrm{single}},y_{\mathrm{single}},
+x_{\mathrm{left}},y_{\mathrm{left}},
+x_{\mathrm{right}},y_{\mathrm{right}}
+\right].
+$$
+
+论文 Eq. (6) 给出的 waypoint loss 为：
+
+$$
+\mathcal L_{\mathrm{ans}}
+=
+\sum_{i=1}^{K}\left\|p_i-\hat p_i\right\|_2^2.
+$$
+
+实现中对不适用的 robot dimensions 使用 mask $m\in\{0,1\}^6$，因此更准确的实现形式是：
+
+$$
+\boxed{
+\mathcal L_{\mathrm{ans}}
+=
+\sum_{i=1}^{K}
+\left\|m\odot(p_i-\hat p_i)\right\|_2^2
+}
+$$
+
+$$
+m_{\mathrm{single}}=[1,1,0,0,0,0],
+\qquad
+m_{\mathrm{bimanual}}=[0,0,1,1,1,1].
+$$
+
+所有 spatial tokens 在同一次 Transformer forward 中计算，因此 waypoint prediction 是并行的；它不同于把坐标序列化为 60--70 个 textual tokens 后逐 token decoding。
+
+### 6.4 Combined Student objective
+
+论文 Eq. (6) 的完整目标为：
+
+$$
+\boxed{
+\mathcal L_{\mathrm{student}}(\theta)
+=
+\mathcal L_{\mathrm{verb}}
++
+\mathcal L_{\mathrm{distill}}
++
+\mathcal L_{\mathrm{ans}}
+}
+\tag{6}
+$$
+
+论文没有报告额外的 weighting coefficients。三项监督的 target 与 gradient path 为：
+
+| Loss | Target | Gradient destination | Function |
+|---|---|---|---|
+| $\mathcal L_{\mathrm{verb}}$ | $\tau^+\succ\tau^-$ | Student；warm-up 时也更新 Verbalizer | semantic preference |
+| $\mathcal L_{\mathrm{distill}}$ | $h_{\mathrm{ans}}^T$ | Student | internal visual-plan transfer |
+| $\mathcal L_{\mathrm{ans}}$ | $\hat p_{1:K}$ | Student + waypoint head | explicit spatial grounding |
 
 ## 7. Spatial Tokens and KV Cache
 
-### 7.1 Layer-wise computation
+### 7.1 One Transformer layer
 
-对于第 $l$ 层中的 spatial token $s_i$，严格地说：
+设第 $l$ 层输入为 $X^{(l)}\in\mathbb R^{n\times d}$。以 Pre-Norm block 为例：
 
-\[
+$$
+\widetilde X^{(l)}=\operatorname{Norm}(X^{(l)}),
+$$
+
+$$
+Q^{(l)}=\widetilde X^{(l)}W_Q^{(l)},
+\quad
+K^{(l)}=\widetilde X^{(l)}W_K^{(l)},
+\quad
+V^{(l)}=\widetilde X^{(l)}W_V^{(l)}.
+$$
+
+Self-attention 与 residual update 为：
+
+$$
+A^{(l)}
+=
+\operatorname{softmax}\!\left(
+\frac{Q^{(l)}K^{(l)\top}}{\sqrt{d_k}}+M_{\mathrm{attn}}
+\right),
+$$
+
+$$
+Y^{(l)}=X^{(l)}+A^{(l)}V^{(l)}W_O^{(l)},
+$$
+
+$$
+X^{(l+1)}
+=
+Y^{(l)}
++
+\operatorname{MLP}^{(l)}\!\left(\operatorname{Norm}(Y^{(l)})\right).
+$$
+
+对于 spatial token $s_i$：
+
+$$
 k_{s_i}^{(l)}
 =
 \operatorname{Norm}(x_{s_i}^{(l)})W_K^{(l)},
@@ -271,185 +413,209 @@ k_{s_i}^{(l)}
 v_{s_i}^{(l)}
 =
 \operatorname{Norm}(x_{s_i}^{(l)})W_V^{(l)}.
-\]
+$$
 
-该层使用 (Q^{(l)},K^{(l)},V^{(l)}) 完成 self-attention 和 MLP，再得到下一层 hidden state：
-
-\[
-X^{(l+1)}
-=
-\operatorname{TransformerBlock}^{(l)}(X^{(l)}).
-\]
-
-下一层不会直接把上一层 (K,V) 当输入，而是从更新后的 (X^{(l+1)}) 用新一层 projection matrices 重新计算 (Q,K,V)。真正沿网络深度传递的是 hidden state。
+层间真正传递的是 $X^{(l+1)}$。下一层使用自己的 $W_Q^{(l+1)},W_K^{(l+1)},W_V^{(l+1)}$ 重新生成 QKV，而不是直接接收上一层的 KV。
 
 ### 7.2 Why spatial tokens contain planning information
 
-Spatial tokens 可以通过 self-attention 读取此前的 image tokens、instruction tokens 和 latent reasoning tokens。由于 $\mathcal L_{\text{ans}}$ 要求它们预测真实轨迹，backpropagation 会逐渐训练其 Query 去检索与 waypoint 相关的视觉和语言特征。
+Spatial token 的 attention output 是 visible token values 的加权和：
 
-“spatial token 关注杯子或夹爪”只是直观说法。严格地说，它对 multimodal token values 做 content-dependent weighted aggregation，并形成足以供后续网络恢复位置和空间关系的 distributed representation。
+$$
+o_{s_i}^{(l)}
+=
+\sum_{j\in\mathcal V(i)}\alpha_{ij}^{(l)}v_j^{(l)},
+\qquad
+\alpha_{ij}^{(l)}
+=
+\operatorname{softmax}_j\!\left(
+\frac{q_{s_i}^{(l)}k_j^{(l)\top}}{\sqrt{d_k}}
+\right).
+$$
 
-在标准 causal mask 下，如果 sequence order 为：
+$\mathcal V(i)$ 是 attention mask 允许 $s_i$ 访问的 token set。$\mathcal L_{\mathrm{ans}}$ 的 gradient 会调整 $W_Q,W_K,W_V$，使 spatial tokens 更有效地聚合 waypoint prediction 所需的 image、instruction 和 latent-reasoning features。
+
+若沿用标准 causal mask，sequence order 为：
 
 ```text
 image tokens + instruction tokens + z1...zM + s1...sK
 ```
 
-则 $s_K$ 能看到所有 preceding tokens，包括 $s_1,\ldots,s_{K-1}$；$s_i$ 不能看到后续 $s_{i+1},\ldots,s_K$。论文没有明确报告 spatial block 使用特殊 bidirectional mask，因此该点应以开源实现为准。
+则：
 
-### 7.3 Visual latent planning \(c_t\)
+$$
+\mathcal V(s_i)
+=
+\{\text{all preceding multimodal tokens},s_1,\ldots,s_i\}.
+$$
 
-论文不是直接把二维 waypoint 喂给 Action Model，而是从 earlier VLM layers 提取 spatial tokens 对应的 KV cache：
+因此 $s_K$ 可以访问全部 preceding tokens，而 $s_i$ 不能访问 $s_{i+1:K}$。论文没有明确说明是否为 spatial-token block 修改 attention mask，该点应以源码为准。
 
-\[
+### 7.3 Extracting visual planning context $c_t$
+
+令 $\mathcal E$ 表示选中的 earlier VLM layers，$S$ 表示 spatial-token positions。从完整 KV cache 中取对应切片：
+
+$$
+K_{\mathrm{sp}}^{(l)}=K^{(l)}[:,S,:],
+\qquad
+V_{\mathrm{sp}}^{(l)}=V^{(l)}[:,S,:],
+\qquad l\in\mathcal E.
+$$
+
+Visual planning context 定义为：
+
+$$
+\boxed{
 c_t
 =
-\left\{
-K_{\text{spatial}}^{(l)},
-V_{\text{spatial}}^{(l)}
-\right\}_{l\in\mathcal L_{\text{early}}}.
-\]
+\left\{K_{\mathrm{sp}}^{(l)},V_{\mathrm{sp}}^{(l)}\right\}_{l\in\mathcal E}
+}
+$$
 
-因此：
+$c_t$ 不是预测出的 2D waypoints。二者来自同一组 spatial tokens，但用途不同：
 
-- waypoint $p_i$：final hidden state 经 MLP 得到，便于 coordinate supervision 和 visualization；
-- visual plan $c_t$：intermediate spatial-token KV，提供给 Action Model，保留更丰富的 object、task phase、spatial relation 和 trajectory information。
+| Representation | Source | Use |
+|---|---|---|
+| $p_i$ | final spatial hidden state $h'(s_i)$ | coordinate supervision / visualization |
+| $c_t$ | earlier-layer spatial KV | Action Model conditioning |
 
-论文的 LIBERO ablation：
-
-| Action conditioning | Success rate |
-|---|---:|
-| early-layer KV | 89.7 |
-| late-layer KV | 88.3 |
-| final output hidden states | 87.1 |
-
-作者据此认为 earlier-layer representations 更适合保留 action prediction 所需的 visual-spatial information。
+LIBERO ablation 中，early-layer KV、late-layer KV、final hidden states 的 success rates 分别为 89.7、88.3、87.1。
 
 ## 8. Reasoning-Enhanced Policy Learning
 
-### 8.1 Purpose
+### 8.1 Projecting and combining conditions
 
-3.2 得到的是 high-level visual plan，而机器人最终需要 continuous low-level controls，例如 end-effector translation、rotation、joint motion 和 gripper state。3.3 使用 Diffusion Action Model 完成：
+3.2 得到 high-level visual plan，3.3 将其转成 continuous low-level action chunk。VLM 与 Action Model 的 hidden dimensions 不同，因此先对 planning KV 做 projection：
 
-\[
-\text{visual plan}
-\rightarrow
-\text{robot action chunk}.
-\]
-
-### 8.2 Conditioning Action Model with planning and state
-
-VLM planning KV 先通过 linear projector 映射到 Action Model dimension：
-
-- DiT-Policy：1024；
-- RDT：2048。
-
-随后与 frozen state encoder 产生的 state KV 拼接：
-
-\[
-K_{\text{cond}}
-=
-[K_{\text{state}};K_{\text{plan}}],
+$$
+\widetilde K_{\mathrm{plan}}^{(j)}
+=P_K^{(j)}\!\left(K_{\mathrm{sp}}^{(l_j)}\right),
 \qquad
-V_{\text{cond}}
+\widetilde V_{\mathrm{plan}}^{(j)}
+=P_V^{(j)}\!\left(V_{\mathrm{sp}}^{(l_j)}\right).
+$$
+
+Projection target dimension 对 DiT-Policy 为 1024，对 RDT 为 2048。将 planning KV 与 frozen state encoder 的 KV 沿 context-token dimension 拼接：
+
+$$
+K_{\mathrm{cond}}^{(j)}
 =
-[V_{\text{state}};V_{\text{plan}}].
-\]
+\left[K_{\mathrm{state}}^{(j)};\widetilde K_{\mathrm{plan}}^{(j)}\right],
+\qquad
+V_{\mathrm{cond}}^{(j)}
+=
+\left[V_{\mathrm{state}}^{(j)};\widetilde V_{\mathrm{plan}}^{(j)}\right].
+$$
 
-Action Model 的 cross-attention 使用 action tokens 作为 Query：
+第 $j$ 个 Action Transformer block 的 cross-attention 为：
 
-\[
-\operatorname{Attention}
-(Q_{\text{action}},K_{\text{cond}},V_{\text{cond}}).
-\]
+$$
+\operatorname{CrossAttn}^{(j)}
+=
+\operatorname{softmax}\!\left(
+\frac{Q_{\mathrm{action}}^{(j)}K_{\mathrm{cond}}^{(j)\top}}{\sqrt{d_k}}
+\right)V_{\mathrm{cond}}^{(j)}.
+$$
 
-其中：
+Planning context 回答“要做什么、目标在哪里”，state context 回答“机器人当前在哪里”，action queries 学习“具体应该怎样运动”。
 
-- visual planning context $c_t$ 提供“应该做什么、目标在哪里”；
-- state observation 提供“机器人当前处于什么状态”；
-- Action Model 学习“具体应该如何运动”。
+### 8.2 Paper-level imitation-learning objective
 
-### 8.3 Imitation-learning objective
+Action demonstration dataset 记为：
 
-训练数据为 action-annotated robot demonstrations：
+$$
+\mathcal D_{\mathrm{act}}
+=
+\{(o_t,l,\hat a_t)\}.
+$$
 
-\[
-(o_t,l,\hat a_t),
-\]
+论文 Eq. (7) 将所用 Diffusion Policy 的内部 denoising process 抽象为：
 
-其中 $\hat a_t$ 通常是一段 ground-truth action chunk。论文写为：
-
-\[
+$$
+\boxed{
 \mathcal L_{\mathrm{IL}}(\phi)
 =
-\ell\left(
-\pi_\phi(o_t,l,c_t),
-\hat a_t
-\right),
-\]
+\ell_{\mathrm{denoise}}\!\left(
+\pi_\phi(o_t,l,c_t),\hat a_t
+\right)
+}
+\tag{7}
+$$
 
-其中 $\ell$ 沿用 DiT-Policy / RDT 的 standard diffusion denoising objective。
+这不是普通的 direct action regression；$\ell_{\mathrm{denoise}}$ 沿用 DiT-Policy 或 RDT 的 diffusion objective。
 
-若采用常见 epsilon-prediction parameterization，训练过程为：
+### 8.3 Expanded epsilon-prediction form
 
-1. 从 demonstration 取得 clean action chunk $a_0=\hat a_t$；
-2. 采样 $\epsilon\sim\mathcal N(0,I)$ 和 diffusion step $\gamma$；
-3. 构造 noisy action：
+下面是帮助理解 Eq. (7) 的常见 epsilon-prediction 展开式，不是论文额外提出的新 loss。令 clean demonstration action chunk 为：
 
-\[
+$$
+a_0\equiv\hat a_t.
+$$
+
+采样 diffusion step 与 Gaussian noise：
+
+$$
+\gamma\sim\operatorname{Uniform}\{1,\ldots,T\},
+\qquad
+\epsilon\sim\mathcal N(0,I).
+$$
+
+Forward noising process：
+
+$$
 a_\gamma
 =
-\sqrt{\bar\alpha_\gamma}a_0
+\sqrt{\bar\alpha_\gamma}\,a_0
 +
-\sqrt{1-\bar\alpha_\gamma}\epsilon;
-\]
+\sqrt{1-\bar\alpha_\gamma}\,\epsilon.
+$$
 
-4. 模型在条件 $(o_t,l,c_t)$ 下预测噪声：
+Conditional noise prediction：
 
-\[
+$$
 \hat\epsilon_\phi
 =
-\pi_\phi(a_\gamma,\gamma,o_t,l,c_t);
-\]
+\epsilon_\phi\!\left(a_\gamma,\gamma\mid o_t,l,c_t\right).
+$$
 
-5. 最小化：
+对应 denoising loss：
 
-\[
-\mathcal L_{\mathrm{IL}}
+$$
+\boxed{
+\mathcal L_{\mathrm{IL}}(\phi)
 =
-\|\epsilon-\hat\epsilon_\phi\|_2^2.
-\]
+\mathbb E_{(o_t,l,a_0),\gamma,\epsilon}
+\left[\left\|\epsilon-\hat\epsilon_\phi\right\|_2^2\right]
+}
+$$
 
-预测噪声等价于学习当前 noisy action 应朝哪个方向修正。根据：
+根据当前 noise estimate 可以得到 clean-action estimate：
 
-\[
-\hat a_{0,\phi}
+$$
+\widehat a_{0,\phi}
 =
 \frac{
-a_\gamma-
-\sqrt{1-\bar\alpha_\gamma}\hat\epsilon_\phi
+a_\gamma-\sqrt{1-\bar\alpha_\gamma}\,\hat\epsilon_\phi
 }{
 \sqrt{\bar\alpha_\gamma}
-},
-\]
+}.
+$$
 
-可以得到当前 clean action estimate。训练时 clean action 和 sampled noise 都已知；inference 时 clean action 未知，模型从 Gaussian noise 开始进行多步 reverse diffusion，最后得到 action chunk。
+训练时 $a_0$ 和 sampled $\epsilon$ 均已知；inference 时二者未知，只有当前 sample $a_\gamma$、noise schedule 和 prediction $\hat\epsilon_\phi$ 已知。模型从 $a_T\sim\mathcal N(0,I)$ 开始，通过多步 reverse diffusion 得到 action chunk。
 
-论文正文仅抽象指定 denoising objective，具体实现也可能采用 $x_0$-prediction 或 $v$-prediction，应以 DiT-Policy/RDT implementation 为准。
+论文只指定 generic denoising objective；实际 DiT-Policy/RDT 也可能采用 $x_0$-prediction 或 $v$-prediction。因此以上是常见具体化，不是对原文实现的额外断言。
 
 ### 8.4 Frozen and trainable modules
 
-Policy post-training 阶段：
+| Module | Policy post-training status | Gradient source |
+|---|---|---|
+| Student VLM $\mathcal F_\theta$ | frozen | none |
+| State Encoder | frozen | none |
+| Latent Projector $P_K,P_V$ | trainable | $\mathcal L_{\mathrm{IL}}$ |
+| Action Model $\pi_\phi$ | trainable | $\mathcal L_{\mathrm{IL}}$ |
+| Teacher / Verbalizer | not used | none |
 
-| Module | Status |
-|---|---|
-| Student VLM $\mathcal F_\theta$ | frozen |
-| State Encoder | frozen |
-| Latent Projector | trainable |
-| Action Model $\pi_\phi$ | trainable |
-| Teacher / Verbalizer | not used |
-
-正文的“only update $\pi_\phi$”是简化表达；附录明确指出 latent projector 也会更新。
+正文的“only update $\pi_\phi$”是简化表达；附录明确说明 latent projector 也随 Action Model 更新。
 
 ## 9. Training Data
 
@@ -527,11 +693,11 @@ Policy post-training 阶段：
 
 `Teacher w/ RL Length-Penalty` 指在 GRPO reward 中加入 reasoning-length penalty，例如：
 
-\[
+$$
 R_{\text{total}}
 =
 R_{\text{task}}-\lambda\,|\tau|.
-\]
+$$
 
 它仍然 autoregressively 生成 textual CoT，只是鼓励更短的 reasoning；Fast-ThinkAct 则改变 reasoning representation，用 continuous latent tokens 代替文本。
 
@@ -616,7 +782,7 @@ R_{\text{task}}-\lambda\,|\tau|.
 
 Fast-ThinkAct 的核心不是“把 CoT 截短”，而是建立一条受三类监督约束的 compact planning channel：
 
-\[
+$$
 \boxed{
 \text{preference-guided latent reasoning}
 \rightarrow
@@ -624,7 +790,7 @@ Fast-ThinkAct 的核心不是“把 CoT 截短”，而是建立一条受三类�
 \rightarrow
 \text{diffusion-based action execution}
 }
-\]
+$$
 
 其中：
 
