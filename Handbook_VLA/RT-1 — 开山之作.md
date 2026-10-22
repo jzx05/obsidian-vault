@@ -8,6 +8,8 @@ related:
   - "[[RT-2 — VLA 的诞生]]"
 ---
 
+# RT-1 — 开山之作
+
 > [!abstract] 核心思想
 > 把机器人控制建模为 **Token 生成问题**：图像和语言进 Transformer，输出离散动作 token。
 
@@ -105,8 +107,6 @@ $$
 | $\gamma(l)$ | 逐通道缩放参数 |
 | $\beta(l)$ | 逐通道偏移参数 |
 | $\odot$ | 逐元素乘法 |
-## 🧮 补充：FiLM（Feature-wise Linear Modulation）
-
 
 ### 直觉
 
