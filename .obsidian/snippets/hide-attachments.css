@@ -1,0 +1,5 @@
+/* 隐藏附件目录，避免图片在文件树里单独出现；笔记里的嵌入仍然正常渲染。
+   需要临时管理附件时，在 设置 → 外观 → CSS 片段 里关掉本片段即可。 */
+.nav-folder-title[data-path="90-Attachments"] {
+  display: none;
+}

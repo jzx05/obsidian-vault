@@ -61,7 +61,11 @@ decoder-only Transformer (8 层, 19M)
 - **并行解码**：11 个动作 token 一次输出，不做自回归；自回归版本推理慢 2× 以上，性能没有提升。
 - **早期语言融合**：语言经 Universal Sentence Encoder 编码后，通过零初始化的 FiLM 层调制 EfficientNet，既注入指令又不破坏 ImageNet 预训练。
 
-![[Pasted image 20261022113606.png]]
+### 推理时：11 个头各选一个 bin
+
+![[90-Attachments/Handbook_VLA/Pasted image 20261022113606.png]]
+
+*每个动作维度从自己的 256 个 bin 里选一个；11 个头并行 argmax，得到 11 个动作值。第 11 维是 mode，决定执行机械臂、底盘还是终止。*
 
 ## 📊 关键数据
 
