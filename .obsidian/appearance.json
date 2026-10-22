@@ -1,4 +1,6 @@
 {
   "cssTheme": "Shiba Inu",
-  "theme": "obsidian"
+  "theme": "obsidian",
+  "nativeMenus": false,
+  "accentColor": "#5c96f5"
 }
