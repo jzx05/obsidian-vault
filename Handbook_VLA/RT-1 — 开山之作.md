@@ -61,6 +61,8 @@ decoder-only Transformer (8 层, 19M)
 - **并行解码**：11 个动作 token 一次输出，不做自回归；自回归版本推理慢 2× 以上，性能没有提升。
 - **早期语言融合**：语言经 Universal Sentence Encoder 编码后，通过零初始化的 FiLM 层调制 EfficientNet，既注入指令又不破坏 ImageNet 预训练。
 
+![[Pasted image 20261022112548.png]]
+
 ## 📊 关键数据
 
 | 维度 | 数值 |
