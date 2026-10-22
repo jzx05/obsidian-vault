@@ -39,6 +39,19 @@ decoder-only Transformer (8 层, 19M)
 11 维动作  →  机器人 @ 3 Hz
 ```
 
+### 系统组件对比
+
+| 模块 | 输入 | 输出 | 频率/时序 | 训练/推理差异 |
+|------|------|------|-----------|----------------|
+| 图像编码器 | 6 帧 RGB，300×300 | 每帧 9×9×512 → 81 个视觉 token | 每个控制步 | ImageNet 预训练 EfficientNet-B3，16M 参数；推理时复用重叠窗口的 token |
+| 语言条件 | 自然语言指令 ℓ | Universal Sentence Encoder 嵌入 | 每条指令一次 | 通过 identity-initialized FiLM 注入 EfficientNet |
+| TokenLearner | 每帧 81 token | 每帧 8 token，6 帧共 48 token | 每个控制步 | 学习式空间注意力压缩；论文报告 2.4× 加速 |
+| Transformer | 48 token + 位置编码 | 11 个动作 token 的 logits | 每步一次前向 | 8 层 decoder-only，19M 参数；非自回归并行输出 |
+| 动作反 token 化 | 11 个 bin 索引 | 11 维连续/离散动作 | 3 Hz | 每个维度 256 bin，取 bin 内代表值 |
+| 推理优化 | 重叠图像窗口 | 复用已算好的视觉 token | 每个控制步 | 论文报告 1.7× 加速 |
+
+总参数：图像侧 16M + Transformer 19M = 35M。这个规模是刻意压出来的：论文把实时控制目标定为 3 Hz，模型推理预算 <100 ms，35M 是当时能在该预算内塞进最多容量的位置。
+
 ## 🔑 关键机制
 
 - **动作即 token**：11 维动作（7 维机械臂 + 3 维底盘 + 1 维模式）各离散为 256 个 bin，模型并行输出 11 个动作 token。
@@ -92,6 +105,8 @@ $$
 | $\gamma(l)$ | 逐通道缩放参数 |
 | $\beta(l)$ | 逐通道偏移参数 |
 | $\odot$ | 逐元素乘法 |
+## 🧮 补充：FiLM（Feature-wise Linear Modulation）
+
 
 ### 直觉
 
