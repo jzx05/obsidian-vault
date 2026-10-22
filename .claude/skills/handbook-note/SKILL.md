@@ -11,7 +11,14 @@ description: Create or reformat VLA-Handbook study notes in the Obsidian vault's
 
 `templates/handbook.md`
 
-新建笔记时，以该模板为骨架；不要在笔记里另起一套结构。若模板缺失，先按本文件末尾的「模板骨架」重建，再继续。
+该模板使用 **Templater** 语法：
+
+- `title` 与 H1：`<% tp.file.title %>`
+- `created`：`'<% tp.date.now("YYYY-MM-DD") %>'`
+
+Templater 已配置为 `Handbook_VLA/` 的 folder template：在 Obsidian 里新建空白笔记时会自动套用。注意 `Trigger Templater on new file creation` 是 Obsidian 的**本机 localStorage 开关**，不能写进 vault 配置；首次使用需在 `设置 → Templater` 里手动打开（会弹一次安全确认）。若没有触发，打开命令面板执行 `Templater: Replace templates in the active file`。
+
+直接用 Write 工具创建完整笔记时，不要保留 `<% %>` 占位符：把 `tp.file.title` 换成实际标题，把 `tp.date.now(...)` 换成实际日期。
 
 ## 工作流
 
@@ -23,6 +30,7 @@ description: Create or reformat VLA-Handbook study notes in the Obsidian vault's
 
 2. **读模板**
    - 先读 `templates/handbook.md`，按其中的 section 顺序填写。
+   - 模板里的 `<% tp.file.title %>` 和 `<% tp.date.now(...) %>` 是 Templater 占位符；直接写文件时必须替换成实际值。
    - frontmatter 字段全部保留；`title` 与文件名（去掉 `.md`）一致。
 
 3. **填 frontmatter**
@@ -98,15 +106,15 @@ description: Create or reformat VLA-Handbook study notes in the Obsidian vault's
 
 ````markdown
 ---
-title: "{{title}}"
+title: "<% tp.file.title %>"
 tags: [handbook, vla]
-created: "{{date:YYYY-MM-DD}}"
+created: '<% tp.date.now("YYYY-MM-DD") %>'
 source:
 status: reading
 related: []
 ---
 
-# {{title}}
+# <% tp.file.title %>
 
 > [!abstract] 核心思想
 > 一句话说清：它解决什么问题，用什么方法，结果如何。

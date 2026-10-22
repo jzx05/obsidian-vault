@@ -1,13 +1,13 @@
 ---
-title: "{{title}}"
+title: "<% tp.file.title %>"
 tags: [handbook, vla]
-created: "{{date:YYYY-MM-DD}}"
+created: '<% tp.date.now("YYYY-MM-DD") %>'
 source:
 status: reading
 related: []
 ---
 
-# {{title}}
+# <% tp.file.title %>
 
 > [!abstract] 核心思想
 > 一句话说清：它解决什么问题，用什么方法，结果如何。
