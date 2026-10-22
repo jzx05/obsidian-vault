@@ -1,21 +1,20 @@
 ---
-title: RT-2 — VLA 概念的诞生
-tags:
-  - handbook
-  - vla
+title: "RT-2 — VLA 概念的诞生"
+tags: [handbook, vla, vlm, rt-2]
 created: 2026-10-22
-source: 2023-07（arXiv v1）；CoRL 2023（PMLR 229:2165-2183）
-status: reading
-related: []
+source: "https://arxiv.org/abs/2307.15818"
+status: read
+related:
+  - "[[RT-1 — 开山之作]]"
 ---
 
 # RT-2 — VLA 概念的诞生
 
 > [!abstract] 核心思想
-> 不给 VLM 加新的动作头，而是把 8 维动作离散成 8 个文本 token，让 PaLI-X / PaLM-E 用原有的下一 token 预测目标直接学控制；再用机器人数据 + Web VQA 的 co-fine-tuning 保住互联网语义。它在 6k 次真机评测中把未见场景泛化做到 RT-1 的约 2 倍，并展示了"抓恐龙玩具"这类涌现语义能力
+> 不给 VLM 加新的动作头，而是把 8 维动作离散成 8 个文本 token，让 PaLI-X / PaLM-E 用原有的下一 token 预测目标直接学控制；再用机器人数据 + Web VQA 的 co-fine-tuning 保住互联网语义。6k 次真机评测中，未见场景泛化约为 RT-1 的 2 倍，并展示了“抓恐龙玩具”这类涌现语义能力。
 
 > [!tip] Eureka Moment
-> 最值得记住的反直觉洞见；如果只能记一句话，就是这句。
+> 动作不一定要做成回归头：把动作写进 VLM 的词表，机器人控制就变成了一个已经解决过预训练问题的语言建模任务。语义可以迁移，但物理技能仍然只能来自机器人数据。
 
 ## 🏗️ 架构与信息流
 
@@ -26,62 +25,128 @@ RGB 图像 + 指令 "pick up the extinct animal"
         PaLI-X / PaLM-E / PaLI-3
         （ViT + 编码器-解码器，5B-55B）
                 │
-                │ 自回归解码，词表约束到 256 个动作 token
+                │ 自回归解码，词表约束到 256 个 action token
                 ▼
 "1 128 124 136 121 158 111 255"
                 │
-                ▼
-8 维动作：6-DoF 末端位移 + 夹爪 + 终止
+                ├─ 前 7 个 token → 反量化 → 7 维连续动作
+                └─ 第 8 个 token → 终止 / 继续
                 │
                 ▼
         机器人执行 @ 1-3 Hz（55B）/ ~5 Hz（5B）
-
 ```
-RT-2 预留了 256 个 token 作为动作词表；每个连续动作维度从这 256 个 bin 里选一个 token，7 个连续维度加 1 个终止命令拼成 8 token的动作串；模型自回归生成这 8 个 token，再把前 7 个反量化成连续动作，就得到 8 维动作。
+
+### 系统组件对比
+
+| 模块 | 输入 | 输出 | 频率/时序 | 训练/推理差异 |
+|------|------|------|-----------|----------------|
+| VLM backbone | 图像 + 指令 | 下一 token 分布 | 每步一次 | PaLI-X 5B/55B（55B 版为 ViT-22B + 32B 编码器-解码器）、PaLM-E 12B、PaLI-3 3B 级；不新增动作专用层 |
+| 动作 tokenizer | 7 维连续动作 + 终止命令 | 8 个整数 token | 每个控制步 | 每维 256 bin；bin 索引映射到词表 token |
+| 自回归解码 | 图像/指令 + 已生成 token | 8 个 action token | 每步 8 次解码 | 训练 teacher forcing；推理逐 token 生成 |
+| 输出约束 | 机器人任务 prompt | 仅合法 action token | 解码时 | 把词表限制到 256 个 action token |
+| 机器人执行 | 8 维动作 | 末端/夹爪命令 | 55B：1-3 Hz；5B：约 5 Hz | 云端多 TPU 服务，网络查询 |
+| 数据混合器 | 机器人轨迹 + Web VQA | 训练 batch | 每个 batch | PaLI-X 机器人数据约 50%；PaLM-E 约 66% |
+
+### 256 个 action token 与 8 维动作
+
+| 概念 | 数量 | 含义 |
+|---|---:|---|
+| action token 词表 | 256 | 每个连续动作维度可选的 bin 数；也是 VLM 词表里预留的 256 个 token |
+| 动作串长度 | 8 | 6-DoF 末端位移 + 夹爪 + 终止命令 |
+| 每步输出 | 8 个 token | 每个位置从 256 个 action token 里选一个 |
+
+```text
+256 个 action token = 字母表
+8 个位置           = 一个动作串
+
+position 1..7 → bin 0..255 → 反量化 → 7 维连续动作
+position 8    → 终止 / 继续
+```
+
+7 个连续维度各选一个 bin，第 8 位是终止命令；同一个 token ID 在不同位置代表不同维度的 bin，位置决定怎么解释。
+
 ## 🔑 关键机制
 
-- **机制 1**：是什么 + 为什么这样设计。
-- **机制 2**：
-- **机制 3**：
+- **动作即语言**：把 8 维动作写成 `"1 128 124 136 121 158 111 255"` 这样的字符串，直接复用 VLM 的下一 token 预测；不需要新的动作头或损失函数。
+- **复用 VLM 词表**：PaLI-X 的 0-1000 整数各有唯一 token，动作 bin 直接映射到整数 token；PaLM-E 没有数字 token，就把 256 个最低频 token 覆写成动作 token。
+- **Co-fine-tuning**：机器人数据只做 fine-tuning 会让模型遗忘 Web 知识；RT-2 在每个 batch 混入原始 VLM 的图文/VQA 数据，机器人占比约 50%（PaLI-X）或 66%（PaLM-E）。
+- **输出约束**：机器人任务下只采样 256 个 action token，避免模型输出自然语言导致无法执行。
+- **Chain-of-thought 变体**：在动作前加 `Plan:` 文本，例如 `Plan: pick rxbar chocolate. Action: ...`，用几百步微调让模型先规划再动作。
+- **规模消融**：5B 从零训练 9%，fine-tune 42%，co-fine-tune 44%；55B fine-tune 52%，co-fine-tune 63%。
 
 ## 📊 关键数据
 
 | 维度 | 数值 |
 |---|---|
-| 参数量 | 待补 |
-| 训练数据 | 待补 |
-| 控制频率 | 待补 |
-| 主要结果 | 待补 |
+| 模型规模 | PaLI-X 5B / 55B；PaLM-E 12B；PaLI-3 3B 级 |
+| 机器人数据 | RT-1 的 130k episodes、700+ 任务、13 台机器人、17 个月 |
+| Web 数据 | WebLI 约 10B 图文对，过滤到前 10%（约 1B）；另含 captioning / VQA |
+| 训练方式 | 机器人轨迹 + Web VQA co-fine-tune；机器人占比约 50%（PaLI-X）/ 66%（PaLM-E） |
+| 控制频率 | 55B：1-3 Hz；5B：约 5 Hz |
+| Seen 任务 | RT-2-PaLI-X 91 / PaLM-E 93；RT-1 92，基本持平 |
+| 未见场景 | RT-2 平均 62%，RT-1 32%，MOO 35%（约 2×） |
+| 涌现能力 | RT-2-PaLI-X 平均 60%，RT-1 17%（约 3.5×） |
 
-## 🧮 补充：公式 / 推导（可选）
+## 🧮 补充：动作 token 似然 + co-fine-tuning
 
 ### 基本公式
 
+自回归动作似然：
+
 $$
-% TODO: 在这里写公式
+p(a \mid o, \ell) = \prod_{i=1}^{8} p_\theta(y_i \mid o, \ell, y_{<i}), \quad y_i \in \{0,\ldots,255\}
+$$
+
+反量化：
+
+$$
+a_i \approx lo_i + (y_i + 0.5)\frac{hi_i - lo_i}{256}
+$$
+
+Co-fine-tuning 目标（用采样比例实现）：
+
+$$
+\mathcal{L} = \mathbb{E}_{(o,\ell,a)\sim D_{\text{robot}}}\left[-\log p_\theta(a\mid o,\ell)\right]
++ \mathbb{E}_{(I,Q,A)\sim D_{\text{web}}}\left[-\log p_\theta(A\mid I,Q)\right]
 $$
 
 ### 符号说明
 
 | 符号 | 含义 |
 |---|---|
-|  |  |
+| $o$ | 机器人当前图像观测 |
+| $\ell$ | 自然语言指令 |
+| $y_i$ | 第 i 个动作 token，0..255 |
+| $y_{<i}$ | 自回归生成时已经产生的动作 token |
+| $a_i$ | 第 i 维连续动作 |
+| $lo_i, hi_i$ | 第 i 维动作的训练范围 |
+| $D_{\text{robot}}$ | 机器人轨迹数据 |
+| $D_{\text{web}}$ | WebLI / VQA / captioning 数据 |
+| $\theta$ | VLM 参数；RT-2 不新增动作专用层 |
 
 ### 直觉
 
+8 个动作 token 只是 VLM 词表里很小的一个子集。Web 数据学到的数字、图标、物体属性、关系，通过 shared embedding 直接影响动作 token 的生成；co-fine-tuning 防止机器人数据把整个词表拉向机器人分布。代价是 8 个 token 必须自回归生成，55B 每步要跑 8 次解码，这就是 1-3 Hz 的来源。
 
 ## 🧩 局限与失败模式
 
-- 
-- 
+- **物理技能受限于机器人数据**：语义能迁移，新运动不能；擦桌子、使用工具等训练集没有的动作学不会。
+- **特定部位抓取差**：例如抓杯柄，模型倾向于抓物体主体。
+- **精细/灵巧操作弱**：折毛巾这类需要精细协调的任务表现差。
+- **多层间接推理会失败**：需要多步语义链的指令仍会出错。
+- **云端延迟与成本**：55B 的 1-3 Hz 不适合高频闭环；多 TPU 服务成本高。
+- **单本体、单动作空间**：8 维动作绑定 Everyday Robots 末端执行器。
 
 ## 🔗 关联
 
-- 后续：[[ ]]
-- 相关概念：[[ ]]
-- 论文笔记：[[ ]]
+- 前作：[[RT-1 — 开山之作]]
+- 后续：[[OpenVLA]]、[[π0]]
+- 相关概念：[[Action Tokenization]]、[[Co-fine-tuning]]、[[Vision-Language-Action Model]]
 
 ## 📚 参考
 
-- 论文：
-- 项目页：
+- 论文：[RT-2: Vision-Language-Action Models Transfer Web Knowledge to Robotic Control](https://arxiv.org/abs/2307.15818)（CoRL 2023，PMLR 229:2165-2183）
+- 项目页：[robotics-transformer2.github.io](https://robotics-transformer2.github.io/)
+- PaLI-X：[PaLI-X: On Scaling up a Multilingual Vision and Language Model](https://arxiv.org/abs/2305.18565)
+- PaLM-E：[PaLM-E: An Embodied Multimodal Language Model](https://arxiv.org/abs/2303.03378)
+- 代码/数据：论文未发布官方代码

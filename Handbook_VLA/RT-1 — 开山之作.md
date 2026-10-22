@@ -5,7 +5,7 @@ created: 2026-10-22
 source: "https://arxiv.org/abs/2212.06817"
 status: read
 related:
-  - "[[RT-2 — VLA 的诞生]]"
+  - "[[RT-2 — VLA 概念的诞生]]"
 ---
 
 # RT-1 — 开山之作
@@ -127,7 +127,7 @@ FiLM 让语言在视觉编码的早期就参与特征选择：$\gamma$ 放大与
 
 ## 🔗 关联
 
-- 后续：[[RT-2 — VLA 的诞生]]
+- 后续：[[RT-2 — VLA 概念的诞生]]
 - 相关概念：[[TokenLearner]]、[[FiLM]]、[[Action Tokenization]]
 - 论文笔记：[[RT-1 — Robotics Transformer]]
 
