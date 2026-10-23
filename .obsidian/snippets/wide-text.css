@@ -1,0 +1,8 @@
+/* 宽屏笔记：放宽 Obsidian 的“可读行长度”限制，让正文占满可用宽度。
+   想改成固定宽度，把 100% 换成例如 1400px 即可。 */
+.markdown-source-view.mod-cm6.is-readable-line-width .cm-sizer,
+.markdown-source-view.mod-cm6.is-readable-line-width .cm-contentContainer,
+.markdown-source-view.mod-cm6.is-readable-line-width .cm-content,
+.markdown-preview-view.is-readable-line-width .markdown-preview-sizer {
+  max-width: 100% !important;
+}

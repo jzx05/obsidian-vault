@@ -4,7 +4,8 @@
   "nativeMenus": false,
   "accentColor": "#5c96f5",
   "enabledCssSnippets": [
-    "hide-attachments"
+    "hide-attachments",
+    "wide-text"
   ],
   "baseFontSizeAction": true
 }
