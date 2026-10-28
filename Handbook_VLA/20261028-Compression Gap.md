@@ -8,7 +8,7 @@ source:
 status: reading
 related: []
 ---
-
+目标是确定：视觉编码器质量的提升是否能够传递到机器人操作性能上，以及在什么条件下能够传递。为了隔离动作表示方式的影响，我们比较两类方法：离散 token 化方法（OAT）和连续扩散方法（Diffusion Policy）
 # The Compression Gap: Why Discrete Tokenizatio Limits Vision-Language-Action Model Scaling
 
 > [!abstract] 核心思想
