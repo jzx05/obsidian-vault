@@ -12,7 +12,7 @@ related: []
 # The Compression Gap: Why Discrete Tokenizatio Limits Vision-Language-Action Model Scaling
 
 > [!abstract] 核心思想
-> 一句话说清：它解决什么问题，用什么方法，结果如何。
+> Physical AI 的扩展关键在于识别信息瓶颈位于整个处理流程的何处，而不是简单地统一增加模型规模或数据量
 
 > [!tip] Eureka Moment
 > 最值得记住的反直觉洞见；如果只能记一句话，就是这句。
