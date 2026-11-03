@@ -37,3 +37,6 @@ desktop.ini
 # ============================================
 .env
 *.local
+
+# Obsidian Git askpass 临时文件（插件自动生成，不提交）
+.obsidian/plugins/obsidian-git/.git_credentials_input*
